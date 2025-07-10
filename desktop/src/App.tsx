@@ -7,6 +7,7 @@ import '~/lib/i18n'
 import SetupPage from '~/pages/setup/Page'
 import HomePage from '~/pages/home/Page'
 import BatchPage from './pages/batch/Page'
+import ModelsPage from './pages/models/Page'
 import { ErrorModalProvider } from './providers/ErrorModal'
 import { UpdaterProvider } from './providers/Updater'
 import { PreferenceProvider } from './providers/Preference'
@@ -38,6 +39,7 @@ export default function App() {
 									<Route path="/" element={<HomePage />} />
 									<Route path="/setup" element={<SetupPage />} />
 									<Route path="/batch" element={<BatchPage />} />
+									<Route path="/models" element={<ModelsPage />} />
 								</Routes>
 							</FilesProvider>
 						</ToastProvider>

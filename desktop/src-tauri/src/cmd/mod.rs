@@ -597,3 +597,9 @@ pub fn get_cargo_features() -> Vec<String> {
 
     enabled_features
 }
+
+#[tauri::command]
+pub fn check_model_exists(models_folder: String, file_name: String) -> bool {
+    let model_path = PathBuf::from(models_folder).join(file_name);
+    model_path.exists()
+}

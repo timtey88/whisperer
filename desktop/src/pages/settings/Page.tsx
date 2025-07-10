@@ -9,16 +9,24 @@ import { ReactComponent as ResetIcon } from '~/icons/reset.svg'
 import { ReactComponent as DiscordIcon } from '~/icons/discord.svg'
 import { ReactComponent as WrenchIcon } from '~/icons/wrench.svg'
 import { ReactComponent as CopyIcon } from '~/icons/copy.svg'
+import { ReactComponent as ListIcon } from '~/icons/list.svg'
 
 import * as config from '~/lib/config'
 import { supportedLanguages } from '~/lib/i18n'
 import { viewModel } from './viewModel'
 import * as os from '@tauri-apps/plugin-os'
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ModifyState } from '~/lib/utils'
 
-export default function SettingsPage() {
+interface SettingsPageProps {
+	setVisible?: ModifyState<boolean>
+}
+
+export default function SettingsPage({ setVisible }: SettingsPageProps = {}) {
 	const { t, i18n } = useTranslation()
 	const vm = viewModel()
+	const navigate = useNavigate()
 
 	const [platform, setPlatform] = useState<os.Platform | null>(null)
 
@@ -148,6 +156,10 @@ export default function SettingsPage() {
 				<button onMouseDown={vm.openModelsUrl} className="btn bg-base-300 text-base-content">
 					{t('common.download-models-link')}
 					<LinkIcon className="w-4 h-4" />
+				</button>
+				<button onMouseDown={() => navigate('/models')} className="btn bg-base-300 text-base-content">
+					{t('common.available-models')}
+					<ListIcon className="w-4 h-4" />
 				</button>
 			</div>
 

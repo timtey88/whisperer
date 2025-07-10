@@ -96,6 +96,7 @@ fn main() -> Result<()> {
             cmd::ytdlp::get_temp_path,
             cmd::is_crashed_recently,
             cmd::rename_crash_file,
+            cmd::check_model_exists,
             #[cfg(windows)]
             cmd::set_high_gpu_preference
         ])
