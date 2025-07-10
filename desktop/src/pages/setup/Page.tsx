@@ -24,20 +24,18 @@ function App() {
 
 				{/* Animated Download Component - Only show when download starts */}
 				{vm.downloadProgress > 0 && (
-					<div className="w-full max-w-2xl mx-auto bg-black/50 p-8 rounded-2xl border border-white/20 shadow-2xl">
-						<AnimatedDownload 
-							isAnimating={vm.downloadProgress < 100}
-							downloadedSize={vm.downloadedSize}
-							totalSize={vm.totalSize}
-							progress={vm.downloadProgress}
-							downloadSpeed={vm.downloadSpeed}
-							timeRemaining={vm.timeRemaining}
-							onAnimationComplete={() => {
-								console.log('Download complete!');
-							}}
-							className="w-full"
-						/>
-					</div>
+					<AnimatedDownload 
+						isAnimating={vm.downloadProgress < 100}
+						downloadedSize={vm.downloadedSize}
+						totalSize={vm.totalSize}
+						progress={vm.downloadProgress}
+						downloadSpeed={vm.downloadSpeed}
+						timeRemaining={vm.timeRemaining}
+						onAnimationComplete={() => {
+							console.log('Download complete!');
+						}}
+						className="w-full max-w-2xl mx-auto"
+					/>
 				)}
 
 				{/* Loading Indicator */}
