@@ -102,12 +102,10 @@ export function asVtt(segments: Segment[], speakerPrefix = 'Speaker') {
 }
 
 export function asText(segments: Segment[], speakerPrefix = 'Speaker') {
-	segments = mergeSpeakerSegments(segments)
-	return segments.reduce((transcript, segment) => {
-		return (
-			transcript + `${segment.speaker ? formatSpeaker(segment.speaker, speakerPrefix) + '\n' : ''}${segment.text.trim()}\n${segment.speaker ? '\n' : ''}`
-		)
-	}, '')
+	return segments.map(segment => {
+		const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
+		return `${speakerText}${segment.text.trim()}`
+	}).join(' ')
 }
 
 export function asJson(segments: Segment[]) {
