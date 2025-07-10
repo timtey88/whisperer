@@ -7,7 +7,6 @@ import * as config from '~/lib/config'
 import { NamedPath, getIssueUrl, ls, resetApp } from '~/lib/utils'
 import { usePreferenceProvider } from '~/providers/Preference'
 import { UnlistenFn, listen } from '@tauri-apps/api/event'
-import { useNavigate } from 'react-router-dom'
 import { load } from '@tauri-apps/plugin-store'
 import { useStoreValue } from '~/lib/useStoreValue'
 import * as clipboard from '@tauri-apps/plugin-clipboard-manager'
@@ -85,21 +84,12 @@ export function viewModel() {
 	const preference = usePreferenceProvider()
 	const { t } = useTranslation()
 	const listenersRef = useRef<UnlistenFn[]>([])
-	const [downloadURL, setDownloadURL] = useState('')
-	const navigate = useNavigate()
 
 	async function askAndReset() {
 		const yes = await ask(t('common.reset-ask-dialog'), { kind: 'info' })
 		if (yes) {
 			resetApp()
 		}
-	}
-
-	async function downloadModel() {
-		if (!downloadURL) {
-			return
-		}
-		navigate('/setup', { state: { downloadURL } })
 	}
 
 	async function loadMeta() {
@@ -160,9 +150,6 @@ export function viewModel() {
 		copyLogs,
 		isLogToFileSet,
 		setLogToFile,
-		downloadModel,
-		downloadURL,
-		setDownloadURL,
 		preference: preference,
 		askAndReset,
 		openModelPath,

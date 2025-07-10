@@ -109,29 +109,6 @@ export default function SettingsPage({ setVisible }: SettingsPageProps = {}) {
 				</span>
 			</div>
 			<div className="flex flex-col gap-1">
-				<label className="input input-bordered flex items-center gap-2">
-					<input
-						type="text"
-						className="grow"
-						value={vm.downloadURL}
-						onChange={(event) => vm.setDownloadURL(event.target.value)}
-						placeholder={t('common.paste-model-link')}
-						onKeyDown={(event) => (event.key === 'Enter' ? vm.downloadModel() : null)}
-					/>
-					<svg
-						onClick={vm.downloadModel}
-						aria-hidden="true"
-						focusable="false"
-						role="img"
-						className="octicon octicon-download cursor-pointer"
-						viewBox="0 0 16 16"
-						width="16"
-						height="16"
-						fill="currentColor">
-						<path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14Z"></path>
-						<path d="M7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.969a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.78a.749.749 0 1 1 1.06-1.06l1.97 1.969Z"></path>
-					</svg>
-				</label>
 				<select
 					onFocus={vm.loadModels}
 					onChange={(e) => vm.preference.setModelPath(e.target.value)}
@@ -154,11 +131,11 @@ export default function SettingsPage({ setVisible }: SettingsPageProps = {}) {
 					<WrenchIcon className="h-4 w-4" />
 				</button>
 				<button onMouseDown={vm.openModelsUrl} className="btn bg-base-300 text-base-content">
-					{t('common.download-models-link')}
+					{t('common.models-source')}
 					<LinkIcon className="w-4 h-4" />
 				</button>
 				<button onMouseDown={() => navigate('/models')} className="btn bg-base-300 text-base-content">
-					{t('common.available-models')}
+					{t('common.manage-models')}
 					<ListIcon className="w-4 h-4" />
 				</button>
 			</div>
