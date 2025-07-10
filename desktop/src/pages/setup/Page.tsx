@@ -1,5 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { viewModel } from './viewModel'
+import AnimatedLoader from '~/components/AnimatedLoader'
+import LoadingText from '~/components/LoadingText'
 
 function App() {
 	const { t } = useTranslation()
@@ -9,12 +11,8 @@ function App() {
 		<div className="relative w-[100vw] h-[100vh] overflow-hidden bg-base-100">
 			{/* Animated Background */}
 			{vm.downloadProgress > 0 && vm.downloadProgress < 100 && (
-				<div className="absolute inset-0 z-0 opacity-20">
-					<img 
-						src="https://cdn.dribbble.com/userupload/19445350/file/original-d3c1a1167b18464e2eff6622d09f2dc8.gif" 
-						alt="" 
-						className="w-full h-full object-cover"
-					/>
+				<div className="absolute inset-0 z-0 flex items-center justify-center opacity-10">
+					<AnimatedLoader size={800} strokeWidth={4} />
 				</div>
 			)}
 
@@ -24,9 +22,12 @@ function App() {
 				<div className="text-4xl font-bold text-center mb-2 text-white drop-shadow-lg">
 					{t('common.downloading-model', { company: vm.modelCompany })}
 				</div>
-				<p className="text-base text-gray-200 mb-8 text-center max-w-lg">
+				<p className="text-base text-gray-200 text-center max-w-lg">
 					{!vm?.location?.state?.downloadURL && t('common.this-happens-once')}
 				</p>
+
+				{/* Loading Text Animation */}
+				{vm.downloadProgress > 0 && <LoadingText />}
 
 				{/* Loading Indicator */}
 				{vm.downloadProgress === 0 && (
@@ -51,7 +52,7 @@ function App() {
 								</div>
 							</div>
 							<div className="overflow-hidden h-4 mb-4 text-xs flex rounded-full bg-white/20 mt-2">
-								<div 
+								<div
 									style={{ width: `${vm.downloadProgress}%` }}
 									className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-primary to-primary-fade transition-all duration-300"
 								></div>
@@ -76,7 +77,7 @@ function App() {
 
 				{/* Cancel Button */}
 				<div className="mt-8">
-					<button 
+					<button
 						className="btn btn-ghost text-white/80 hover:bg-white/10 hover:text-white transition-all"
 						onClick={vm.cancelSetup}
 					>
