@@ -1,8 +1,6 @@
 import * as shell from '@tauri-apps/plugin-shell'
 import { useTranslation } from 'react-i18next'
 import { InfoTooltip } from '~/components/InfoTooltip'
-import { ReactComponent as ChevronLeftIcon } from '~/icons/chevron-left.svg'
-import { ReactComponent as ChevronRightIcon } from '~/icons/chevron-right.svg'
 import { ReactComponent as FolderIcon } from '~/icons/folder.svg'
 import { ReactComponent as GithubIcon } from '~/icons/github.svg'
 import { ReactComponent as HeartIcon } from '~/icons/heart.svg'
@@ -14,16 +12,11 @@ import { ReactComponent as CopyIcon } from '~/icons/copy.svg'
 
 import * as config from '~/lib/config'
 import { supportedLanguages } from '~/lib/i18n'
-import { ModifyState, cx } from '~/lib/utils'
 import { viewModel } from './viewModel'
 import * as os from '@tauri-apps/plugin-os'
 import { useEffect, useState } from 'react'
 
-interface SettingsPageProps {
-	setVisible: ModifyState<boolean>
-}
-
-export default function SettingsPage({ setVisible }: SettingsPageProps) {
+export default function SettingsPage() {
 	const { t, i18n } = useTranslation()
 	const vm = viewModel()
 
@@ -38,15 +31,9 @@ export default function SettingsPage({ setVisible }: SettingsPageProps) {
 	}, [])
 
 	return (
-		<div className="flex flex-col m-auto w-[300px] mt-10 pb-4 dark:font-normal">
-			<div className="relative mt-5">
-				<button onMouseDown={() => setVisible(false)} className={cx('btn btn-square btn-ghost absolute start-0')}>
-					{i18n.dir() === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-				</button>
-				<div className="text-4xl text-center">{t('common.settings')}</div>
-			</div>
+		<div className="flex flex-col m-auto w-[300px] pb-4 dark:font-normal">
 
-			<label className="form-control w-full mt-10">
+			<label className="form-control w-full">
 				<div className="label">
 					<span className="label-text">{t('common.language')}</span>
 				</div>

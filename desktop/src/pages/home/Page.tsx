@@ -85,8 +85,8 @@ export default function Home() {
       </div>
 
       {activeTab === 3 ? (
-        <div className="mt-6 w-full max-w-3xl mx-auto">
-          <SettingsPage setVisible={() => setActiveTab(0)} />
+        <div className="w-full max-w-3xl mx-auto">
+          <SettingsPage />
         </div>
       ) : (
         <>
