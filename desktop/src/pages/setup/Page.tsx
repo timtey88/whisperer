@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { viewModel } from './viewModel'
 import AnimatedLoader from '~/components/AnimatedLoader'
 import LoadingText from '~/components/LoadingText'
+import { AnimatedDownload } from '~/components/AnimatedDownload'
 
 function App() {
 	const { t } = useTranslation()
@@ -28,6 +29,18 @@ function App() {
 
 				{/* Loading Text Animation */}
 				{vm.downloadProgress > 0 && <LoadingText />}
+
+				{/* Animated Download Component */}
+				{vm.downloadProgress > 0 && (
+					<div className="w-full max-w-2xl mt-8">
+						<AnimatedDownload 
+							isAnimating={vm.downloadProgress > 0 && vm.downloadProgress < 100}
+							onAnimationComplete={() => {
+								// Optional: Add any completion logic here
+							}}
+						/>
+					</div>
+				)}
 
 				{/* Loading Indicator */}
 				{vm.downloadProgress === 0 && (
