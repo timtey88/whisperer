@@ -1,72 +1,86 @@
 [
     {
-        "model": "ggml-base-encoder",
-        "file_name": "ggml-base-encoder.mlmodelc.zip",
-        "file_size": "37,922,638 bytes",
-        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base-encoder.mlmodelc.zip",
-        "sha256": "7e6ab77041942572f239b5b602f8aaa1c3ed29d73e3d8f20abea03a773541089"
-    },
-    {
-        "model": "ggml-base.en-encoder",
-        "file_name": "ggml-base.en-encoder.mlmodelc.zip",
-        "file_size": "37,950,917 bytes",
-        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en-encoder.mlmodelc.zip",
-        "sha256": "8cf860309e2449e2bdc8be834cf838ab2565747ecc8c0ef914ef5975115e192b"
-    },
-    {
-        "model": "ggml-large-encoder",
-        "file_name": "ggml-large-encoder.mlmodelc.zip",
-        "file_size": "1,174,643,458 bytes",
-        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-encoder.mlmodelc.zip",
-        "sha256": "c65d28737f51d09dff3b9da9d26c2ab6f5d82857c9b049ce383d64c2502a5541"
-    },
-    {
-        "model": "ggml-large-v1-encoder",
-        "file_name": "ggml-large-v1-encoder.mlmodelc.zip",
-        "file_size": "1,177,529,527 bytes",
-        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v1-encoder.mlmodelc.zip",
-        "sha256": "d10d24a4272572fee07843ffc2e4e4ceebd1d0b0831a142dd2fdb3d56d5bf56e"
-    },
-    {
-        "model": "ggml-medium-encoder",
-        "file_name": "ggml-medium-encoder.mlmodelc.zip",
-        "file_size": "567,829,413 bytes",
-        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium-encoder.mlmodelc.zip",
-        "sha256": "79b0b8d436d47d3f24dd3afc91f19447dd686a4f37521b2f6d9c30a642133fbd"
-    },
-    {
-        "model": "ggml-medium.en-encoder",
-        "file_name": "ggml-medium.en-encoder.mlmodelc.zip",
-        "file_size": "566,993,085 bytes",
-        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium.en-encoder.mlmodelc.zip",
-        "sha256": "cdc44fee3c62b5743913e3147ed75f4e8ecfb52dd7a0f0f7387094b406ff0ee6"
-    },
-    {
-        "model": "ggml-small-encoder",
-        "file_name": "ggml-small-encoder.mlmodelc.zip",
-        "file_size": "163,083,239 bytes",
-        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-encoder.mlmodelc.zip",
-        "sha256": "de43fb9fed471e95c19e60ae67575c2bf09e8fb607016da171b06ddad313988b"
-    },
-    {
-        "model": "ggml-small.en-encoder",
-        "file_name": "ggml-small.en-encoder.mlmodelc.zip",
-        "file_size": "162,952,446 bytes",
-        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en-encoder.mlmodelc.zip",
-        "sha256": "b2ef1c506378b825b4b4341979a93e1656b5d6c129f17114cfb8fb78aabc2f89"
-    },
-    {
         "model": "ggml-tiny-encoder",
-        "file_name": "ggml-tiny-encoder.mlmodelc.zip",
-        "file_size": "15,037,446 bytes",
+        "file_name": "ggml-tiny-encoder.mlmodelc",
+        "file_size": "15.4 MB",
         "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny-encoder.mlmodelc.zip",
         "sha256": "c88cbd2648e1f5415092bcf5256add463a0f19943e6938f46e8d4ffdebd47739"
     },
     {
         "model": "ggml-tiny.en-encoder",
-        "file_name": "ggml-tiny.en-encoder.mlmodelc.zip",
-        "file_size": "15,034,655 bytes",
+        "file_name": "ggml-tiny.en-encoder.mlmodelc",
+        "file_size": "15.4 MB",
         "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en-encoder.mlmodelc.zip",
         "sha256": "82b32eef73c94bb0c432a776a047b757d9525c26d84038a15d8798d7c8d1ee58"
+    },
+    {
+        "model": "ggml-base-encoder",
+        "file_name": "ggml-base-encoder.mlmodelc",
+        "file_size": "37.9 MB",
+        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base-encoder.mlmodelc.zip",
+        "sha256": "7e6ab77041942572f239b5b602f8aaa1c3ed29d73e3d8f20abea03a773541089"
+    },
+    {
+        "model": "ggml-base.en-encoder",
+        "file_name": "ggml-base.en-encoder.mlmodelc",
+        "file_size": "37.9 MB",
+        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en-encoder.mlmodelc.zip",
+        "sha256": "8cf860309e2449e2bdc8be834cf838ab2565747ecc8c0ef914ef5975115e192b"
+    },
+    {
+        "model": "ggml-small-encoder",
+        "file_name": "ggml-small-encoder.mlmodelc",
+        "file_size": "163 MB",
+        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small-encoder.mlmodelc.zip",
+        "sha256": "de43fb9fed471e95c19e60ae67575c2bf09e8fb607016da171b06ddad313988b"
+    },
+    {
+        "model": "ggml-small.en-encoder",
+        "file_name": "ggml-small.en-encoder.mlmodelc",
+        "file_size": "163 MB",
+        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en-encoder.mlmodelc.zip",
+        "sha256": "b2ef1c506378b825b4b4341979a93e1656b5d6c129f17114cfb8fb78aabc2f89"
+    },
+    {
+        "model": "ggml-medium-encoder",
+        "file_name": "ggml-medium-encoder.mlmodelc",
+        "file_size": "568 MB",
+        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium-encoder.mlmodelc.zip",
+        "sha256": "79b0b8d436d47d3f24dd3afc91f19447dd686a4f37521b2f6d9c30a642133fbd"
+    },
+    {
+        "model": "ggml-medium.en-encoder",
+        "file_name": "ggml-medium.en-encoder.mlmodelc",
+        "file_size": "567 MB",
+        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium.en-encoder.mlmodelc.zip",
+        "sha256": "cdc44fee3c62b5743913e3147ed75f4e8ecfb52dd7a0f0f7387094b406ff0ee6"
+    },
+    {
+        "model": "ggml-large-v1-encoder",
+        "file_name": "ggml-large-v1-encoder.mlmodelc",
+        "file_size": "1.18 GB",
+        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v1-encoder.mlmodelc.zip",
+        "sha256": "d10d24a4272572fee07843ffc2e4e4ceebd1d0b0831a142dd2fdb3d56d5bf56e"
+    },
+    {
+        "model": "ggml-large-v2-encoder",
+        "file_name": "ggml-large-v2-encoder.mlmodelc",
+        "file_size": "1.17 GB",
+        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v2-encoder.mlmodelc.zip",
+        "sha256": "c65d28737f51d09dff3b9da9d26c2ab6f5d82857c9b049ce383d64c2502a5541"
+    },
+    {
+        "model": "ggml-large-v3-encoder",
+        "file_name": "ggml-large-v3-encoder.mlmodelc",
+        "file_size": "1.18 GB",
+        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-encoder.mlmodelc.zip",
+        "sha256": "c65d28737f51d09dff3b9da9d26c2ab6f5d82857c9b049ce383d64c2502a5541"
+    },
+    {
+        "model": "ggml-large-v3-turbo-encoder",
+        "file_name": "ggml-large-v3-turbo-encoder.mlmodelc",
+        "file_size": "1.17 GB",
+        "url": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-encoder.mlmodelc.zip",
+        "sha256": "84bedfe895bd7b5de6e8e89a0803dfc5addf8c0c5bc4c937451716bf7cf7988a"
     }
 ]
