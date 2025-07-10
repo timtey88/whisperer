@@ -13,7 +13,7 @@ interface ModelInfo {
 	sha256: string
 	isDownloaded?: boolean
 	isDownloading?: boolean
-	category?: 'model' | 'encoder'
+	category?: 'models' | 'encoders'
 }
 
 export function viewModel() {
@@ -37,11 +37,11 @@ export function viewModel() {
 			// Combine regular models and encoders with category tags
 			const regularModels = (modelsData as ModelInfo[]).map(model => ({ 
 				...model, 
-				category: 'model' as const 
+				category: 'models' as const 
 			}))
 			const encoderModels = (encodersData as ModelInfo[]).map(model => ({ 
 				...model, 
-				category: 'encoder' as const 
+				category: 'encoders' as const 
 			}))
 			const allModels = [...regularModels, ...encoderModels]
 			
@@ -63,9 +63,6 @@ export function viewModel() {
 			)
 			
 			setModels(modelsWithStatus)
-			console.log('Loaded models:', modelsWithStatus.length)
-			console.log('Regular models:', regularModels.length) 
-			console.log('Encoder models:', encoderModels.length)
 		} catch (error) {
 			console.error('Failed to load models:', error)
 		} finally {
@@ -76,7 +73,8 @@ export function viewModel() {
 	// Filter models based on active tab and filter
 	const filteredModels = models.filter(model => {
 		// First filter by active tab - handle undefined category gracefully
-		const modelCategory = model.category || 'model' // Default to 'model' if undefined
+		const modelCategory = model.category || 'models' // Default to 'models' if undefined
+		
 		if (modelCategory !== activeTab) return false
 		
 		// Then filter by type (only applies to regular models)
@@ -87,12 +85,6 @@ export function viewModel() {
 		// For encoders, show all (or could add encoder-specific filtering later)
 		return true
 	})
-
-	// Debug logging
-	console.log('Total models:', models.length)
-	console.log('Active tab:', activeTab)
-	console.log('Filter:', filter)
-	console.log('Filtered models:', filteredModels.length)
 
 	async function downloadModel(model: ModelInfo) {
 		try {
