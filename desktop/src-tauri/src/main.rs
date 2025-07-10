@@ -97,6 +97,7 @@ fn main() -> Result<()> {
             cmd::is_crashed_recently,
             cmd::rename_crash_file,
             cmd::check_model_exists,
+            cmd::delete_model,
             #[cfg(windows)]
             cmd::set_high_gpu_preference
         ])

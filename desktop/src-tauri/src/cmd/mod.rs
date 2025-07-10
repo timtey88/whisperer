@@ -603,3 +603,22 @@ pub fn check_model_exists(models_folder: String, file_name: String) -> bool {
     let model_path = PathBuf::from(models_folder).join(file_name);
     model_path.exists()
 }
+
+#[tauri::command]
+pub fn delete_model(models_folder: String, file_name: String) -> Result<()> {
+    // Create the models folder path first
+    let models_folder_path = PathBuf::from(models_folder);
+    let model_path = models_folder_path.join(file_name);
+    
+    if !model_path.exists() {
+        bail!("Model file does not exist");
+    }
+    
+    // Ensure the file is within the models folder for security
+    if !model_path.starts_with(&models_folder_path) {
+        bail!("Model path is outside the models folder");
+    }
+    
+    std::fs::remove_file(model_path).context("Failed to delete model file")?;
+    Ok(())
+}

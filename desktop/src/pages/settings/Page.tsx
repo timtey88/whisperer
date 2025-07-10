@@ -122,6 +122,10 @@ export default function SettingsPage({ setVisible }: SettingsPageProps = {}) {
 					))}
 				</select>
 
+				<button onMouseDown={() => navigate('/models')} className="btn bg-base-300 text-base-content">
+					{t('common.manage-models')}
+					<ListIcon className="w-4 h-4" />
+				</button>
 				<button onMouseDown={vm.openModelPath} className="btn bg-base-300 text-base-content">
 					{t('common.models-folder')}
 					<FolderIcon className="h-4 w-4" />
@@ -133,10 +137,6 @@ export default function SettingsPage({ setVisible }: SettingsPageProps = {}) {
 				<button onMouseDown={vm.openModelsUrl} className="btn bg-base-300 text-base-content">
 					{t('common.models-source')}
 					<LinkIcon className="w-4 h-4" />
-				</button>
-				<button onMouseDown={() => navigate('/models')} className="btn bg-base-300 text-base-content">
-					{t('common.manage-models')}
-					<ListIcon className="w-4 h-4" />
 				</button>
 			</div>
 

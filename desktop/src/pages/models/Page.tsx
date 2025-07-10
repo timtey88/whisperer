@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ReactComponent as ChevronLeftIcon } from '~/icons/chevron-left.svg'
 import { ReactComponent as DownloadIcon } from '~/icons/download.svg'
 import { ReactComponent as CheckIcon } from '~/icons/check.svg'
+import { ReactComponent as CancelIcon } from '~/icons/cancel.svg'
 import Layout from '~/components/Layout'
 import { cx } from '~/lib/utils'
 import { viewModel } from './viewModel'
@@ -13,11 +14,6 @@ export default function ModelsPage() {
 	const vm = viewModel()
 
 	const modelTypes = ['all', 'tiny', 'base', 'small', 'medium', 'large']
-
-	const filteredModels = vm.models.filter(model => {
-		if (vm.filter === 'all') return true
-		return model.model.toLowerCase().includes(vm.filter.toLowerCase())
-	})
 
 	function getModelTypeFromName(modelName: string): string {
 		const name = modelName.toLowerCase()
@@ -46,33 +42,52 @@ export default function ModelsPage() {
 				{/* Header with back button */}
 				<div className="flex items-center gap-4 mb-6">
 					<button
-						onClick={() => navigate(-1)}
+						onClick={() => navigate('/settings')}
 						className="btn btn-ghost btn-sm"
 					>
 						<ChevronLeftIcon className="w-4 h-4" />
 						{t('common.back')}
 					</button>
-					<h1 className="text-2xl font-bold">{t('common.available-models')}</h1>
+					<h1 className="text-2xl font-bold">{t('common.models-management')}</h1>
 				</div>
 
-				{/* Filter tabs */}
-				<div className="tabs tabs-boxed mb-6 justify-center">
-					{modelTypes.map(type => (
-						<a
-							key={type}
-							className={cx('tab', vm.filter === type && 'tab-active')}
-							onClick={() => vm.setFilter(type)}
-						>
-							{type === 'all' ? t('common.all') : type}
-						</a>
-					))}
+				{/* Main tabs */}
+				<div className="tabs tabs-boxed mb-4 justify-center">
+					<a
+						className={cx('tab', vm.activeTab === 'models' && 'tab-active')}
+						onClick={() => vm.setActiveTab('models')}
+					>
+						{t('common.models')}
+					</a>
+					<a
+						className={cx('tab', vm.activeTab === 'encoders' && 'tab-active')}
+						onClick={() => vm.setActiveTab('encoders')}
+					>
+						{t('common.encoders')}
+					</a>
 				</div>
+
+				{/* Filter tabs - only show for models */}
+				{vm.activeTab === 'models' && (
+					<div className="tabs tabs-boxed mb-6 justify-center">
+						{modelTypes.map(type => (
+							<a
+								key={type}
+								className={cx('tab', vm.filter === type && 'tab-active')}
+								onClick={() => vm.setFilter(type)}
+							>
+								{type === 'all' ? t('common.all') : type}
+							</a>
+						))}
+					</div>
+				)}
 
 				{/* Models grid */}
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-					{filteredModels.map((model) => {
+					{vm.filteredModels.map((model) => {
 						const modelType = getModelTypeFromName(model.model)
 						const isDownloading = vm.downloadingModels.has(model.model)
+						const isDeleting = vm.deletingModels.has(model.model)
 						
 						return (
 							<div key={model.model} className="card bg-base-200 shadow-md">
@@ -114,19 +129,37 @@ export default function ModelsPage() {
 										</div>
 									</div>
 
-									{/* Action button */}
-									<div className="card-actions justify-end">
+									{/* Action buttons */}
+									<div className="card-actions justify-end gap-2">
 										{model.isDownloaded ? (
-											<div className="badge badge-success badge-lg">
-												{t('common.installed')}
-											</div>
+											<>
+												<div className="flex items-center gap-1 text-success text-sm">
+													<CheckIcon className="w-4 h-4" />
+													{t('common.installed')}
+												</div>
+												<button
+													className={cx(
+														'btn btn-error btn-sm',
+														isDeleting && 'loading'
+													)}
+													disabled={isDeleting || isDownloading}
+													onClick={() => vm.deleteModel(model)}
+												>
+													{isDeleting ? (
+														<span className="loading loading-spinner loading-sm"></span>
+													) : (
+														<CancelIcon className="w-4 h-4" />
+													)}
+													{isDeleting ? t('common.uninstalling') : t('common.uninstall')}
+												</button>
+											</>
 										) : (
 											<button
 												className={cx(
 													'btn btn-primary btn-sm',
 													isDownloading && 'loading'
 												)}
-												disabled={isDownloading}
+												disabled={isDownloading || isDeleting}
 												onClick={() => vm.downloadModel(model)}
 											>
 												{isDownloading ? (
@@ -145,15 +178,19 @@ export default function ModelsPage() {
 				</div>
 
 				{/* Empty state */}
-				{filteredModels.length === 0 && vm.models.length > 0 && (
+				{vm.filteredModels.length === 0 && vm.models.length > 0 && !vm.loading && (
 					<div className="text-center py-12">
-						<p className="text-lg opacity-60">{t('common.no-models-found')}</p>
-						<p className="text-sm opacity-40 mt-2">{t('common.try-different-filter')}</p>
+						<p className="text-lg opacity-60">
+							{vm.activeTab === 'models' ? t('common.no-models-found') : t('common.no-encoders-found')}
+						</p>
+						{vm.activeTab === 'models' && (
+							<p className="text-sm opacity-40 mt-2">{t('common.try-different-filter')}</p>
+						)}
 					</div>
 				)}
 
 				{/* Loading state */}
-				{vm.models.length === 0 && (
+				{vm.loading && (
 					<div className="text-center py-12">
 						<span className="loading loading-spinner loading-lg"></span>
 						<p className="mt-4 opacity-60">{t('common.loading-models')}</p>
