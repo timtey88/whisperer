@@ -83,6 +83,53 @@ pub fn get_x86_features() -> Option<Value> {
         None
     }
 }
+
+fn extract_zip(zip_path: &Path, extract_to: &Path) -> Result<()> {
+    let file = std::fs::File::open(zip_path)?;
+    let mut archive = zip::ZipArchive::new(file)?;
+    
+    tracing::debug!("Starting zip extraction from: {}", zip_path.display());
+    tracing::debug!("Extracting to: {}", extract_to.display());
+    tracing::debug!("Total files in archive: {}", archive.len());
+    
+    // Log basic zip info
+    tracing::debug!("Zip contains {} files/directories", archive.len());
+    
+    // Create the base extraction directory
+    std::fs::create_dir_all(extract_to)?;
+    
+    let archive_len = archive.len();
+    for i in 0..archive_len {
+        let mut file = archive.by_index(i)?;
+        let file_name = file.name();
+        
+        let outpath = match file.enclosed_name() {
+            Some(path) => extract_to.join(path),
+            None => {
+                tracing::warn!("Skipping file with unsafe name: {}", file_name);
+                continue;
+            }
+        };
+        
+        if file.name().ends_with('/') {
+            // Directory
+            std::fs::create_dir_all(&outpath)?;
+        } else {
+            // File
+            if let Some(p) = outpath.parent() {
+                if !p.exists() {
+                    std::fs::create_dir_all(p)?;
+                }
+            }
+            let mut outfile = std::fs::File::create(&outpath)?;
+            std::io::copy(&mut file, &mut outfile)?;
+        }
+    }
+    
+    tracing::debug!("Zip extraction completed successfully");
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn download_model(app_handle: tauri::AppHandle, url: String, path: String) -> Result<String> {
     let mut downloader = vibe_core::downloader::Downloader::new();
@@ -125,11 +172,197 @@ pub async fn download_model(app_handle: tauri::AppHandle, url: String, path: Str
         }
     };
 
+    // Check if we need to download a zip file
+    let (download_path, final_path) = if url.ends_with(".zip") {
+        // For zip files, download with .zip extension, then extract to the original path
+        let zip_path = format!("{}.zip", path);
+        (zip_path, path)
+    } else {
+        // For regular files, download directly to the intended path
+        (path.clone(), path)
+    };
+    
     downloader
-        .download(&url, path.clone().into(), download_progress_callback)
+        .download(&url, download_path.clone().into(), download_progress_callback)
         .await?;
-    set_progress_bar(&app_handle_c, None)?;
-    Ok(path.to_string())
+    
+    // Check if the downloaded file is a zip and extract it
+    let download_path_buf = PathBuf::from(&download_path);
+    if url.ends_with(".zip") {
+        tracing::debug!("Extracting zip file: {}", download_path);
+        
+        // Get the models directory (parent of the zip file)
+        let models_dir = download_path_buf.parent().ok_or_else(|| eyre!("Could not get models directory"))?;
+        
+        // Create a temporary extraction directory first
+        let temp_extract_dir = models_dir.join("temp_extract");
+        let final_extract_dir = PathBuf::from(&final_path);
+        
+        // Cleanup function for error handling
+        let cleanup = || {
+            if temp_extract_dir.exists() {
+                let _ = std::fs::remove_dir_all(&temp_extract_dir);
+            }
+            if final_extract_dir.exists() {
+                let _ = std::fs::remove_dir_all(&final_extract_dir);
+            }
+        };
+        
+        // Perform extraction with error handling
+        match (|| -> Result<()> {
+            std::fs::create_dir_all(&temp_extract_dir)?;
+            
+            // Extract the zip file to temporary directory
+            extract_zip(&download_path_buf, &temp_extract_dir)?;
+            
+            // Check what was actually extracted
+            let entries: Vec<_> = std::fs::read_dir(&temp_extract_dir)?.collect::<Result<Vec<_>, _>>()?;
+            
+            tracing::debug!("Extracted {} items to temp directory", entries.len());
+            
+            if entries.is_empty() {
+                return Err(eyre!("No files were extracted from the zip archive"));
+            }
+            
+            if entries.len() == 1 {
+                // If there's only one item extracted, move it to the final location
+                let extracted_item = &entries[0];
+                let extracted_path = extracted_item.path();
+                let extracted_name = extracted_item.file_name();
+                
+                if extracted_path.is_dir() {
+                    // Check if the extracted directory name matches the target name
+                    let expected_name = final_extract_dir.file_name()
+                        .map(|n| n.to_string_lossy())
+                        .unwrap_or_default();
+                    let actual_name = extracted_name.to_string_lossy();
+                    
+                    if actual_name == expected_name {
+                        // Names match - this is a pre-structured bundle, move it directly
+                        tracing::debug!("Moving pre-structured bundle: {} -> {}", extracted_path.display(), final_extract_dir.display());
+                        
+                        // Remove target if it exists (to avoid conflicts)
+                        if final_extract_dir.exists() {
+                            std::fs::remove_dir_all(&final_extract_dir)?;
+                        }
+                        
+                        std::fs::rename(&extracted_path, &final_extract_dir)?;
+                    } else {
+                        // Names don't match - create target and move contents
+                        tracing::debug!("Moving directory contents to target");
+                        std::fs::create_dir_all(&final_extract_dir)?;
+                        
+                        // Move all contents from extracted directory to final directory
+                        for entry in std::fs::read_dir(&extracted_path)? {
+                            let entry = entry?;
+                            let src = entry.path();
+                            let dst = final_extract_dir.join(entry.file_name());
+                            std::fs::rename(src, dst)?;
+                        }
+                    }
+                } else {
+                    // If it's a file, create the directory and move the file into it
+                    tracing::debug!("Moving single file to directory");
+                    std::fs::create_dir_all(&final_extract_dir)?;
+                    let final_file_path = final_extract_dir.join(extracted_item.file_name());
+                    std::fs::rename(&extracted_path, &final_file_path)?;
+                }
+            } else {
+                // Multiple items extracted, move the temp directory to final location
+                tracing::debug!("Moving multiple items: {} -> {}", temp_extract_dir.display(), final_extract_dir.display());
+                
+                // Remove target if it exists
+                if final_extract_dir.exists() {
+                    std::fs::remove_dir_all(&final_extract_dir)?;
+                }
+                
+                std::fs::rename(&temp_extract_dir, &final_extract_dir)?;
+            }
+            
+            // Clean up temp directory if it still exists
+            if temp_extract_dir.exists() {
+                std::fs::remove_dir_all(&temp_extract_dir)?;
+            }
+            
+            // Validate extraction was successful
+            if !final_extract_dir.exists() {
+                return Err(eyre!("Extraction failed - final directory does not exist"));
+            }
+            
+            if !final_extract_dir.is_dir() {
+                return Err(eyre!("Extraction failed - final path is not a directory"));
+            }
+            
+            tracing::debug!("Extraction validation passed");
+            
+            // Special handling for .mlmodelc bundles on macOS
+            if final_extract_dir.extension().and_then(|s| s.to_str()) == Some("mlmodelc") {
+                #[cfg(target_os = "macos")]
+                {
+                    use std::process::Command;
+                    tracing::debug!("Setting macOS bundle attributes");
+                    
+                    // Set the bundle bit using xattr
+                    let _ = Command::new("xattr")
+                        .arg("-w")
+                        .arg("com.apple.FinderInfo")
+                        .arg("0000000000000000000000000000000000000000000000000000000000000000")
+                        .arg(&final_extract_dir)
+                        .output();
+                    
+                    // Try to set the bundle type using SetFile if available
+                    let _ = Command::new("SetFile")
+                        .arg("-a")
+                        .arg("B")
+                        .arg(&final_extract_dir)
+                        .output();
+                }
+            }
+            
+            Ok(())
+        })() {
+            Ok(()) => {
+                // Extraction successful, remove the zip file
+                tracing::debug!("Extraction completed, removing zip file");
+                
+                // Safety check: ensure paths are different
+                if download_path_buf == final_extract_dir {
+                    return Err(eyre!("Cannot remove zip file - same path as extracted directory"));
+                }
+                
+                // Verify final directory exists before removing zip
+                if !final_extract_dir.exists() || !final_extract_dir.is_dir() {
+                    return Err(eyre!("Final directory missing or invalid before zip cleanup"));
+                }
+                
+                // Remove the zip file
+                std::fs::remove_file(&download_path_buf)?;
+                
+                // Final verification
+                if !final_extract_dir.exists() {
+                    return Err(eyre!("Final directory was accidentally deleted"));
+                }
+                
+                tracing::info!("Zip extraction completed successfully");
+                set_progress_bar(&app_handle_c, None)?;
+                
+                // Return the extracted directory path
+                Ok(final_extract_dir.to_string_lossy().to_string())
+            }
+            Err(e) => {
+                // Extraction failed, cleanup and keep the zip file
+                tracing::error!("Zip extraction failed: {}", e);
+                cleanup();
+                
+                // Return the original zip file path so the user can manually extract
+                set_progress_bar(&app_handle_c, None)?;
+                Ok(download_path)
+            }
+        }
+    } else {
+        set_progress_bar(&app_handle_c, None)?;
+        Ok(final_path)
+    }
 }
 
 #[tauri::command]
@@ -611,7 +844,7 @@ pub fn delete_model(models_folder: String, file_name: String) -> Result<()> {
     let model_path = models_folder_path.join(file_name);
     
     if !model_path.exists() {
-        bail!("Model file does not exist");
+        bail!("Model does not exist");
     }
     
     // Ensure the file is within the models folder for security
@@ -619,6 +852,11 @@ pub fn delete_model(models_folder: String, file_name: String) -> Result<()> {
         bail!("Model path is outside the models folder");
     }
     
-    std::fs::remove_file(model_path).context("Failed to delete model file")?;
+    // Handle both files and directories (for encoder models)
+    if model_path.is_dir() {
+        std::fs::remove_dir_all(&model_path).context("Failed to delete model directory")?;
+    } else {
+        std::fs::remove_file(&model_path).context("Failed to delete model file")?;
+    }
     Ok(())
 }

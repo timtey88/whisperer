@@ -30,6 +30,16 @@ export default function SettingsPage({ setVisible }: SettingsPageProps = {}) {
 
 	const [platform, setPlatform] = useState<os.Platform | null>(null)
 
+	// Redirect to home page with settings tab active if accessed directly
+	useEffect(() => {
+		if (!setVisible) { // Only redirect if not embedded in Home component
+			// Set the home tab index to settings (3) first
+			vm.preference.setHomeTabIndex(3)
+			// Then navigate to home page
+			navigate('/', { replace: true })
+		}
+	}, [])
+
 	async function getPlatform() {
 		setPlatform(os.platform())
 	}

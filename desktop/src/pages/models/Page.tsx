@@ -7,6 +7,9 @@ import { ReactComponent as CancelIcon } from '~/icons/cancel.svg'
 import Layout from '~/components/Layout'
 import { cx } from '~/lib/utils'
 import { viewModel } from './viewModel'
+import AnimatedLoader from '~/components/AnimatedLoader'
+import LoadingText from '~/components/LoadingText'
+import { AnimatedDownload } from '~/components/AnimatedDownload'
 
 export default function ModelsPage() {
 	const { t } = useTranslation()
@@ -39,7 +42,7 @@ export default function ModelsPage() {
 	return (
 		<Layout>
 			<div className="flex flex-col max-w-6xl mx-auto px-4">
-				{/* Header with back button */}
+				{/* Header with back button and refresh */}
 				<div className="flex items-center gap-4 mb-6">
 					<button
 						onClick={() => navigate('/settings')}
@@ -48,7 +51,22 @@ export default function ModelsPage() {
 						<ChevronLeftIcon className="w-4 h-4" />
 						{t('common.back')}
 					</button>
-					<h1 className="text-2xl font-bold">{t('common.models-management')}</h1>
+					<h1 className="text-2xl font-bold flex-1">{t('common.models-management')}</h1>
+					<button
+						onClick={vm.manualRefresh}
+						disabled={vm.loading || vm.isRefreshing}
+						className="btn btn-ghost btn-sm"
+						title={t('common.refresh')}
+					>
+						{vm.isRefreshing ? (
+							<AnimatedLoader size={16} strokeWidth={2} />
+						) : (
+							<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+							</svg>
+						)}
+						{t('common.refresh')}
+					</button>
 				</div>
 
 				{/* Main tabs */}
@@ -88,9 +106,14 @@ export default function ModelsPage() {
 						const modelType = getModelTypeFromName(model.model)
 						const isDownloading = vm.downloadingModels.has(model.model)
 						const isDeleting = vm.deletingModels.has(model.model)
+						const downloadProgress = vm.downloadProgress.get(model.model)
 						
 						return (
-							<div key={model.model} className="card bg-base-200 shadow-md">
+							<div key={model.model} className={cx(
+								'card bg-base-200 shadow-md transition-all duration-300 hover:shadow-lg',
+								isDownloading && 'ring-2 ring-primary ring-opacity-50 bg-primary/5',
+								model.isDownloaded && 'border border-success/20'
+							)}>
 								<div className="card-body p-4">
 									{/* Model header */}
 									<div className="flex items-start justify-between mb-3">
@@ -113,30 +136,32 @@ export default function ModelsPage() {
 											<span className="font-medium">{t('common.size')}: </span>
 											<span className="opacity-80">{model.file_size}</span>
 										</div>
-										<div className="flex items-center gap-1">
-											{model.isDownloaded ? (
-												<>
-													<CheckIcon className="w-4 h-4 text-success" />
-													<span className="text-sm text-success font-medium">
-														{t('common.downloaded')}
-													</span>
-												</>
-											) : (
-												<span className="text-sm opacity-60">
-													{t('common.available')}
+										{model.isDownloaded && (
+											<div className="flex items-center gap-1">
+												<CheckIcon className="w-4 h-4 text-success" />
+												<span className="text-sm text-success font-medium">
+													{t('common.installed')}
 												</span>
-											)}
-										</div>
+											</div>
+										)}
 									</div>
 
-									{/* Action buttons */}
-									<div className="card-actions justify-end gap-2">
-										{model.isDownloaded ? (
-											<>
-												<div className="flex items-center gap-1 text-success text-sm">
-													<CheckIcon className="w-4 h-4" />
-													{t('common.installed')}
-												</div>
+									{/* Download progress or action buttons */}
+									{isDownloading && downloadProgress ? (
+										<div className="mt-4">
+											<AnimatedDownload
+												className="scale-75 origin-center"
+												isAnimating={true}
+												progress={downloadProgress.progress}
+												downloadedSize={downloadProgress.downloadedSize}
+												totalSize={downloadProgress.totalSize}
+												downloadSpeed={downloadProgress.downloadSpeed}
+												timeRemaining={downloadProgress.timeRemaining}
+											/>
+										</div>
+									) : (
+										<div className="card-actions justify-end gap-2">
+											{model.isDownloaded ? (
 												<button
 													className={cx(
 														'btn btn-error btn-sm',
@@ -152,25 +177,18 @@ export default function ModelsPage() {
 													)}
 													{isDeleting ? t('common.uninstalling') : t('common.uninstall')}
 												</button>
-											</>
-										) : (
-											<button
-												className={cx(
-													'btn btn-primary btn-sm',
-													isDownloading && 'loading'
-												)}
-												disabled={isDownloading || isDeleting}
-												onClick={() => vm.downloadModel(model)}
-											>
-												{isDownloading ? (
-													<span className="loading loading-spinner loading-sm"></span>
-												) : (
+											) : (
+												<button
+													className="btn btn-primary btn-sm"
+													disabled={isDownloading || isDeleting}
+													onClick={() => vm.downloadModel(model)}
+												>
 													<DownloadIcon className="w-4 h-4" />
-												)}
-												{isDownloading ? t('common.downloading') : t('common.download')}
-											</button>
-										)}
-									</div>
+													{t('common.download')}
+												</button>
+											)}
+										</div>
+									)}
 								</div>
 							</div>
 						)
@@ -192,8 +210,10 @@ export default function ModelsPage() {
 				{/* Loading state */}
 				{vm.loading && (
 					<div className="text-center py-12">
-						<span className="loading loading-spinner loading-lg"></span>
-						<p className="mt-4 opacity-60">{t('common.loading-models')}</p>
+						<AnimatedLoader size={120} strokeWidth={6} />
+						<div className="mt-8">
+							<LoadingText />
+						</div>
 					</div>
 				)}
 			</div>
