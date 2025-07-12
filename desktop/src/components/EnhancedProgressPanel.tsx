@@ -11,12 +11,9 @@ import LoadingText from './LoadingText'
 import { 
 	getModelInfo, 
 	getLanguageDisplayName, 
-	whisperOptions, 
-	whisperTips, 
 	getProcessingPhases,
 	formatFileSize,
-	estimateProcessingTime,
-	WhisperTip
+	estimateProcessingTime
 } from '~/lib/whisperInfo'
 
 interface EnhancedProgressPanelProps {
@@ -45,7 +42,6 @@ export default function EnhancedProgressPanel({
 	currentPhase = 'Loading Model'
 }: EnhancedProgressPanelProps) {
 	const { t } = useTranslation()
-	const [currentTipIndex, setCurrentTipIndex] = useState(0)
 	const [startTime] = useState(Date.now())
 	const [elapsedTime, setElapsedTime] = useState(0)
 
@@ -54,13 +50,6 @@ export default function EnhancedProgressPanel({
 	const phases = getProcessingPhases()
 	const currentPhaseInfo = phases.find(p => p.phase === currentPhase) || phases[0]
 	
-	// Rotate tips every 4 seconds
-	useEffect(() => {
-		const interval = setInterval(() => {
-			setCurrentTipIndex((prev) => (prev + 1) % whisperTips.length)
-		}, 4000)
-		return () => clearInterval(interval)
-	}, [])
 
 	// Update elapsed time
 	useEffect(() => {
@@ -81,7 +70,6 @@ export default function EnhancedProgressPanel({
 		? estimateProcessingTime(audioDuration, modelInfo.name, useGpu)
 		: 'Calculating...'
 
-	const currentTip = whisperTips[currentTipIndex]
 
 	return (
 		<div className="w-full flex flex-col items-center mb-6">
@@ -208,21 +196,6 @@ export default function EnhancedProgressPanel({
 					</div>
 				</div>
 
-				{/* Educational Tip */}
-				<div className="bg-gradient-to-r from-primary/10 to-secondary/10 p-4 rounded-lg mb-6">
-					<div className="flex items-start gap-3">
-						<span className="text-2xl">{currentTip.icon}</span>
-						<div className="flex-1">
-							<div className="flex items-center gap-2 mb-1">
-								<h5 className="font-medium text-sm">{currentTip.title}</h5>
-								<span className="badge badge-xs">{currentTip.category}</span>
-							</div>
-							<p className="text-sm opacity-80 leading-relaxed">
-								{currentTip.description}
-							</p>
-						</div>
-					</div>
-				</div>
 
 				{/* Action Controls */}
 				<div className="flex justify-center">

@@ -41,6 +41,8 @@ export interface TranscriptionResult {
 	startTime: number
 	endTime: number
 	error?: string
+	modelPath?: string
+	useGpu?: boolean
 }
 
 export function viewModel() {
@@ -420,7 +422,9 @@ export function viewModel() {
 				status: 'completed',
 				duration: processingDuration,
 				startTime: transcriptionStartTime,
-				endTime: transcriptionEndTime
+				endTime: transcriptionEndTime,
+				modelPath,
+				useGpu: preferenceRef.current.useGpu
 			})
 			setShowTranscriptionResult(true)
 			
@@ -436,7 +440,9 @@ export function viewModel() {
 					status: 'canceled',
 					duration: processingDuration,
 					startTime: transcriptionStartTime,
-					endTime: transcriptionEndTime
+					endTime: transcriptionEndTime,
+					modelPath,
+					useGpu: preferenceRef.current.useGpu
 				})
 				setShowTranscriptionResult(true)
 			} else {
@@ -447,7 +453,9 @@ export function viewModel() {
 					duration: processingDuration,
 					startTime: transcriptionStartTime,
 					endTime: transcriptionEndTime,
-					error: String(error)
+					error: String(error),
+					modelPath,
+					useGpu: preferenceRef.current.useGpu
 				})
 				setShowTranscriptionResult(true)
 				stopKeepAwake()

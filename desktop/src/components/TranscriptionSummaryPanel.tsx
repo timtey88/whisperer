@@ -4,8 +4,11 @@ import { ReactComponent as CancelIcon } from '~/icons/cancel.svg'
 import { ReactComponent as ClockIcon } from '~/icons/clock.svg'
 import { ReactComponent as FileIcon } from '~/icons/file.svg'
 import { ReactComponent as InfoIcon } from '~/icons/info.svg'
+import { ReactComponent as CpuIcon } from '~/icons/cpu.svg'
+import { ReactComponent as GpuIcon } from '~/icons/gpu.svg'
 import { cx } from '~/lib/utils'
 import { TranscriptionResult } from '~/pages/home/viewModel'
+import { getModelInfo } from '~/lib/whisperInfo'
 
 interface TranscriptionSummaryPanelProps {
 	result: TranscriptionResult
@@ -17,6 +20,8 @@ export default function TranscriptionSummaryPanel({
 	onDismiss
 }: TranscriptionSummaryPanelProps) {
 	const { t } = useTranslation()
+
+	const modelInfo = result.modelPath ? getModelInfo(result.modelPath) : null
 
 	const formatDuration = (seconds: number) => {
 		if (seconds < 60) {
@@ -102,7 +107,7 @@ export default function TranscriptionSummaryPanel({
 				</div>
 
 				{/* Details Grid */}
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 					{/* File Information */}
 					<div className="flex items-center gap-3 p-3 bg-base-100 rounded-lg">
 						<FileIcon className="w-5 h-5 text-primary" />
@@ -128,6 +133,25 @@ export default function TranscriptionSummaryPanel({
 							</p>
 						</div>
 					</div>
+
+					{/* Model Information */}
+					{modelInfo && (
+						<div className="flex items-center gap-3 p-3 bg-base-100 rounded-lg">
+							{result.useGpu ? (
+								<GpuIcon className="w-5 h-5 text-primary" />
+							) : (
+								<CpuIcon className="w-5 h-5 text-primary" />
+							)}
+							<div className="flex-1">
+								<p className="text-sm font-medium">
+									{modelInfo.name}
+								</p>
+								<p className="text-xs opacity-60">
+									{modelInfo.size} • {result.useGpu ? 'GPU' : 'CPU'}
+								</p>
+							</div>
+						</div>
+					)}
 				</div>
 
 				{/* Error Message */}
