@@ -60,6 +60,7 @@
     "shell:allow-spawn",
     "fs:default",
     "fs:allow-exists",
+    "fs:allow-stat",
     "core:path:allow-basename",
     "deep-link:allow-get-current",
     "clipboard-manager:allow-write-text",
