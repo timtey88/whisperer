@@ -8,6 +8,7 @@ import SetupPage from '~/pages/setup/Page'
 import HomePage from '~/pages/home/Page'
 import BatchPage from './pages/batch/Page'
 import ModelsPage from './pages/models/Page'
+import ModelOptionsPage from './pages/model-options/Page'
 import SettingsPage from './pages/settings/Page'
 import { ErrorModalProvider } from './providers/ErrorModal'
 import { UpdaterProvider } from './providers/Updater'
@@ -41,6 +42,7 @@ export default function App() {
 									<Route path="/setup" element={<SetupPage />} />
 									<Route path="/batch" element={<BatchPage />} />
 									<Route path="/models" element={<ModelsPage />} />
+									<Route path="/model-options" element={<ModelOptionsPage />} />
 									<Route path="/settings" element={<SettingsPage />} />
 								</Routes>
 							</FilesProvider>

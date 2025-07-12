@@ -87,6 +87,7 @@ export interface FfmpegOptions {
 }
 
 export interface ModelOptions {
+	// Basic options
 	lang: string
 	verbose: boolean
 	n_threads?: number
@@ -98,6 +99,31 @@ export interface ModelOptions {
 	max_sentence_len?: number
 	sampling_strategy: 'greedy' | 'beam search'
 	sampling_bestof_or_beam_size?: number
+	
+	// Advanced Whisper options
+	best_of?: number
+	beam_size?: number
+	patience?: number
+	length_penalty?: number
+	suppress_tokens?: string
+	condition_on_previous_text?: boolean
+	fp16?: boolean
+	temperature_increment_on_fallback?: number
+	compression_ratio_threshold?: number
+	logprob_threshold?: number
+	no_speech_threshold?: number
+	
+	// Output formatting options
+	max_line_width?: number
+	max_line_count?: number
+	max_words_per_line?: number
+	highlight_words?: boolean
+	prepend_punctuations?: string
+	append_punctuations?: string
+	
+	// Performance and debugging
+	clip_timestamps?: string
+	hallucination_silence_threshold?: number
 }
 
 const systemIsDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -108,16 +134,42 @@ const defaultOptions = {
 	focusOnFinish: true,
 	modelPath: null,
 	modelOptions: {
+		// Basic options
 		init_prompt: '',
 		verbose: false,
 		lang: 'en',
 		n_threads: 4,
-		temperature: 0.4,
+		temperature: 0.0,
 		max_text_ctx: undefined,
 		word_timestamps: false,
 		max_sentence_len: 1,
 		sampling_strategy: 'beam search' as 'greedy' | 'beam search',
 		sampling_bestof_or_beam_size: 5,
+		
+		// Advanced Whisper options with defaults from documentation
+		best_of: 5,
+		beam_size: 5,
+		patience: 1.0,
+		length_penalty: undefined,
+		suppress_tokens: '-1',
+		condition_on_previous_text: true,
+		fp16: true,
+		temperature_increment_on_fallback: 0.2,
+		compression_ratio_threshold: 2.4,
+		logprob_threshold: -1.0,
+		no_speech_threshold: 0.6,
+		
+		// Output formatting options
+		max_line_width: undefined,
+		max_line_count: undefined,
+		max_words_per_line: undefined,
+		highlight_words: false,
+		prepend_punctuations: "\"'\\u00BF([{-",
+		append_punctuations: "\"'.\\u3002,\\uFF0C!\\uFF01?\\uFF1F:\\uFF1A\")]\\u3001",
+		
+		// Performance and debugging
+		clip_timestamps: undefined,
+		hallucination_silence_threshold: undefined,
 	},
 	ffmpegOptions: {
 		normalize_loudness: false,

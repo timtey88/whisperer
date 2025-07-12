@@ -136,6 +136,10 @@ export default function SettingsPage({ setVisible }: SettingsPageProps = {}) {
 					{t('common.manage-models')}
 					<ListIcon className="w-4 h-4" />
 				</button>
+				<button onMouseDown={() => navigate('/model-options')} className="btn bg-base-300 text-base-content">
+					{t('common.model-options')}
+					<WrenchIcon className="w-4 h-4" />
+				</button>
 				<button onMouseDown={vm.openModelPath} className="btn bg-base-300 text-base-content">
 					{t('common.models-folder')}
 					<FolderIcon className="h-4 w-4" />
