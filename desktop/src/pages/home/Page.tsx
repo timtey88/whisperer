@@ -188,7 +188,6 @@ export default function Home() {
                     progress={vm.progress}
                     fileName={vm.files[0]?.name}
                     fileSize={vm.fileSize || undefined}
-                    audioDuration={vm.audioDuration || undefined}
                     modelPath={vm.preference.modelPath}
                     modelOptions={vm.preference.modelOptions}
                     useGpu={vm.preference.useGpu || false}
