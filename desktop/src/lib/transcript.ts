@@ -118,7 +118,10 @@ export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker')
 		return getConfidenceLegend() + '<div class="text-center text-gray-500">No transcript data available</div>'
 	}
 
-	const segmentHtml = segments.map((segment) => {
+	// Deduplicate segments based on content and timing to prevent duplicates during transcription
+	const uniqueSegments = deduplicateSegments(segments)
+
+	const segmentHtml = uniqueSegments.map((segment) => {
 		// Convert ANSI codes to HTML (or display as plain text if no codes present)
 		const coloredHtml = ansiToHtml(segment.text)
 		
@@ -139,6 +142,8 @@ export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker')
 		`
 	}).join('')
 
+	const hasAnsiCodes = segments.some(s => s.text.includes('\x1b[38;5;'))
+
 	return `
 		${getConfidenceLegend()}
 		<div class="confidence-transcript">
@@ -146,7 +151,30 @@ export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker')
 		</div>
 		<div class="mt-4 p-3 bg-base-200 rounded-lg text-xs text-gray-600">
 			<strong>Note:</strong> This is a display-only format showing confidence levels through colors. 
-			ANSI color codes from transcription are converted to HTML for display.
+			${hasAnsiCodes 
+				? 'ANSI color codes from transcription are converted to HTML for display.' 
+				: 'Simulated confidence colors are shown for demonstration until real confidence data is available.'}
 		</div>
 	`
+}
+
+/**
+ * Removes duplicate segments that can occur during real-time transcription
+ * Uses content and timing to identify duplicates
+ */
+function deduplicateSegments(segments: Segment[]): Segment[] {
+	const seen = new Set<string>()
+	const uniqueSegments: Segment[] = []
+	
+	for (const segment of segments) {
+		// Create a unique key based on content, start time, and speaker
+		const key = `${segment.text.trim()}-${segment.start}-${segment.speaker || ''}`
+		
+		if (!seen.has(key)) {
+			seen.add(key)
+			uniqueSegments.push(segment)
+		}
+	}
+	
+	return uniqueSegments
 }

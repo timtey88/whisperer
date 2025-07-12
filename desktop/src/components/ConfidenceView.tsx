@@ -54,7 +54,8 @@ export default function ConfidenceView({ confidenceHtml, file, preference }: Con
 				style={{
 					fontSize: '16px',
 					lineHeight: '1.7',
-					color: '#374151'
+					color: '#374151',
+					minHeight: '200px' // Prevent layout shift during transcription
 				}}
 				dangerouslySetInnerHTML={{ __html: confidenceHtml }}
 			/>
