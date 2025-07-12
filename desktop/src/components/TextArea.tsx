@@ -334,7 +334,7 @@ export default function TextArea({
 						<option value="srt">SRT</option>
 						<option value="vtt">VTT</option>
 						<option value="json">JSON</option>
-						<option value="confidence">Confidence Colors</option>
+						<option value="confidence">Confidence</option>
 					</select>
 				</div>
 			</div>

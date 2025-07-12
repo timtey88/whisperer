@@ -38,7 +38,7 @@ export default function FormatSelect({ format, setFormat }: FormatSelectProps) {
 				<option value="docx">docx</option>
 				<option value="vtt">vtt</option>
 				<option value="json">json</option>
-				<option value="confidence">Confidence Colors</option>
+				<option value="confidence">Confidence</option>
 			</select>
 		</label>
 	)

@@ -145,7 +145,7 @@ function getWordConfidenceColor(word: string): string {
 export const getConfidenceLegend = (): string => {
     return `
     <div class="flex flex-col space-y-1 text-xs mb-4 p-3 bg-base-200 rounded-lg">
-        <h4 class="font-semibold text-sm mb-2">Confidence Color Legend</h4>
+        <h4 class="font-semibold text-sm mb-2">Confidence Legend</h4>
         <div class="flex items-center">
             <span class="w-4 h-4 mr-2 rounded" style="background-color: #00af00;"></span>
             <span>High confidence (0.90–1.00)</span>

@@ -45,7 +45,7 @@ export default function ConfidenceView({ confidenceHtml, file, preference }: Con
 					color: '#6b7280',
 					fontWeight: '500'
 				}}>
-					Confidence Colors View
+					Confidence View
 				</div>
 			</div>
 
