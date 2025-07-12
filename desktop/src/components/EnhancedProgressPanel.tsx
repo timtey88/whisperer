@@ -85,8 +85,13 @@ export default function EnhancedProgressPanel({
 							Transcription Status
 						</h4>
 						<div className="flex items-center gap-4 mb-3">
-							<div className="flex-shrink-0">
-								<AnimatedLoader size={60} strokeWidth={3} />
+							<div className="flex-shrink-0 relative">
+								<AnimatedLoader size={80} strokeWidth={3} />
+								<div className="absolute inset-0 flex items-center justify-center">
+									<span className="text-xs font-semibold text-center leading-tight">
+										{formatElapsedTime(elapsedTime)}
+									</span>
+								</div>
 							</div>
 							<div className="flex-1">
 								<p className="font-medium text-sm mb-1">
@@ -100,15 +105,6 @@ export default function EnhancedProgressPanel({
 								)}
 							</div>
 						</div>
-						<div className="flex items-center justify-between text-xs">
-							<div className="flex items-center gap-1 font-medium">
-								<ClockIcon className="w-3 h-3" />
-								<span>{formatElapsedTime(elapsedTime)}</span>
-							</div>
-							<div className="opacity-65 font-medium">
-								Est: {estimatedTime}
-							</div>
-						</div>
 					</div>
 
 					{/* Progress Info */}
@@ -118,9 +114,7 @@ export default function EnhancedProgressPanel({
 							Progress Info
 						</h4>
 						<div className="flex items-center justify-between mb-2">
-							<div className="flex items-center gap-2">
-								<LoadingText text={currentPhase} />
-							</div>
+							<LoadingText text={currentPhase} />
 							<span className="text-sm font-mono font-semibold text-primary">
 								{progress ? `${Math.round(progress)}%` : '0%'}
 							</span>
