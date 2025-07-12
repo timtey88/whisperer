@@ -18,7 +18,6 @@ interface EnhancedProgressPanelProps {
 	progress: number | null
 	fileName?: string
 	fileSize?: number
-	audioDuration?: number
 	modelPath?: string | null
 	modelOptions: ModelOptions
 	useGpu?: boolean
@@ -31,7 +30,6 @@ export default function EnhancedProgressPanel({
 	progress,
 	fileName,
 	fileSize,
-	audioDuration,
 	modelPath,
 	modelOptions,
 	useGpu = false,
