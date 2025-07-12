@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
 
-export type TextFormat = 'normal' | 'srt' | 'vtt' | 'html' | 'pdf' | 'json' | 'docx' | 'confidence'
+export type TextFormat = 'normal' | 'srt' | 'vtt' | 'html' | 'pdf' | 'json' | 'docx' | 'confidence' | 'raw-ansi'
 export type FormatExtensions = {
 	[name in TextFormat]: string
 }
@@ -14,6 +14,7 @@ export const formatExtensions: FormatExtensions = {
 	json: '.json',
 	docx: '.docx',
 	confidence: '.html', // Display only format, no actual download
+	'raw-ansi': '.txt', // Raw ANSI codes preserved in text file
 }
 
 interface FormatSelectProps {

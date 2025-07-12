@@ -6,7 +6,7 @@ import { ReactComponent as CopyIcon } from '~/icons/copy.svg'
 import { ReactComponent as DownloadIcon } from '~/icons/download.svg'
 import { ReactComponent as PrintIcon } from '~/icons/print.svg'
 import { ReactComponent as ClockIcon } from '~/icons/clock.svg'
-import { Segment, asJson, asSrt, asText, asVtt, asConfidenceHtml } from '~/lib/transcript'
+import { Segment, asJson, asSrt, asText, asVtt, asConfidenceHtml, asRawAnsi } from '~/lib/transcript'
 import { ModifyState, NamedPath, cx, openPath } from '~/lib/utils'
 import { TextFormat, formatExtensions } from './FormatSelect'
 import { usePreferenceProvider } from '~/providers/Preference'
@@ -157,6 +157,8 @@ export default function TextArea({
 					? asJson(segments)
 					: preference.textFormat === 'confidence'
 					? asConfidenceHtml(segments, t('common.speaker-prefix'), preference.showTimestamps)
+					: preference.textFormat === 'raw-ansi'
+					? asRawAnsi(segments, t('common.speaker-prefix'), preference.showTimestamps)
 					: asText(segments, t('common.speaker-prefix'))
 			)
 		} else {
@@ -336,6 +338,7 @@ export default function TextArea({
 						<option value="vtt">VTT</option>
 						<option value="json">JSON</option>
 						<option value="confidence">Confidence</option>
+						<option value="raw-ansi">Raw ANSI</option>
 					</select>
 				</div>
 			</div>
@@ -361,7 +364,10 @@ export default function TextArea({
 						onChange={(e) => setText(e.target.value)}
 						value={text}
 						dir={preference.textAreaDirection}
-						className="textarea textarea-bordered w-full h-full text-lg rounded-none border-0 focus:outline-none resize-none bg-base-100 text-justify"
+						className={cx(
+							"textarea textarea-bordered w-full h-full text-lg rounded-none border-0 focus:outline-none resize-none bg-base-100",
+							preference.textFormat === 'raw-ansi' ? 'font-mono text-sm' : 'text-justify'
+						)}
 						style={{ lineHeight: '1.6', padding: '20px' }}
 					/>
 				)}

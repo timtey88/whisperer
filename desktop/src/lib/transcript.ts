@@ -1,5 +1,5 @@
 import { formatSpeaker } from './utils'
-import { ansiToHtml, getConfidenceLegend } from './ansi'
+import { ansiToHtml, getConfidenceLegend, addAnsiCodes } from './ansi'
 
 export interface Duration {
 	secs: number
@@ -119,6 +119,22 @@ export function asText(segments: Segment[], speakerPrefix = 'Speaker') {
 		const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
 		return `${speakerText}${segment.text.trim()}`
 	}).join(' ')
+}
+
+export function asRawAnsi(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true) {
+	segments = mergeSpeakerSegments(segments)
+	// Deduplicate segments based on content and timing to prevent duplicates during transcription
+	const uniqueSegments = deduplicateSegments(segments)
+	
+	return uniqueSegments.map(segment => {
+		const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
+		const timestamp = showTimestamps 
+			? `[${formatTimestamp(segment.start, false, '.', false)}] `
+			: ''
+		// Generate actual ANSI escape sequences for confidence colors
+		const textWithAnsi = addAnsiCodes(segment.text)
+		return `${timestamp}${speakerText}${textWithAnsi}`
+	}).join('\n\n')
 }
 
 export function asJson(segments: Segment[]) {

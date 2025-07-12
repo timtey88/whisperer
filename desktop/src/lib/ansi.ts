@@ -138,6 +138,44 @@ function getWordConfidenceColor(word: string): string {
 }
 
 /**
+ * Generates ANSI color codes for text using the same confidence logic as HTML version
+ * 
+ * @param text - Plain text to add ANSI color codes to
+ * @returns Text with ANSI escape sequences for colors
+ */
+export const addAnsiCodes = (text: string): string => {
+    if (!text) return ''
+
+    // Check if text already contains ANSI codes
+    const hasAnsiCodes = text.includes('\x1b[38;5;')
+    
+    if (hasAnsiCodes) {
+        // Text already has ANSI codes, return as-is
+        return text
+    }
+
+    // Add ANSI codes using same logic as generateSimulatedConfidenceHtml
+    const words = text.split(/(\s+|[.!?,:;])/)
+    
+    const coloredWords = words.map(part => {
+        if (/^\s+$/.test(part)) {
+            // Preserve spaces as-is
+            return part
+        } else if (/[.!?,:;]/.test(part)) {
+            // Punctuation in neutral gray (250)
+            return `\x1b[38;5;250m${part}\x1b[0m`
+        } else if (part.trim().length > 0) {
+            // Words get consistent confidence colors based on their content
+            const colorCode = getWordConfidenceColor(part)
+            return `\x1b[38;5;${colorCode}m${part}\x1b[0m`
+        }
+        return part
+    })
+    
+    return coloredWords.join('')
+}
+
+/**
  * Creates a confidence color legend for Whisper transcription confidence levels
  * 
  * @returns HTML string with a color legend showing confidence ranges
