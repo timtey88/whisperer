@@ -261,7 +261,7 @@ export default function TextArea({
 	}, [])
 
 	return (
-		<div className="w-full h-full">
+		<div className="w-full flex flex-col" style={{ height: 'calc(100vh - 400px)', minHeight: '400px', maxHeight: '80vh' }}>
 			{replaceBoxVisible && (
 				<ReplaceWithBox
 					selected={selectedText}
@@ -276,63 +276,79 @@ export default function TextArea({
 					dir={preference.textAreaDirection}
 				/>
 			)}
-			<div className=" w-full bg-base-200 rounded-tl-lg rounded-tr-lg flex flex-row items-center">
-				<Copy text={text} />
-				<div className="tooltip tooltip-bottom" data-tip={t('common.save-transcript')}>
-					<button onMouseDown={() => download(text, preference.textFormat, file)} className="btn btn-square btn-md">
-						<DownloadIcon className="h-6 w-6" />
+			{/* Enhanced Toolbar with better grouping */}
+			<div className="w-full bg-base-200 rounded-tl-lg rounded-tr-lg flex flex-col sm:flex-row items-center gap-3 px-4 py-3 min-h-[64px] border-b border-base-300">
+				{/* Action Buttons Group */}
+				<div className="flex items-center gap-2">
+					<Copy text={text} />
+					<div className="tooltip tooltip-bottom" data-tip={t('common.save-transcript')}>
+						<button onMouseDown={() => download(text, preference.textFormat, file)} className="btn btn-square btn-md">
+							<DownloadIcon className="h-6 w-6" />
+						</button>
+					</div>
+					{['html', 'pdf'].includes(preference.textFormat) && (
+						<div className="tooltip tooltip-bottom" data-tip={t('common.print-tooltip')}>
+							<button onMouseDown={() => window.print()} className="btn btn-square btn-md">
+								<PrintIcon className="w-6 h-6" />
+							</button>
+						</div>
+					)}
+				</div>
+
+				{/* Separator */}
+				<div className="hidden sm:block w-px h-8 bg-base-300"></div>
+
+				{/* Text Direction Toggle */}
+				<div className="tooltip tooltip-bottom" data-tip={t('common.right-alignment')}>
+					<button
+						onMouseDown={() => preference.setTextAreaDirection(preference.textAreaDirection === 'rtl' ? 'ltr' : 'rtl')}
+						className={cx('btn btn-square btn-md', preference.textAreaDirection == 'rtl' && 'btn-active')}>
+						<AlignRightIcon className="w-6 h-6" />
 					</button>
 				</div>
-				{['html', 'pdf'].includes(preference.textFormat) && (
-					<div className="tooltip tooltip-bottom" data-tip={t('common.print-tooltip')}>
-						<div onMouseDown={() => window.print()} className={cx('h-full p-2 rounded-lg cursor-pointer')}>
-							<PrintIcon className="w-6 h-6" />
-						</div>
-					</div>
-				)}
 
-				<div className="tooltip tooltip-bottom" data-tip={t('common.right-alignment')}>
-					<div
-						onMouseDown={() => preference.setTextAreaDirection(preference.textAreaDirection === 'rtl' ? 'ltr' : 'rtl')}
-						className={cx('h-full p-2 rounded-lg cursor-pointer', preference.textAreaDirection == 'rtl' && 'bg-base-100')}>
-						<AlignRightIcon className="w-6 h-6" />
-					</div>
-				</div>
-
-				<div className="tooltip tooltip-bottom ms-auto me-1" data-tip={t('common.format')}>
+				{/* Format Selector */}
+				<div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto justify-center sm:justify-end">
+					<span className="text-sm font-medium opacity-70">{t('common.format')}:</span>
 					<select
 						value={preference.textFormat}
 						onChange={(event) => {
 							preference.setTextFormat(event.target.value as unknown as TextFormat)
 						}}
-						className="select select-bordered">
+						className="select select-bordered select-sm w-full sm:w-32">
 						<option value="normal">{t('common.mode-text')}</option>
-						<option value="html">html</option>
-						<option value="pdf">pdf</option>
-						<option value="docx">docx</option>
-						<option value="srt">srt</option>
-						<option value="vtt">vtt</option>
-						<option value="json">json</option>
+						<option value="html">HTML</option>
+						<option value="pdf">PDF</option>
+						<option value="docx">DOCX</option>
+						<option value="srt">SRT</option>
+						<option value="vtt">VTT</option>
+						<option value="json">JSON</option>
 					</select>
 				</div>
 			</div>
-			{['html', 'pdf', 'docx'].includes(preference.textFormat) ? (
-				<HTMLView preference={preference} segments={segments ?? []} file={file} />
-			) : (
-				<textarea
-					onFocus={() => (segmentsInFocusRef.current = true)}
-					onBlur={() => (segmentsInFocusRef.current = false)}
-					ref={segmentsTextAreaRef}
-					placeholder={placeholder}
-					readOnly={readonly}
-					autoCorrect="off"
-					spellCheck={false}
-					onChange={(e) => setText(e.target.value)}
-					value={text}
-					dir={preference.textAreaDirection}
-					className="textarea textarea-bordered w-full h-full text-lg rounded-tl-none rounded-tr-none focus:outline-none"
-				/>
-			)}
+			{/* Content Area with proper flex growth */}
+			<div className="flex-1 overflow-hidden rounded-bl-lg rounded-br-lg">
+				{['html', 'pdf', 'docx'].includes(preference.textFormat) ? (
+					<div className="h-full overflow-auto">
+						<HTMLView preference={preference} segments={segments ?? []} file={file} />
+					</div>
+				) : (
+					<textarea
+						onFocus={() => (segmentsInFocusRef.current = true)}
+						onBlur={() => (segmentsInFocusRef.current = false)}
+						ref={segmentsTextAreaRef}
+						placeholder={placeholder}
+						readOnly={readonly}
+						autoCorrect="off"
+						spellCheck={false}
+						onChange={(e) => setText(e.target.value)}
+						value={text}
+						dir={preference.textAreaDirection}
+						className="textarea textarea-bordered w-full h-full text-lg rounded-none border-0 focus:outline-none resize-none bg-base-100"
+						style={{ lineHeight: '1.6', padding: '20px' }}
+					/>
+				)}
+			</div>
 		</div>
 	)
 }

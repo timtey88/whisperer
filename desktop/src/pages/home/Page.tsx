@@ -178,7 +178,7 @@ export default function Home() {
                 )}
               </div>
 
-              <div className="w-full max-w-3xl mt-6">
+              <div className="w-full max-w-6xl mt-6 px-4">
                 {vm.loading && (
                   <ProgressPanel 
                     isAborting={vm.isAborting} 

@@ -29,7 +29,16 @@ export default function HTMLView({ segments, file, preference }: HTMLViewProps) 
 			contentEditable={true}
 			dir={preference.textAreaDirection}
 			className="html printable"
-			style={{ padding: '22px', minHeight: '90vh', fontFamily: 'Roboto, Arial', maxWidth: '1000px', margin: 'auto', outline: 'none' }}>
+			style={{ 
+				padding: '24px', 
+				minHeight: '100%', 
+				height: 'fit-content',
+				fontFamily: 'Roboto, Arial', 
+				maxWidth: '100%', 
+				margin: '0', 
+				outline: 'none',
+				lineHeight: '1.6'
+			}}>
 			<h1
 				style={{
 					fontSize: '36px',
@@ -43,15 +52,38 @@ export default function HTMLView({ segments, file, preference }: HTMLViewProps) 
 				}}>
 				{file?.name}
 			</h1>
-			{segments.map((segment) => (
-				<div key={segment.text} className="segment" style={{ fontSize: '18px', display: 'flex', flexDirection: 'column', paddingTop: '18px' }}>
-					<div style={{ marginBottom: '10px' }}>
-						<div className="timestamp" style={{ fontSize: '13px', paddingBottom: '6px', opacity: 0.7 }}>
+			{segments.map((segment, index) => (
+				<div key={`${segment.text}-${index}`} className="segment" style={{ 
+					fontSize: '18px', 
+					display: 'flex', 
+					flexDirection: 'column', 
+					paddingTop: '24px',
+					borderBottom: '1px solid #e5e7eb',
+					paddingBottom: '16px'
+				}}>
+					<div style={{ marginBottom: '12px' }}>
+						<div className="timestamp" style={{ 
+							fontSize: '13px', 
+							paddingBottom: '8px', 
+							opacity: 0.6,
+							fontWeight: '500',
+							color: '#6b7280'
+						}}>
 							{formatDuration(segment.start, segment.stop)}
 						</div>
-						{segment.speaker ? formatSpeaker(segment.speaker, t('common.speaker-prefix')) : ''}
-						{segment.speaker && <br />}
-						{segment.text}
+						{segment.speaker && (
+							<div style={{ 
+								fontSize: '16px', 
+								fontWeight: 'bold', 
+								marginBottom: '8px',
+								color: '#374151'
+							}}>
+								{formatSpeaker(segment.speaker, t('common.speaker-prefix'))}
+							</div>
+						)}
+						<div style={{ fontSize: '18px', lineHeight: '1.7' }}>
+							{segment.text}
+						</div>
 					</div>
 				</div>
 			))}
