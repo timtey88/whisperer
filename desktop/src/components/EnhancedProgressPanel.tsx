@@ -75,57 +75,59 @@ export default function EnhancedProgressPanel({
 		<div className="w-full flex flex-col items-center mb-6">
 			<div className="bg-base-200 p-6 rounded-2xl shadow-lg border border-base-300 max-w-4xl w-full">
 				{/* Header Section */}
-				<div className="flex flex-col sm:flex-row items-center gap-6 mb-6">
-					<div className="flex-shrink-0">
-						<AnimatedLoader size={80} strokeWidth={3} />
-					</div>
-					
-					<div className="flex-1 text-center sm:text-left">
-						<h3 className="text-xl font-semibold mb-2">
-							{isAborting ? t('common.aborting') : t('common.transcribing')}
-						</h3>
+				<div className="flex flex-col md:flex-row items-center md:items-start gap-6 mb-6">
+					<div className="flex flex-col sm:flex-row items-center gap-6 flex-1">
+						<div className="flex-shrink-0">
+							<AnimatedLoader size={80} strokeWidth={3} />
+						</div>
 						
-						{fileName && (
-							<p className="text-sm opacity-70 mb-2 truncate max-w-md">
-								<MicrophoneIcon className="w-4 h-4 inline mr-1" />
-								{fileName}
-								{fileSize && <span className="ml-2">({formatFileSize(fileSize)})</span>}
-							</p>
-						)}
-						
-						<div className="flex items-center justify-center sm:justify-start gap-4 text-sm">
-							<div className="flex items-center gap-1">
-								<ClockIcon className="w-4 h-4" />
-								<span>{formatElapsedTime(elapsedTime)}</span>
-							</div>
-							<div className="text-xs opacity-60">
-								Est: {estimatedTime}
+						<div className="flex-1 text-center sm:text-left">
+							<h3 className="text-xl font-semibold mb-2">
+								{isAborting ? t('common.aborting') : t('common.transcribing')}
+							</h3>
+							
+							{fileName && (
+								<p className="text-sm opacity-70 mb-2 truncate max-w-md">
+									<MicrophoneIcon className="w-4 h-4 inline mr-1" />
+									{fileName}
+									{fileSize && <span className="ml-2">({formatFileSize(fileSize)})</span>}
+								</p>
+							)}
+							
+							<div className="flex items-center justify-center sm:justify-start gap-4 text-sm">
+								<div className="flex items-center gap-1">
+									<ClockIcon className="w-4 h-4" />
+									<span>{formatElapsedTime(elapsedTime)}</span>
+								</div>
+								<div className="text-xs opacity-60">
+									Est: {estimatedTime}
+								</div>
 							</div>
 						</div>
 					</div>
-				</div>
 
-				{/* Progress Section */}
-				<div className="mb-6">
-					<div className="flex items-center justify-between mb-2">
-						<div className="flex items-center gap-2">
-							<LoadingText text={currentPhase} />
+					{/* Progress Info Box */}
+					<div className="bg-base-100 p-4 rounded-lg w-full md:w-80 flex-shrink-0">
+						<div className="flex items-center justify-between mb-2">
+							<div className="flex items-center gap-2">
+								<LoadingText text={currentPhase} />
+							</div>
+							<span className="text-sm font-mono font-medium">
+								{progress ? `${Math.round(progress)}%` : '0%'}
+							</span>
 						</div>
-						<span className="text-sm font-mono font-medium">
-							{progress ? `${Math.round(progress)}%` : '0%'}
-						</span>
+						
+						<div className="w-full bg-base-300 rounded-full h-2 mb-2">
+							<div 
+								className="bg-primary h-2 rounded-full transition-all duration-300"
+								style={{ width: `${progress || 0}%` }}
+							></div>
+						</div>
+						
+						<p className="text-xs opacity-60 text-center">
+							{currentPhaseInfo.description}
+						</p>
 					</div>
-					
-					<div className="w-full bg-base-300 rounded-full h-2 mb-2">
-						<div 
-							className="bg-primary h-2 rounded-full transition-all duration-300"
-							style={{ width: `${progress || 0}%` }}
-						></div>
-					</div>
-					
-					<p className="text-xs opacity-60 text-center">
-						{currentPhaseInfo.description}
-					</p>
 				</div>
 
 				{/* Information Grid */}
