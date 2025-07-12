@@ -6,11 +6,12 @@ import { ReactComponent as AlignRightIcon } from '~/icons/align-right.svg'
 import { ReactComponent as CopyIcon } from '~/icons/copy.svg'
 import { ReactComponent as DownloadIcon } from '~/icons/download.svg'
 import { ReactComponent as PrintIcon } from '~/icons/print.svg'
-import { Segment, asJson, asSrt, asText, asVtt } from '~/lib/transcript'
+import { Segment, asJson, asSrt, asText, asVtt, asConfidenceHtml } from '~/lib/transcript'
 import { ModifyState, NamedPath, cx, openPath } from '~/lib/utils'
 import { TextFormat, formatExtensions } from './FormatSelect'
 import { usePreferenceProvider } from '~/providers/Preference'
 import HTMLView from './HtmlView'
+import ConfidenceView from './ConfidenceView'
 import toast from 'react-hot-toast'
 import { invoke } from '@tauri-apps/api/core'
 import * as clipboard from '@tauri-apps/plugin-clipboard-manager'
@@ -154,6 +155,8 @@ export default function TextArea({
 					? asSrt(segments, t('common.speaker-prefix'))
 					: preference.textFormat === 'json'
 					? asJson(segments)
+					: preference.textFormat === 'confidence'
+					? asConfidenceHtml(segments, t('common.speaker-prefix'))
 					: asText(segments, t('common.speaker-prefix'))
 			)
 		} else {
@@ -280,12 +283,20 @@ export default function TextArea({
 			<div className="w-full bg-base-200 rounded-tl-lg rounded-tr-lg flex flex-col sm:flex-row items-center gap-3 px-4 py-3 min-h-[64px] border-b border-base-300">
 				{/* Action Buttons Group */}
 				<div className="flex items-center gap-2">
-					<Copy text={text} />
-					<div className="tooltip tooltip-bottom" data-tip={t('common.save-transcript')}>
-						<button onMouseDown={() => download(text, preference.textFormat, file)} className="btn btn-square btn-md">
-							<DownloadIcon className="h-6 w-6" />
-						</button>
-					</div>
+					{preference.textFormat !== 'confidence' ? (
+						<>
+							<Copy text={text} />
+							<div className="tooltip tooltip-bottom" data-tip={t('common.save-transcript')}>
+								<button onMouseDown={() => download(text, preference.textFormat, file)} className="btn btn-square btn-md">
+									<DownloadIcon className="h-6 w-6" />
+								</button>
+							</div>
+						</>
+					) : (
+						<div className="text-sm text-gray-500 px-3 py-2 bg-base-300 rounded-lg">
+							Display-only format (no copy/download)
+						</div>
+					)}
 					{['html', 'pdf'].includes(preference.textFormat) && (
 						<div className="tooltip tooltip-bottom" data-tip={t('common.print-tooltip')}>
 							<button onMouseDown={() => window.print()} className="btn btn-square btn-md">
@@ -323,12 +334,17 @@ export default function TextArea({
 						<option value="srt">SRT</option>
 						<option value="vtt">VTT</option>
 						<option value="json">JSON</option>
+						<option value="confidence">Confidence Colors</option>
 					</select>
 				</div>
 			</div>
 			{/* Content Area with proper flex growth */}
 			<div className="flex-1 overflow-hidden rounded-bl-lg rounded-br-lg">
-				{['html', 'pdf', 'docx'].includes(preference.textFormat) ? (
+				{preference.textFormat === 'confidence' ? (
+					<div className="h-full overflow-auto">
+						<ConfidenceView confidenceHtml={text} file={file} preference={preference} />
+					</div>
+				) : ['html', 'pdf', 'docx'].includes(preference.textFormat) ? (
 					<div className="h-full overflow-auto">
 						<HTMLView preference={preference} segments={segments ?? []} file={file} />
 					</div>

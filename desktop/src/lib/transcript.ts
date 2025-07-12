@@ -1,4 +1,5 @@
 import { formatSpeaker } from './utils'
+import { ansiToHtml, createMockConfidenceText, getConfidenceLegend } from './ansi'
 
 export interface Duration {
 	secs: number
@@ -110,4 +111,52 @@ export function asText(segments: Segment[], speakerPrefix = 'Speaker') {
 
 export function asJson(segments: Segment[]) {
 	return JSON.stringify(segments, null, 4)
+}
+
+export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker') {
+	if (!segments || segments.length === 0) {
+		return getConfidenceLegend() + '<div class="text-center text-gray-500">No transcript data available</div>'
+	}
+
+	const segmentHtml = segments.map((segment, index) => {
+		// Check if the segment text already contains ANSI codes
+		const hasAnsiCodes = segment.text.includes('\x1b[38;5;')
+		
+		// If no ANSI codes present, create mock confidence data for demonstration
+		const textWithConfidence = hasAnsiCodes 
+			? segment.text 
+			: createMockConfidenceText(segment.text)
+
+		// Convert ANSI codes to HTML
+		const coloredHtml = ansiToHtml(textWithConfidence)
+		
+		// Format speaker and timestamp
+		const speakerText = segment.speaker 
+			? `<strong>${formatSpeaker(segment.speaker, speakerPrefix)}:</strong> ` 
+			: ''
+		
+		const timestamp = `<span class="text-xs text-gray-500 mr-2">[${formatTimestamp(segment.start, false, '.', false)}]</span>`
+		
+		return `
+			<div class="mb-3 p-2 bg-base-100 rounded-lg">
+				<div class="text-xs text-gray-500 mb-1">
+					${timestamp}${speakerText}
+				</div>
+				${coloredHtml}
+			</div>
+		`
+	}).join('')
+
+	return `
+		${getConfidenceLegend()}
+		<div class="confidence-transcript">
+			${segmentHtml}
+		</div>
+		<div class="mt-4 p-3 bg-base-200 rounded-lg text-xs text-gray-600">
+			<strong>Note:</strong> This is a display-only format showing confidence levels through colors. 
+			${segments.some(s => s.text.includes('\x1b[38;5;')) 
+				? 'Colors reflect actual confidence scores from Whisper.' 
+				: 'Sample confidence colors are shown for demonstration.'}
+		</div>
+	`
 }
