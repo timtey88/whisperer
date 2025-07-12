@@ -46,6 +46,9 @@ export function viewModel() {
 	const [summarizeSegments, setSummarizeSegments] = useState<transcript.Segment[] | null>(null)
 	const [audio, setAudio] = useState<HTMLAudioElement | null>(null)
 	const [progress, setProgress] = useState<number | null>(0)
+	const [currentPhase, setCurrentPhase] = useState<string>('Loading Model')
+	const [fileSize, setFileSize] = useState<number | null>(null)
+	const [audioDuration, setAudioDuration] = useState<number | null>(null)
 	const { t } = useTranslation()
 	const toast = useToastProvider()
 	const [llm, setLlm] = useState<Llm | null>(null)
@@ -171,6 +174,12 @@ export function viewModel() {
 			const value = event.payload as number
 			if (value >= 0 && value <= 100) {
 				setProgress(value)
+				// Update phase based on progress
+				if (value >= 10 && value < 95) {
+					setCurrentPhase('Transcribing')
+				} else if (value >= 95) {
+					setCurrentPhase('Post-Processing')
+				}
 			}
 		})
 		await listen<transcript.Segment>('new_segment', (event) => {
@@ -346,16 +355,33 @@ export function viewModel() {
 		setTranscriptTab('transcript')
 
 		setLoading(true)
+		setCurrentPhase('Loading Model')
+		setProgress(0)
 		abortRef.current = false
+
+		// Get file information
+		try {
+			const fileInfo = await fs.stat(path)
+			setFileSize(fileInfo.size)
+		} catch (error) {
+			console.warn('Could not get file size:', error)
+		}
 
 		var newSegments: transcript.Segment[] = []
 		try {
 			const modelPath = preferenceRef.current.modelPath
+			setCurrentPhase('Loading Model')
 			await invoke('load_model', { modelPath, gpuDevice: preferenceRef.current.gpuDevice, useGpu: preferenceRef.current.useGpu })
+			
+			setCurrentPhase('Audio Processing')
+			setProgress(5)
 			const options = {
 				path,
 				...preferenceRef.current.modelOptions,
 			}
+			setCurrentPhase('Transcribing')
+			setProgress(10)
+			
 			const startTime = performance.now()
 			const diarizeOptions = { threshold: preferenceRef.current.diarizeThreshold, max_speakers: preferenceRef.current.maxSpeakers, enabled: preferenceRef.current.recognizeSpeakers }
 			const res: transcript.Transcript = await invoke('transcribe', {
@@ -364,6 +390,9 @@ export function viewModel() {
 				diarizeOptions,
 				ffmpegOptions: preferenceRef.current.ffmpegOptions,
 			})
+
+			setCurrentPhase('Post-Processing')
+			setProgress(95)
 
 			// Calcualte time
 			const total = Math.round((performance.now() - startTime) / 1000)
@@ -471,6 +500,9 @@ export function viewModel() {
 		setSettingsVisible,
 		loading,
 		progress,
+		currentPhase,
+		fileSize,
+		audioDuration,
 		audio,
 		setAudio,
 		files,

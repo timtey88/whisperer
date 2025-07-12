@@ -11,6 +11,7 @@ import TextArea from '~/components/TextArea';
 import AudioInput from '~/pages/home/AudioInput';
 import AudioPlayer from './AudioPlayer';
 import ProgressPanel from './ProgressPanel';
+import EnhancedProgressPanel from '~/components/EnhancedProgressPanel';
 import AudioDeviceInput from '~/components/AudioDeviceInput';
 import AdvancedTranscribe from '~/components/AdvancedTranscribe';
 import SettingsPage from '~/pages/settings/Page';
@@ -180,10 +181,17 @@ export default function Home() {
 
               <div className="w-full max-w-6xl mt-6 px-4">
                 {vm.loading && (
-                  <ProgressPanel 
+                  <EnhancedProgressPanel 
                     isAborting={vm.isAborting} 
                     onAbort={vm.onAbort} 
-                    progress={vm.progress} 
+                    progress={vm.progress}
+                    fileName={vm.files[0]?.name}
+                    fileSize={vm.fileSize || undefined}
+                    audioDuration={vm.audioDuration || undefined}
+                    modelPath={vm.preference.modelPath}
+                    modelOptions={vm.preference.modelOptions}
+                    useGpu={vm.preference.useGpu || false}
+                    currentPhase={vm.currentPhase}
                   />
                 )}
 
