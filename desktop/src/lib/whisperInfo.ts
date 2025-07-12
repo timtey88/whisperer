@@ -71,12 +71,6 @@ export const whisperOptions: Record<string, WhisperOptionInfo> = {
 
 export const whisperTips: WhisperTip[] = [
 	{
-		category: 'Quality',
-		title: 'Better Audio, Better Results',
-		description: 'Clear audio with minimal background noise produces significantly better transcriptions.',
-		icon: '🎤'
-	},
-	{
 		category: 'Performance',
 		title: 'GPU Acceleration',
 		description: 'Enable GPU processing in settings for 2-5x faster transcription on supported hardware.',

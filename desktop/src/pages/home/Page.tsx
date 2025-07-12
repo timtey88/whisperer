@@ -12,6 +12,7 @@ import AudioInput from '~/pages/home/AudioInput';
 import AudioPlayer from './AudioPlayer';
 import ProgressPanel from './ProgressPanel';
 import EnhancedProgressPanel from '~/components/EnhancedProgressPanel';
+import TranscriptionSummaryPanel from '~/components/TranscriptionSummaryPanel';
 import AudioDeviceInput from '~/components/AudioDeviceInput';
 import AdvancedTranscribe from '~/components/AdvancedTranscribe';
 import SettingsPage from '~/pages/settings/Page';
@@ -192,6 +193,13 @@ export default function Home() {
                     modelOptions={vm.preference.modelOptions}
                     useGpu={vm.preference.useGpu || false}
                     currentPhase={vm.currentPhase}
+                  />
+                )}
+
+                {vm.showTranscriptionResult && vm.transcriptionResult && (
+                  <TranscriptionSummaryPanel 
+                    result={vm.transcriptionResult}
+                    onDismiss={() => vm.setShowTranscriptionResult(false)}
                   />
                 )}
 

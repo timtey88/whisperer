@@ -34,6 +34,15 @@ export interface BatchOptions {
 	modelOptions: ModelOptions
 }
 
+export interface TranscriptionResult {
+	fileName: string
+	status: 'completed' | 'failed' | 'canceled' | 'incomplete'
+	duration: number // in seconds
+	startTime: number
+	endTime: number
+	error?: string
+}
+
 export function viewModel() {
 	const location = useLocation()
 	const [settingsVisible, setSettingsVisible] = useState(location.hash === '#settings')
@@ -49,6 +58,8 @@ export function viewModel() {
 	const [currentPhase, setCurrentPhase] = useState<string>('Loading Model')
 	const [fileSize, setFileSize] = useState<number | null>(null)
 	const [audioDuration, setAudioDuration] = useState<number | null>(null)
+	const [transcriptionResult, setTranscriptionResult] = useState<TranscriptionResult | null>(null)
+	const [showTranscriptionResult, setShowTranscriptionResult] = useState(false)
 	const { t } = useTranslation()
 	const toast = useToastProvider()
 	const [llm, setLlm] = useState<Llm | null>(null)
@@ -353,13 +364,18 @@ export function viewModel() {
 		setSegments(null)
 		setSummarizeSegments(null)
 		setTranscriptTab('transcript')
+		setShowTranscriptionResult(false) // Hide any previous result
 
 		setLoading(true)
 		setCurrentPhase('Loading Model')
 		setProgress(0)
 		abortRef.current = false
 
-		// Get file information
+		// Get file information and set up result tracking
+		const fileName = await basename(path)
+		const transcriptionStartTime = Date.now()
+		const processStartTime = performance.now()
+		
 		try {
 			const fileInfo = await fs.stat(path)
 			setFileSize(fileInfo.size)
@@ -374,15 +390,12 @@ export function viewModel() {
 			await invoke('load_model', { modelPath, gpuDevice: preferenceRef.current.gpuDevice, useGpu: preferenceRef.current.useGpu })
 			
 			setCurrentPhase('Audio Processing')
-			setProgress(5)
 			const options = {
 				path,
 				...preferenceRef.current.modelOptions,
 			}
 			setCurrentPhase('Transcribing')
-			setProgress(10)
 			
-			const startTime = performance.now()
 			const diarizeOptions = { threshold: preferenceRef.current.diarizeThreshold, max_speakers: preferenceRef.current.maxSpeakers, enabled: preferenceRef.current.recognizeSpeakers }
 			const res: transcript.Transcript = await invoke('transcribe', {
 				options,
@@ -392,17 +405,51 @@ export function viewModel() {
 			})
 
 			setCurrentPhase('Post-Processing')
-			setProgress(95)
 
-			// Calcualte time
-			const total = Math.round((performance.now() - startTime) / 1000)
-			console.info(`Transcribe took ${total} seconds.`)
+			// Calculate time
+			const processingDuration = Math.round((performance.now() - processStartTime) / 1000)
+			console.info(`Transcribe took ${processingDuration} seconds.`)
 
 			newSegments = res.segments
 			setSegments(res.segments)
-			hotToast.success(t('common.transcribe-took', { total: String(total) }), { position: 'bottom-center' })
+			
+			// Set successful transcription result
+			const transcriptionEndTime = Date.now()
+			setTranscriptionResult({
+				fileName,
+				status: 'completed',
+				duration: processingDuration,
+				startTime: transcriptionStartTime,
+				endTime: transcriptionEndTime
+			})
+			setShowTranscriptionResult(true)
+			
+			hotToast.success(t('common.transcribe-took', { total: String(processingDuration) }), { position: 'bottom-center' })
 		} catch (error) {
-			if (!abortRef.current) {
+			const processingDuration = Math.round((performance.now() - processStartTime) / 1000)
+			const transcriptionEndTime = Date.now()
+			
+			if (abortRef.current) {
+				// Transcription was canceled
+				setTranscriptionResult({
+					fileName,
+					status: 'canceled',
+					duration: processingDuration,
+					startTime: transcriptionStartTime,
+					endTime: transcriptionEndTime
+				})
+				setShowTranscriptionResult(true)
+			} else {
+				// Transcription failed
+				setTranscriptionResult({
+					fileName,
+					status: 'failed',
+					duration: processingDuration,
+					startTime: transcriptionStartTime,
+					endTime: transcriptionEndTime,
+					error: String(error)
+				})
+				setShowTranscriptionResult(true)
 				stopKeepAwake()
 				console.error('error: ', error)
 				setErrorModal?.({ log: String(error), open: true })
@@ -519,5 +566,9 @@ export function viewModel() {
 		downloadAudio,
 		downloadingAudio,
 		setDownloadingAudio,
+		transcriptionResult,
+		setTranscriptionResult,
+		showTranscriptionResult,
+		setShowTranscriptionResult,
 	}
 }
