@@ -79,8 +79,14 @@ export function mergeSpeakerSegments(segments: Segment[]) {
 	}
 }
 
-export function asSrt(segments: Segment[], speakerPrefix = 'Speaker') {
+export function asSrt(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true) {
 	segments = mergeSpeakerSegments(segments)
+	if (!showTimestamps) {
+		// Return text-only format when timestamps disabled
+		return segments.reduce((transcript, segment) => {
+			return transcript + `${segment.speaker ? formatSpeaker(segment.speaker, speakerPrefix) : ''}${segment.text.trim()}\n\n`
+		}, '')
+	}
 	return segments.reduce((transcript, segment, i) => {
 		return (
 			transcript +
@@ -91,8 +97,14 @@ export function asSrt(segments: Segment[], speakerPrefix = 'Speaker') {
 	}, '')
 }
 
-export function asVtt(segments: Segment[], speakerPrefix = 'Speaker') {
+export function asVtt(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true) {
 	segments = mergeSpeakerSegments(segments)
+	if (!showTimestamps) {
+		// Return text-only format when timestamps disabled  
+		return segments.reduce((transcript, segment) => {
+			return transcript + `${segment.speaker ? formatSpeaker(segment.speaker, speakerPrefix) : ''}${segment.text.trim()}\n\n`
+		}, '')
+	}
 	return segments.reduce((transcript, segment) => {
 		return (
 			transcript +
@@ -113,7 +125,7 @@ export function asJson(segments: Segment[]) {
 	return JSON.stringify(segments, null, 4)
 }
 
-export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker') {
+export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true) {
 	if (!segments || segments.length === 0) {
 		return getConfidenceLegend() + '<div class="text-center text-gray-500">No transcript data available</div>'
 	}
@@ -130,7 +142,9 @@ export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker')
 			? `<strong>${formatSpeaker(segment.speaker, speakerPrefix)}:</strong> ` 
 			: ''
 		
-		const timestamp = `<span class="text-xs text-gray-500 mr-2">[${formatTimestamp(segment.start, false, '.', false)}]</span>`
+		const timestamp = showTimestamps 
+			? `<span class="text-xs text-gray-500 mr-2">[${formatTimestamp(segment.start, false, '.', false)}]</span>`
+			: ''
 		
 		return `
 			<div class="mb-3 p-2 bg-base-100 rounded-lg">

@@ -62,15 +62,17 @@ export default function HTMLView({ segments, file, preference }: HTMLViewProps) 
 					paddingBottom: '16px'
 				}}>
 					<div style={{ marginBottom: '12px' }}>
-						<div className="timestamp" style={{ 
-							fontSize: '13px', 
-							paddingBottom: '8px', 
-							opacity: 0.6,
-							fontWeight: '500',
-							color: '#6b7280'
-						}}>
-							{formatDuration(segment.start, segment.stop)}
-						</div>
+						{preference.showTimestamps && (
+							<div className="timestamp" style={{ 
+								fontSize: '13px', 
+								paddingBottom: '8px', 
+								opacity: 0.6,
+								fontWeight: '500',
+								color: '#6b7280'
+							}}>
+								{formatDuration(segment.start, segment.stop)}
+							</div>
+						)}
 						{segment.speaker && (
 							<div style={{ 
 								fontSize: '16px', 
@@ -81,7 +83,7 @@ export default function HTMLView({ segments, file, preference }: HTMLViewProps) 
 								{formatSpeaker(segment.speaker, t('common.speaker-prefix'))}
 							</div>
 						)}
-						<div style={{ fontSize: '18px', lineHeight: '1.7' }}>
+						<div style={{ fontSize: '18px', lineHeight: '1.7', textAlign: 'justify' }}>
 							{segment.text}
 						</div>
 					</div>

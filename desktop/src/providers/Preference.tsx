@@ -34,6 +34,8 @@ export interface Preference {
 	setTextAreaDirection: ModifyState<Direction>
 	textFormat: TextFormat
 	setTextFormat: ModifyState<TextFormat>
+	showTimestamps: boolean
+	setShowTimestamps: ModifyState<boolean>
 	modelOptions: ModelOptions
 	setModelOptions: ModifyState<ModelOptions>
 	theme: 'light' | 'dark'
@@ -198,6 +200,7 @@ export function PreferenceProvider({ children }: { children: ReactNode }) {
 	const [skippedSetup, setSkippedSetup] = useLocalStorage<boolean>('prefs_skipped_setup', false)
 	const [textAreaDirection, setTextAreaDirection] = useLocalStorage<Direction>('prefs_textarea_direction', 'ltr')
 	const [textFormat, setTextFormat] = useLocalStorage<TextFormat>('prefs_text_format', 'pdf')
+	const [showTimestamps, setShowTimestamps] = useLocalStorage<boolean>('prefs_show_timestamps', true)
 	const isMounted = useRef<boolean>()
 	const [theme, setTheme] = useLocalStorage<'dark' | 'light'>('prefs_theme', systemIsDark ? 'dark' : 'light')
 	const [highGraphicsPreference, setHighGraphicsPreference] = useLocalStorage<boolean>('prefs_high_graphics_performance', false)
@@ -299,6 +302,8 @@ export function PreferenceProvider({ children }: { children: ReactNode }) {
 		setStoreRecordInDocuments,
 		textFormat,
 		setTextFormat,
+		showTimestamps,
+		setShowTimestamps,
 		textAreaDirection,
 		setTextAreaDirection,
 		skippedSetup,

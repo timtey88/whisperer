@@ -2,10 +2,10 @@ import * as dialog from '@tauri-apps/plugin-dialog'
 import * as fs from '@tauri-apps/plugin-fs'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ReactComponent as AlignRightIcon } from '~/icons/align-right.svg'
 import { ReactComponent as CopyIcon } from '~/icons/copy.svg'
 import { ReactComponent as DownloadIcon } from '~/icons/download.svg'
 import { ReactComponent as PrintIcon } from '~/icons/print.svg'
+import { ReactComponent as ClockIcon } from '~/icons/clock.svg'
 import { Segment, asJson, asSrt, asText, asVtt, asConfidenceHtml } from '~/lib/transcript'
 import { ModifyState, NamedPath, cx, openPath } from '~/lib/utils'
 import { TextFormat, formatExtensions } from './FormatSelect'
@@ -150,19 +150,19 @@ export default function TextArea({
 		if (segments) {
 			setText(
 				preference.textFormat === 'vtt'
-					? asVtt(segments, t('common.speaker-prefix'))
+					? asVtt(segments, t('common.speaker-prefix'), preference.showTimestamps)
 					: preference.textFormat === 'srt'
-					? asSrt(segments, t('common.speaker-prefix'))
+					? asSrt(segments, t('common.speaker-prefix'), preference.showTimestamps)
 					: preference.textFormat === 'json'
 					? asJson(segments)
 					: preference.textFormat === 'confidence'
-					? asConfidenceHtml(segments, t('common.speaker-prefix'))
+					? asConfidenceHtml(segments, t('common.speaker-prefix'), preference.showTimestamps)
 					: asText(segments, t('common.speaker-prefix'))
 			)
 		} else {
 			setText('')
 		}
-	}, [preference.textFormat, segments])
+	}, [preference.textFormat, preference.showTimestamps, segments])
 
 	async function download(text: string, format: TextFormat, file: NamedPath) {
 		if (format === 'html') {
@@ -306,17 +306,18 @@ export default function TextArea({
 					)}
 				</div>
 
-				{/* Separator */}
-				<div className="hidden sm:block w-px h-8 bg-base-300"></div>
 
-				{/* Text Direction Toggle */}
-				<div className="tooltip tooltip-bottom" data-tip={t('common.right-alignment')}>
+				{/* Timestamp Toggle */}
+				<div className="tooltip tooltip-bottom" data-tip={preference.showTimestamps ? t('common.hide-timestamps') : t('common.show-timestamps')}>
 					<button
-						onMouseDown={() => preference.setTextAreaDirection(preference.textAreaDirection === 'rtl' ? 'ltr' : 'rtl')}
-						className={cx('btn btn-square btn-md', preference.textAreaDirection == 'rtl' && 'btn-active')}>
-						<AlignRightIcon className="w-6 h-6" />
+						onMouseDown={() => preference.setShowTimestamps(!preference.showTimestamps)}
+						className={cx('btn btn-square btn-md', preference.showTimestamps && 'btn-active')}>
+						<ClockIcon className="w-6 h-6" />
 					</button>
 				</div>
+
+				{/* Separator */}
+				<div className="hidden sm:block w-px h-8 bg-base-300"></div>
 
 				{/* Format Selector */}
 				<div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto justify-center sm:justify-end">
@@ -360,7 +361,7 @@ export default function TextArea({
 						onChange={(e) => setText(e.target.value)}
 						value={text}
 						dir={preference.textAreaDirection}
-						className="textarea textarea-bordered w-full h-full text-lg rounded-none border-0 focus:outline-none resize-none bg-base-100"
+						className="textarea textarea-bordered w-full h-full text-lg rounded-none border-0 focus:outline-none resize-none bg-base-100 text-justify"
 						style={{ lineHeight: '1.6', padding: '20px' }}
 					/>
 				)}
