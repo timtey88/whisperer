@@ -49,6 +49,7 @@ const escapeHtml = (str: string): string =>
 
 /**
  * Converts ANSI color codes in text to HTML with CSS styling
+ * Properly handles text before first color code and preserves all spacing
  * 
  * @param text - The text with ANSI color codes
  * @returns HTML string with CSS styling for colors
@@ -56,22 +57,52 @@ const escapeHtml = (str: string): string =>
 export const ansiToHtml = (text: string): string => {
     if (!text) return ''
 
-    // Match sequences like: \x1b[38;5;166m text \x1b[0m
-    const regex = /\x1b\[38;5;(\d+)m([\s\S]*?)(?=\x1b\[38;5;|\x1b\[0m|$)/g
-    const htmlParts: string[] = []
-
-    let match
-    while ((match = regex.exec(text)) !== null) {
-        const [_, colorCode, content] = match
-        const color = ANSI_COLOR_MAP[colorCode] || '#ffffff'
-        const escapedText = escapeHtml(content)
-        htmlParts.push(`<span style="color: ${color};">${escapedText}</span>`)
+    // First, split the text into segments based on ANSI codes
+    const segments: Array<{ type: 'text' | 'colored', content: string, colorCode?: string }> = []
+    
+    // Split by any ANSI escape sequence to preserve exact structure
+    const parts = text.split(/(\x1b\[[0-9;]*m)/)
+    
+    let currentColorCode: string | null = null
+    let i = 0
+    
+    while (i < parts.length) {
+        const part = parts[i]
+        
+        if (part.match(/\x1b\[38;5;(\d+)m/)) {
+            // This is a color start code
+            const match = part.match(/\x1b\[38;5;(\d+)m/)
+            if (match) {
+                currentColorCode = match[1]
+            }
+        } else if (part === '\x1b[0m') {
+            // This is a reset code
+            currentColorCode = null
+        } else if (part.length > 0) {
+            // This is actual text content
+            if (currentColorCode) {
+                segments.push({ type: 'colored', content: part, colorCode: currentColorCode })
+            } else {
+                segments.push({ type: 'text', content: part })
+            }
+        }
+        i++
     }
+    
+    // Convert segments to HTML
+    const htmlParts = segments.map(segment => {
+        const escapedText = escapeHtml(segment.content)
+        
+        if (segment.type === 'colored' && segment.colorCode) {
+            const color = ANSI_COLOR_MAP[segment.colorCode] || '#374151'
+            return `<span style="color: ${color};">${escapedText}</span>`
+        } else {
+            // Default color for uncolored text
+            return `<span style="color: #374151;">${escapedText}</span>`
+        }
+    })
 
-    // Clean up any leftover control codes
-    const html = htmlParts.join('').replace(/\x1b\[[0-9;]*m/g, '')
-
-    return `<div style="white-space: pre-wrap; text-align: justify;">${html}</div>`
+    return `<div style="white-space: pre-wrap; text-align: justify; line-height: 1.6;">${htmlParts.join('')}</div>`
 }
 
 /**
@@ -109,30 +140,131 @@ export const getConfidenceLegend = (): string => {
 
 /**
  * Creates a mock confidence-colored text for testing purposes
- * This simulates what Whisper might output with ANSI color codes
+ * This simulates realistic Whisper output with ANSI color codes,
+ * including words split into multiple confidence levels
  * 
  * @param plainText - Plain text to add mock confidence colors to
- * @returns Text with ANSI color codes
+ * @returns Text with ANSI color codes showing realistic confidence patterns
  */
 export const createMockConfidenceText = (plainText: string): string => {
     if (!plainText) return ''
 
-    // Split by words and add random confidence colors
-    const words = plainText.split(' ')
-    const coloredWords = words.map(word => {
-        // Randomly assign confidence levels for demo
-        const rand = Math.random()
-        let colorCode: string
+    const result: string[] = []
+    
+    // Process character by character to create realistic patterns
+    let i = 0
+    while (i < plainText.length) {
+        const char = plainText[i]
         
-        if (rand > 0.9) colorCode = '40' // High confidence - bright green
-        else if (rand > 0.8) colorCode = '34' // High confidence - green  
-        else if (rand > 0.7) colorCode = '190' // Medium-high - yellow-green
-        else if (rand > 0.6) colorCode = '220' // Medium - yellow-orange
-        else if (rand > 0.4) colorCode = '208' // Low-medium - orange
-        else colorCode = '196' // Low confidence - red
+        if (char === ' ') {
+            // Spaces are usually neutral
+            result.push(char)
+            i++
+        } else if (/[.!?,:;]/.test(char)) {
+            // Punctuation is usually neutral/gray
+            result.push(`\x1b[38;5;250m${char}\x1b[0m`)
+            i++
+        } else if (/[a-zA-Z]/.test(char)) {
+            // Process words with varying confidence levels
+            const wordStart = i
+            let wordEnd = i
+            
+            // Find the end of the current word
+            while (wordEnd < plainText.length && /[a-zA-Z0-9']/.test(plainText[wordEnd])) {
+                wordEnd++
+            }
+            
+            const word = plainText.slice(wordStart, wordEnd)
+            const coloredWord = createWordWithVariableConfidence(word)
+            result.push(coloredWord)
+            
+            i = wordEnd
+        } else {
+            // Numbers and other characters
+            const rand = Math.random()
+            let colorCode: string
+            
+            if (rand > 0.7) colorCode = '34' // High confidence
+            else if (rand > 0.4) colorCode = '220' // Medium confidence
+            else colorCode = '208' // Lower confidence
+            
+            result.push(`\x1b[38;5;${colorCode}m${char}\x1b[0m`)
+            i++
+        }
+    }
+    
+    return result.join('')
+}
 
+/**
+ * Creates realistic confidence patterns within a single word
+ * Simulates how Whisper might have different confidence levels for different parts of a word
+ * 
+ * @param word - The word to add confidence colors to
+ * @returns Word with ANSI color codes for different parts
+ */
+function createWordWithVariableConfidence(word: string): string {
+    if (word.length <= 3) {
+        // Short words get single confidence level
+        const colorCode = getRandomConfidenceColor()
         return `\x1b[38;5;${colorCode}m${word}\x1b[0m`
-    })
+    }
+    
+    // Longer words can be split into multiple confidence levels
+    const shouldSplit = Math.random() > 0.6 // 40% chance to split word
+    
+    if (!shouldSplit) {
+        const colorCode = getRandomConfidenceColor()
+        return `\x1b[38;5;${colorCode}m${word}\x1b[0m`
+    }
+    
+    // Split word into 2-3 parts with different confidence levels
+    const parts: string[] = []
+    const numParts = Math.random() > 0.7 ? 3 : 2
+    
+    if (numParts === 2) {
+        const splitPoint = Math.floor(word.length / 2) + Math.floor(Math.random() * 2) - 1
+        const part1 = word.slice(0, splitPoint)
+        const part2 = word.slice(splitPoint)
+        
+        const color1 = getRandomConfidenceColor()
+        const color2 = getRandomConfidenceColor()
+        
+        parts.push(`\x1b[38;5;${color1}m${part1}\x1b[0m`)
+        parts.push(`\x1b[38;5;${color2}m${part2}\x1b[0m`)
+    } else {
+        // Split into 3 parts
+        const split1 = Math.floor(word.length / 3)
+        const split2 = Math.floor((word.length * 2) / 3)
+        
+        const part1 = word.slice(0, split1)
+        const part2 = word.slice(split1, split2)
+        const part3 = word.slice(split2)
+        
+        const color1 = getRandomConfidenceColor()
+        const color2 = getRandomConfidenceColor()
+        const color3 = getRandomConfidenceColor()
+        
+        parts.push(`\x1b[38;5;${color1}m${part1}\x1b[0m`)
+        parts.push(`\x1b[38;5;${color2}m${part2}\x1b[0m`)
+        parts.push(`\x1b[38;5;${color3}m${part3}\x1b[0m`)
+    }
+    
+    return parts.join('')
+}
 
-    return coloredWords.join(' ')
+/**
+ * Returns a random confidence color code based on realistic distribution
+ * Higher confidence levels are more common than lower ones
+ */
+function getRandomConfidenceColor(): string {
+    const rand = Math.random()
+    
+    // Weight higher confidence colors more heavily (realistic for most transcriptions)
+    if (rand > 0.85) return '40'   // High confidence - bright green (15%)
+    if (rand > 0.7) return '34'    // High confidence - green (15%)
+    if (rand > 0.5) return '190'   // Medium-high - yellow-green (20%)
+    if (rand > 0.3) return '220'   // Medium - yellow-orange (20%)
+    if (rand > 0.15) return '208'  // Low-medium - orange (15%)
+    return '196'                   // Low confidence - red (15%)
 }
