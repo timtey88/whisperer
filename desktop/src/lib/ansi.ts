@@ -73,13 +73,30 @@ export const ansiToHtml = (text: string): string => {
         const [_, colorCode, content] = match
         const color = ANSI_COLOR_MAP[colorCode] || '#374151'
         const escapedText = escapeHtml(content)
-        htmlParts.push(`<span style="color: ${color};">${escapedText}</span>`)
+        
+        // Enhanced styling with subtle text shadow and improved readability
+        htmlParts.push(`<span style="
+            color: ${color};
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: all 0.1s ease;
+        ">${escapedText}</span>`)
     }
 
     // Clean up any leftover control codes
     const html = htmlParts.join('').replace(/\x1b\[[0-9;]*m/g, '')
 
-    return `<div style="white-space: pre-wrap; text-align: justify; line-height: 1.6;">${html}</div>`
+    return `<div style="
+        white-space: pre-wrap; 
+        text-align: justify; 
+        line-height: 1.8;
+        letter-spacing: 0.2px;
+        word-spacing: 1px;
+        hyphens: auto;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    ">${html}</div>`
 }
 
 /**
@@ -97,18 +114,37 @@ function generateSimulatedConfidenceHtml(text: string): string {
             // Preserve spaces as-is
             return part
         } else if (/[.!?,:;]/.test(part)) {
-            // Punctuation in neutral gray
-            return `<span style="color: #bcbcbc;">${escapeHtml(part)}</span>`
+            // Punctuation in neutral gray with enhanced styling
+            return `<span style="
+                color: #bcbcbc;
+                font-weight: 400;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            ">${escapeHtml(part)}</span>`
         } else if (part.trim().length > 0) {
             // Words get consistent confidence colors based on their content
             const colorCode = getWordConfidenceColor(part)
             const color = ANSI_COLOR_MAP[colorCode] || '#374151'
-            return `<span style="color: ${color};">${escapeHtml(part)}</span>`
+            return `<span style="
+                color: ${color};
+                font-weight: 500;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                transition: all 0.1s ease;
+            ">${escapeHtml(part)}</span>`
         }
         return escapeHtml(part)
     })
     
-    return `<div style="white-space: pre-wrap; text-align: justify; line-height: 1.6;">${coloredWords.join('')}</div>`
+    return `<div style="
+        white-space: pre-wrap; 
+        text-align: justify; 
+        line-height: 1.8;
+        letter-spacing: 0.2px;
+        word-spacing: 1px;
+        hyphens: auto;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    ">${coloredWords.join('')}</div>`
 }
 
 /**
@@ -176,33 +212,132 @@ export const addAnsiCodes = (text: string): string => {
 }
 
 /**
- * Creates a confidence color legend for Whisper transcription confidence levels
+ * Creates a modern, compact confidence color legend for Whisper transcription confidence levels
  * 
- * @returns HTML string with a color legend showing confidence ranges
+ * @returns HTML string with a sleek horizontal legend design
  */
 export const getConfidenceLegend = (): string => {
     return `
-    <div class="flex flex-col space-y-1 text-xs mb-4 p-3 bg-base-200 rounded-lg">
-        <h4 class="font-semibold text-sm mb-2">Confidence Legend</h4>
-        <div class="flex items-center">
-            <span class="w-4 h-4 mr-2 rounded" style="background-color: #00af00;"></span>
-            <span>High confidence (0.90–1.00)</span>
-        </div>
-        <div class="flex items-center">
-            <span class="w-4 h-4 mr-2 rounded" style="background-color: #dfff00;"></span>
-            <span>Medium-high confidence (0.80–0.89)</span>
-        </div>
-        <div class="flex items-center">
-            <span class="w-4 h-4 mr-2 rounded" style="background-color: #ffaf5f;"></span>
-            <span>Medium confidence (0.60–0.79)</span>
-        </div>
-        <div class="flex items-center">
-            <span class="w-4 h-4 mr-2 rounded" style="background-color: #ff0000;"></span>
-            <span>Low confidence (0.00–0.59)</span>
-        </div>
-        <div class="flex items-center">
-            <span class="w-4 h-4 mr-2 rounded" style="background-color: #bcbcbc;"></span>
-            <span>Neutral / Informational (punctuation, metadata)</span>
+    <div class="confidence-legend" style="
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 16px;
+        padding: 16px 20px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    ">
+        <div style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        ">
+            <h4 style="
+                font-size: 14px;
+                font-weight: 600;
+                color: #374151;
+                margin: 0;
+                letter-spacing: 0.5px;
+            ">Confidence</h4>
+            
+            <div style="
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                flex-wrap: wrap;
+            ">
+                <div class="confidence-indicator" style="
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-size: 11px;
+                    font-weight: 500;
+                    color: #6b7280;
+                ">
+                    <div style="
+                        width: 24px;
+                        height: 6px;
+                        border-radius: 3px;
+                        background: linear-gradient(90deg, #00af00 0%, #00d700 100%);
+                        box-shadow: 0 1px 3px rgba(0,175,0,0.3);
+                    "></div>
+                    High
+                </div>
+                
+                <div class="confidence-indicator" style="
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-size: 11px;
+                    font-weight: 500;
+                    color: #6b7280;
+                ">
+                    <div style="
+                        width: 24px;
+                        height: 6px;
+                        border-radius: 3px;
+                        background: linear-gradient(90deg, #dfff00 0%, #87d787 100%);
+                        box-shadow: 0 1px 3px rgba(223,255,0,0.3);
+                    "></div>
+                    Med-High
+                </div>
+                
+                <div class="confidence-indicator" style="
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-size: 11px;
+                    font-weight: 500;
+                    color: #6b7280;
+                ">
+                    <div style="
+                        width: 24px;
+                        height: 6px;
+                        border-radius: 3px;
+                        background: linear-gradient(90deg, #ffaf5f 0%, #ffd700 100%);
+                        box-shadow: 0 1px 3px rgba(255,175,95,0.3);
+                    "></div>
+                    Medium
+                </div>
+                
+                <div class="confidence-indicator" style="
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-size: 11px;
+                    font-weight: 500;
+                    color: #6b7280;
+                ">
+                    <div style="
+                        width: 24px;
+                        height: 6px;
+                        border-radius: 3px;
+                        background: linear-gradient(90deg, #ff0000 0%, #ff8700 100%);
+                        box-shadow: 0 1px 3px rgba(255,0,0,0.3);
+                    "></div>
+                    Low
+                </div>
+                
+                <div class="confidence-indicator" style="
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-size: 11px;
+                    font-weight: 500;
+                    color: #6b7280;
+                ">
+                    <div style="
+                        width: 16px;
+                        height: 6px;
+                        border-radius: 3px;
+                        background: #bcbcbc;
+                        box-shadow: 0 1px 3px rgba(188,188,188,0.3);
+                    "></div>
+                    Neutral
+                </div>
+            </div>
         </div>
     </div>
     `

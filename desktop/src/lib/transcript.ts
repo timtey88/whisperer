@@ -143,31 +143,62 @@ export function asJson(segments: Segment[]) {
 
 export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true) {
 	if (!segments || segments.length === 0) {
-		return getConfidenceLegend() + '<div class="text-center text-gray-500">No transcript data available</div>'
+		return getConfidenceLegend() + '<div style="text-align: center; color: #9ca3af; padding: 40px;">No transcript data available</div>'
 	}
 
 	// Deduplicate segments based on content and timing to prevent duplicates during transcription
 	const uniqueSegments = deduplicateSegments(segments)
 
-	const segmentHtml = uniqueSegments.map((segment) => {
+	const segmentHtml = uniqueSegments.map((segment, index) => {
 		// Convert ANSI codes to HTML (or display as plain text if no codes present)
 		const coloredHtml = ansiToHtml(segment.text)
 		
-		// Format speaker and timestamp
+		// Format speaker and timestamp in floating style
 		const speakerText = segment.speaker 
-			? `<strong>${formatSpeaker(segment.speaker, speakerPrefix)}:</strong> ` 
+			? `<span style="font-weight: 600; color: #4f46e5;">${formatSpeaker(segment.speaker, speakerPrefix)}</span>` 
 			: ''
 		
 		const timestamp = showTimestamps 
-			? `<span class="text-xs text-gray-500 mr-2">[${formatTimestamp(segment.start, false, '.', false)}]</span>`
+			? `<span style="color: #9ca3af; font-size: 11px; font-weight: 500;">${formatTimestamp(segment.start, false, '.', false)}</span>`
 			: ''
 		
+		const metaInfo = (timestamp || speakerText) ? `
+			<div style="
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				margin-bottom: 8px;
+				padding-bottom: 4px;
+			">
+				${timestamp}
+				${speakerText}
+			</div>
+		` : ''
+		
+		// Add subtle divider except for last segment
+		const divider = index < uniqueSegments.length - 1 ? `
+			<div style="
+				width: 100%;
+				height: 1px;
+				background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.08) 50%, transparent 100%);
+				margin: 20px 0;
+			"></div>
+		` : ''
+		
 		return `
-			<div class="mb-3 p-2 bg-base-100 rounded-lg">
-				<div class="text-xs text-gray-500 mb-1">
-					${timestamp}${speakerText}
+			<div style="
+				margin-bottom: 16px;
+				transition: all 0.2s ease;
+			">
+				${metaInfo}
+				<div style="
+					padding-left: ${speakerText ? '12px' : '0'};
+					line-height: 1.7;
+					font-size: 16px;
+				">
+					${coloredHtml}
 				</div>
-				${coloredHtml}
+				${divider}
 			</div>
 		`
 	}).join('')
@@ -176,11 +207,23 @@ export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker',
 
 	return `
 		${getConfidenceLegend()}
-		<div class="confidence-transcript">
+		<div class="confidence-transcript" style="
+			padding: 0;
+			margin: 0;
+		">
 			${segmentHtml}
 		</div>
-		<div class="mt-4 p-3 bg-base-200 rounded-lg text-xs text-gray-600">
-			<strong>Note:</strong> This is a display-only format showing confidence levels through colors. 
+		<div style="
+			margin-top: 32px;
+			padding: 16px;
+			background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 51, 234, 0.05) 100%);
+			border: 1px solid rgba(59, 130, 246, 0.1);
+			border-radius: 12px;
+			font-size: 12px;
+			color: #6b7280;
+			line-height: 1.5;
+		">
+			<strong style="color: #374151;">Display-Only Format:</strong> Shows confidence levels through colors. 
 			${hasAnsiCodes 
 				? 'ANSI color codes from transcription are converted to HTML for display.' 
 				: 'Simulated confidence colors are shown for demonstration until real confidence data is available.'}
