@@ -82,12 +82,15 @@ export default function EnhancedProgressPanel({
 										</span>
 									</div>
 								</div>
-								<div className="flex-1">
+								<div className="flex-1 min-w-0">
 									<p className="font-medium text-sm mb-1">
 										{isAborting ? t('common.aborting') : t('common.transcribing')}
 									</p>
 									{fileName && (
-										<p className="text-xs opacity-75 truncate font-medium">
+										<p 
+											className="text-xs opacity-75 truncate font-medium max-w-full overflow-hidden"
+											title={fileName + (fileSize ? ` (${formatFileSize(fileSize)})` : '')}
+										>
 											{fileName}
 											{fileSize && <span className="ml-1">({formatFileSize(fileSize)})</span>}
 										</p>
