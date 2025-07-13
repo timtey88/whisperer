@@ -114,11 +114,24 @@ export function asVtt(segments: Segment[], speakerPrefix = 'Speaker', showTimest
 	}, '')
 }
 
-export function asText(segments: Segment[], speakerPrefix = 'Speaker') {
+export function asText(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = false) {
+	segments = mergeSpeakerSegments(segments)
+	
+	if (!showTimestamps) {
+		// Return text-only format when timestamps disabled (original behavior)
+		return segments.map(segment => {
+			const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
+			return `${speakerText}${segment.text.trim()}`
+		}).join(' ')
+	}
+	
+	// Return format with timestamps on separate lines (like VTT)
 	return segments.map(segment => {
+		const timestamp = `${formatTimestamp(segment.start, false, '.', false)} --> ${formatTimestamp(segment.stop, false, '.', false)}`
 		const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
-		return `${speakerText}${segment.text.trim()}`
-	}).join(' ')
+		const content = `${speakerText}${segment.text.trim()}`
+		return `${timestamp}\n${content}`
+	}).join('\n\n')
 }
 
 export function asRawAnsi(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true) {

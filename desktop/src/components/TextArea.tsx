@@ -159,7 +159,7 @@ export default function TextArea({
 					? asConfidenceHtml(segments, t('common.speaker-prefix'), preference.showTimestamps)
 					: preference.textFormat === 'raw-ansi'
 					? asRawAnsi(segments, t('common.speaker-prefix'), preference.showTimestamps)
-					: asText(segments, t('common.speaker-prefix'))
+					: asText(segments, t('common.speaker-prefix'), preference.showTimestamps)
 			)
 		} else {
 			setText('')
