@@ -6,6 +6,7 @@ import { ReactComponent as MicrophoneIcon } from '~/icons/microphone.svg'
 import { cx } from '~/lib/utils'
 import { ModelOptions } from '~/providers/Preference'
 import AnimatedLoader from './AnimatedLoader'
+import AnimatedTimer from './AnimatedTimer'
 import {
 	getModelInfo,
 	getLanguageDisplayName,
@@ -51,12 +52,6 @@ export default function EnhancedProgressPanel({
 		return () => clearInterval(interval)
 	}, [startTime])
 
-	const formatElapsedTime = (ms: number) => {
-		const seconds = Math.floor(ms / 1000)
-		const minutes = Math.floor(seconds / 60)
-		const remainingSeconds = seconds % 60
-		return minutes > 0 ? `${minutes}:${remainingSeconds.toString().padStart(2, '0')}` : `${seconds}s`
-	}
 
 
 
@@ -77,9 +72,10 @@ export default function EnhancedProgressPanel({
 								<div className="flex-shrink-0 relative">
 									<AnimatedLoader size={80} strokeWidth={3} />
 									<div className="absolute inset-0 flex items-center justify-center">
-										<span className="text-xs font-semibold text-center leading-tight">
-											{formatElapsedTime(elapsedTime)}
-										</span>
+										<AnimatedTimer 
+											elapsedTime={elapsedTime}
+											className="text-xs font-semibold text-center leading-tight"
+										/>
 									</div>
 								</div>
 								<div className="flex-1 min-w-0">
