@@ -24,6 +24,56 @@ export function formatDuration(start: number, stop: number, direction: 'rtl' | '
 export default function HTMLView({ segments, file, preference, showParagraphs = true }: HTMLViewProps) {
 	segments = mergeSpeakerSegments(segments)
 	const { t } = useTranslation()
+	
+	// Single paragraph mode - combine all segments into one continuous paragraph
+	if (!showParagraphs) {
+		const combinedText = segments.map(segment => {
+			const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, t('common.speaker-prefix'))}: ` : ''
+			return `${speakerText}${segment.text.trim()}`
+		}).join(' ')
+		
+		return (
+			<div
+				autoCorrect="off"
+				contentEditable={true}
+				dir={preference.textAreaDirection}
+				className="html printable"
+				style={{ 
+					padding: '24px', 
+					minHeight: '100%', 
+					height: 'fit-content',
+					fontFamily: 'Roboto, Arial', 
+					maxWidth: '100%', 
+					margin: '0', 
+					outline: 'none',
+					lineHeight: '1.6'
+				}}>
+				<h1
+					style={{
+						fontSize: '36px',
+						textAlign: 'center',
+						color: '#1565c0',
+						maxWidth: '50vw',
+						margin: 'auto',
+						whiteSpace: 'nowrap',
+						overflow: 'hidden',
+						textOverflow: 'ellipsis',
+					}}>
+					{file?.name}
+				</h1>
+				<div style={{ 
+					fontSize: '18px', 
+					lineHeight: '1.7', 
+					textAlign: 'justify',
+					paddingTop: '24px'
+				}}>
+					{combinedText}
+				</div>
+			</div>
+		)
+	}
+	
+	// Regular paragraph mode - individual segments
 	return (
 		<div
 			autoCorrect="off"

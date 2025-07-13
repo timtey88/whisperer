@@ -158,6 +158,14 @@ export function asText(segments: Segment[], speakerPrefix = 'Speaker', showTimes
 	
 	if (!showTimestamps) {
 		// Return text-only format when timestamps disabled
+		if (!showParagraphs) {
+			// Combine all segments into one continuous paragraph
+			return uniqueSegments.map(segment => {
+				const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
+				return `${speakerText}${segment.text.trim()}`
+			}).join(' ') // Single space, no line breaks
+		}
+		
 		const separator = getSegmentSeparator(showParagraphs, 'text')
 		return uniqueSegments.map(segment => {
 			const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
@@ -166,6 +174,14 @@ export function asText(segments: Segment[], speakerPrefix = 'Speaker', showTimes
 	}
 	
 	// Return format with timestamps on separate lines (like VTT)
+	if (!showParagraphs) {
+		// Combine all segments into one continuous paragraph with timestamps
+		return uniqueSegments.map(segment => {
+			const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
+			return `${speakerText}${segment.text.trim()}`
+		}).join(' ') // Single space, no line breaks or timestamps when paragraphs OFF
+	}
+	
 	const separator = getSegmentSeparator(showParagraphs, 'text')
 	return uniqueSegments.map(segment => {
 		const timestamp = `${formatTimestamp(segment.start, false, '.', false)} --> ${formatTimestamp(segment.stop, false, '.', false)}`
@@ -194,6 +210,15 @@ To enable confidence visualization, please re-run the transcription with confide
 	}
 	
 	// Has confidence data - process with ANSI codes
+	if (!showParagraphs) {
+		// Combine all segments into one continuous ANSI text block
+		return uniqueSegments.map(segment => {
+			const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
+			const textWithAnsi = addAnsiCodes(segment.text)
+			return `${speakerText}${textWithAnsi}`
+		}).join(' ') // Single space, no line breaks or timestamps
+	}
+	
 	const separator = getSegmentSeparator(showParagraphs, 'raw-ansi')
 	return uniqueSegments.map(segment => {
 		const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
@@ -256,6 +281,43 @@ export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker',
 				<div style="font-size: 12px; color: #64748b; font-style: italic;">
 					💡 Switch to "Text" format to view the transcript content
 				</div>
+			</div>
+		`
+	}
+
+	if (!showParagraphs) {
+		// Combine all segments into single continuous confidence HTML block
+		const combinedHtml = uniqueSegments
+			.map(segment => ansiToHtml(segment.text).replace(/<\/?div[^>]*>/g, '')) // Remove div wrappers
+			.join(' ')
+		
+		return `
+			${getConfidenceLegend()}
+			<div class="confidence-transcript" style="
+				padding: 0;
+				margin: 0;
+			">
+				<div style="
+					line-height: 1.7;
+					font-size: 16px;
+					text-align: justify;
+				">
+					${combinedHtml}
+				</div>
+			</div>
+			<div style="
+				margin-top: 16px;
+				padding: 16px;
+				background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.08) 100%);
+				border: 1px solid rgba(59, 130, 246, 0.2);
+				border-radius: 12px;
+				font-size: 12px;
+				color: #94a3b8;
+				line-height: 1.5;
+				backdrop-filter: blur(8px);
+				box-shadow: 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+			">
+				<strong style="color: #e2e8f0; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">Display-Only Format:</strong> Shows transcription confidence levels through colors.
 			</div>
 		`
 	}

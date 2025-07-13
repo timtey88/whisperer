@@ -151,9 +151,9 @@ export default function TextArea({
 		if (segments) {
 			setText(
 				preference.textFormat === 'vtt'
-					? asVtt(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
+					? asVtt(segments, t('common.speaker-prefix'), true, true) // Always use standard VTT format
 					: preference.textFormat === 'srt'
-					? asSrt(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
+					? asSrt(segments, t('common.speaker-prefix'), true, true) // Always use standard SRT format
 					: preference.textFormat === 'json'
 					? asJson(segments)
 					: preference.textFormat === 'confidence'
@@ -165,7 +165,14 @@ export default function TextArea({
 		} else {
 			setText('')
 		}
-	}, [preference.textFormat, preference.showTimestamps, preference.showParagraphs, segments])
+	}, [
+		preference.textFormat, 
+		segments,
+		// Only include toggle dependencies for formats that support them
+		...((['normal', 'html', 'pdf', 'docx', 'confidence', 'raw-ansi'].includes(preference.textFormat)) 
+			? [preference.showTimestamps, preference.showParagraphs] 
+			: [])
+	])
 
 	async function download(text: string, format: TextFormat, file: NamedPath) {
 		if (format === 'html') {
