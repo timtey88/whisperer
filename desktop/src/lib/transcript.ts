@@ -153,13 +153,13 @@ export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker',
 		// Convert ANSI codes to HTML (or display as plain text if no codes present)
 		const coloredHtml = ansiToHtml(segment.text)
 		
-		// Format speaker and timestamp in floating style
+		// Format speaker and timestamp in dark mode floating style
 		const speakerText = segment.speaker 
-			? `<span style="font-weight: 600; color: #4f46e5;">${formatSpeaker(segment.speaker, speakerPrefix)}</span>` 
+			? `<span style="font-weight: 600; color: #60a5fa; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">${formatSpeaker(segment.speaker, speakerPrefix)}</span>` 
 			: ''
 		
 		const timestamp = showTimestamps 
-			? `<span style="color: #9ca3af; font-size: 11px; font-weight: 500;">${formatTimestamp(segment.start, false, '.', false)}</span>`
+			? `<span style="color: #94a3b8; font-size: 11px; font-weight: 500; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${formatTimestamp(segment.start, false, '.', false)}</span>`
 			: ''
 		
 		const metaInfo = (timestamp || speakerText) ? `
@@ -175,13 +175,14 @@ export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker',
 			</div>
 		` : ''
 		
-		// Add subtle divider except for last segment
+		// Add subtle divider except for last segment - dark mode version
 		const divider = index < uniqueSegments.length - 1 ? `
 			<div style="
 				width: 100%;
 				height: 1px;
-				background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.08) 50%, transparent 100%);
+				background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%);
 				margin: 20px 0;
+				box-shadow: 0 1px 0 rgba(255,255,255,0.03);
 			"></div>
 		` : ''
 		
@@ -203,8 +204,6 @@ export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker',
 		`
 	}).join('')
 
-	const hasAnsiCodes = segments.some(s => s.text.includes('\x1b[38;5;'))
-
 	return `
 		${getConfidenceLegend()}
 		<div class="confidence-transcript" style="
@@ -216,17 +215,16 @@ export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker',
 		<div style="
 			margin-top: 32px;
 			padding: 16px;
-			background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(147, 51, 234, 0.05) 100%);
-			border: 1px solid rgba(59, 130, 246, 0.1);
+			background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.08) 100%);
+			border: 1px solid rgba(59, 130, 246, 0.2);
 			border-radius: 12px;
 			font-size: 12px;
-			color: #6b7280;
+			color: #94a3b8;
 			line-height: 1.5;
+			backdrop-filter: blur(8px);
+			box-shadow: 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
 		">
-			<strong style="color: #374151;">Display-Only Format:</strong> Shows confidence levels through colors. 
-			${hasAnsiCodes 
-				? 'ANSI color codes from transcription are converted to HTML for display.' 
-				: 'Simulated confidence colors are shown for demonstration until real confidence data is available.'}
+			<strong style="color: #e2e8f0; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">Display-Only Format:</strong> Shows transcription confidence levels through colors.
 		</div>
 	`
 }

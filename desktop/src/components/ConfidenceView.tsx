@@ -16,7 +16,7 @@ export default function ConfidenceView({ confidenceHtml, file, preference }: Con
 			dir={preference.textAreaDirection}
 			className="confidence-view printable"
 			style={{ 
-				padding: '32px 28px', 
+				padding: '24px', 
 				minHeight: '100%', 
 				height: 'fit-content',
 				fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif', 
@@ -24,59 +24,41 @@ export default function ConfidenceView({ confidenceHtml, file, preference }: Con
 				margin: '0', 
 				outline: 'none',
 				lineHeight: '1.6',
-				background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-				position: 'relative'
+				background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+				position: 'relative',
+				color: '#e2e8f0'
 			}}>
 			
-			{/* Subtle background pattern */}
+			{/* Subtle background pattern for dark mode */}
 			<div style={{
 				position: 'absolute',
 				top: 0,
 				left: 0,
 				right: 0,
 				bottom: 0,
-				opacity: 0.02,
-				backgroundImage: `radial-gradient(circle at 1px 1px, rgba(0,0,0,0.15) 1px, transparent 0)`,
+				opacity: 0.08,
+				backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.1) 1px, transparent 0)`,
 				backgroundSize: '20px 20px',
 				pointerEvents: 'none'
 			}}></div>
 
-			{/* Streamlined Header */}
-			<div style={{ 
-				marginBottom: '28px', 
-				position: 'relative',
-				zIndex: 1
-			}}>
-				<h1 style={{
-					fontSize: '28px',
-					fontWeight: '700',
-					color: '#1e293b',
-					maxWidth: '100%',
-					margin: '0 0 6px 0',
-					whiteSpace: 'nowrap',
-					overflow: 'hidden',
-					textOverflow: 'ellipsis',
-					letterSpacing: '-0.5px'
-				}}>
-					{file?.name}
-				</h1>
-				<div style={{
-					fontSize: '13px',
-					color: '#64748b',
-					fontWeight: '500',
-					letterSpacing: '0.5px',
-					textTransform: 'uppercase'
-				}}>
-					Confidence Analysis
-				</div>
-			</div>
+			{/* Dark mode gradient overlay */}
+			<div style={{
+				position: 'absolute',
+				top: 0,
+				left: 0,
+				right: 0,
+				bottom: 0,
+				background: 'radial-gradient(ellipse at top, rgba(59, 130, 246, 0.03) 0%, transparent 50%)',
+				pointerEvents: 'none'
+			}}></div>
 
 			{/* Confidence HTML Content */}
 			<div 
 				style={{
 					fontSize: '16px',
 					lineHeight: '1.7',
-					color: '#374151',
+					color: '#e2e8f0',
 					minHeight: '200px', // Prevent layout shift during transcription
 					position: 'relative',
 					zIndex: 1

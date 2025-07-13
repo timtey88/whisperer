@@ -1,37 +1,37 @@
-// Confidence color mapping based on ANSI color codes from Whisper output
-// Organized by confidence level ranges
+// Confidence color mapping optimized for dark mode
+// Enhanced contrast and visibility on dark backgrounds
 const ANSI_COLOR_MAP: Record<string, string> = {
-    // 🔴 Low Confidence (0.0-0.6)
-    '160': '#d70000', // Red (~0.50)
-    '196': '#ff0000', // Bright Red (~0.55)
-    '166': '#d75f00', // Dark Orange (~0.60)
+    // 🔴 Low Confidence (0.0-0.6) - Enhanced brightness for dark mode
+    '160': '#ff4444', // Bright Red (~0.50)
+    '196': '#ff5555', // Enhanced Bright Red (~0.55)
+    '166': '#ff7744', // Bright Dark Orange (~0.60)
 
-    // 🟠 Medium Confidence (0.6-0.8)
-    '208': '#ff8700', // Orange (~0.70)
-    '215': '#ffaf5f', // Light Orange (~0.75)
-    '220': '#ffd700', // Yellow-Orange (~0.78)
+    // 🟠 Medium Confidence (0.6-0.8) - Enhanced visibility
+    '208': '#ff9933', // Bright Orange (~0.70)
+    '215': '#ffbb66', // Enhanced Light Orange (~0.75)
+    '220': '#ffdd44', // Bright Yellow-Orange (~0.78)
 
-    // 🟡 Medium-High Confidence (0.8-0.9)
-    '190': '#dfff00', // Yellow-Green (~0.82)
-    '114': '#87d787', // Green-Cyan (~0.88)
+    // 🟡 Medium-High Confidence (0.8-0.9) - Enhanced contrast
+    '190': '#eeff44', // Bright Yellow-Green (~0.82)
+    '114': '#99ee99', // Bright Green-Cyan (~0.88)
 
-    // 🟢 High Confidence (0.9-1.0)
-    '71': '#5faf5f', // Light Green (~0.92)
-    '34': '#00af00', // Green (~0.95)
-    '40': '#00d700', // Bright Green (~0.97)
+    // 🟢 High Confidence (0.9-1.0) - Enhanced vibrancy
+    '71': '#77dd77', // Bright Light Green (~0.92)
+    '34': '#44cc44', // Enhanced Green (~0.95)
+    '40': '#55ff55', // Vivid Bright Green (~0.97)
 
-    // 🟣🔵 Neutral/Informational (Varies)
-    '250': '#bcbcbc', // Gray (Neutral/filler)
-    '33': '#0087ff', // Blue (Metadata or tags)
-    '8': '#808080', // Dark Gray (Silent or skipped)
+    // 🟣🔵 Neutral/Informational (Varies) - Dark mode optimized
+    '250': '#888888', // Enhanced Gray (Neutral/filler)
+    '33': '#66aaff', // Bright Blue (Metadata or tags)
+    '8': '#999999', // Enhanced Medium Gray (Silent or skipped)
 
-    // Additional colors that might be in the output
-    '226': '#ffff00', // Yellow
-    '214': '#ffaf00', // Dark orange
-    '227': '#ffff5f', // Light yellow
-    '35': '#00af5f', // Spring green
-    '46': '#00ff00', // Lime green
-    '70': '#5faf00', // Olive green
+    // Additional colors optimized for dark backgrounds
+    '226': '#ffff66', // Bright Yellow
+    '214': '#ffcc44', // Enhanced orange
+    '227': '#ffff88', // Bright light yellow
+    '35': '#44ff88', // Bright spring green
+    '46': '#66ff66', // Enhanced lime green
+    '70': '#88cc44', // Bright olive green
 }
 
 /**
@@ -56,12 +56,15 @@ const escapeHtml = (str: string): string =>
 export const ansiToHtml = (text: string): string => {
     if (!text) return ''
 
+    // Trim leading and trailing whitespace to prevent extra spaces
+    const trimmedText = text.trim()
+
     // Check if text contains ANSI codes
-    const hasAnsiCodes = text.includes('\x1b[38;5;')
+    const hasAnsiCodes = trimmedText.includes('\x1b[38;5;')
     
     if (!hasAnsiCodes) {
         // No ANSI codes present, add basic simulated confidence colors
-        return generateSimulatedConfidenceHtml(text)
+        return generateSimulatedConfidenceHtml(trimmedText)
     }
 
     // Match sequences like: \x1b[38;5;166m text \x1b[0m
@@ -69,17 +72,18 @@ export const ansiToHtml = (text: string): string => {
     const htmlParts: string[] = []
 
     let match
-    while ((match = regex.exec(text)) !== null) {
+    while ((match = regex.exec(trimmedText)) !== null) {
         const [_, colorCode, content] = match
         const color = ANSI_COLOR_MAP[colorCode] || '#374151'
         const escapedText = escapeHtml(content)
         
-        // Enhanced styling with subtle text shadow and improved readability
+        // Enhanced styling for dark mode with stronger shadows and improved readability
         htmlParts.push(`<span style="
             color: ${color};
-            font-weight: 500;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            transition: all 0.1s ease;
+            font-weight: 600;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.7), 0 0 0 rgba(255,255,255,0.1);
+            transition: all 0.15s ease;
+            filter: brightness(1.1) saturate(1.2);
         ">${escapedText}</span>`)
     }
 
@@ -89,13 +93,15 @@ export const ansiToHtml = (text: string): string => {
     return `<div style="
         white-space: pre-wrap; 
         text-align: justify; 
-        line-height: 1.8;
-        letter-spacing: 0.2px;
-        word-spacing: 1px;
+        line-height: 1.9;
+        letter-spacing: 0.3px;
+        word-spacing: 1.2px;
         hyphens: auto;
         text-rendering: optimizeLegibility;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        font-feature-settings: 'liga' 1, 'kern' 1;
+        color: #e2e8f0;
     ">${html}</div>`
 }
 
@@ -107,18 +113,21 @@ export const ansiToHtml = (text: string): string => {
  * @returns HTML with simulated confidence colors
  */
 function generateSimulatedConfidenceHtml(text: string): string {
-    const words = text.split(/(\s+|[.!?,:;])/)
+    // Trim leading and trailing whitespace to prevent extra spaces
+    const trimmedText = text.trim()
+    const words = trimmedText.split(/(\s+|[.!?,:;])/)
     
     const coloredWords = words.map(part => {
         if (/^\s+$/.test(part)) {
             // Preserve spaces as-is
             return part
         } else if (/[.!?,:;]/.test(part)) {
-            // Punctuation in neutral gray with enhanced styling
+            // Punctuation in neutral gray with enhanced dark mode styling
             return `<span style="
-                color: #bcbcbc;
-                font-weight: 400;
-                text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                color: #64748b;
+                font-weight: 500;
+                text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+                filter: brightness(1.1);
             ">${escapeHtml(part)}</span>`
         } else if (part.trim().length > 0) {
             // Words get consistent confidence colors based on their content
@@ -126,9 +135,10 @@ function generateSimulatedConfidenceHtml(text: string): string {
             const color = ANSI_COLOR_MAP[colorCode] || '#374151'
             return `<span style="
                 color: ${color};
-                font-weight: 500;
-                text-shadow: 0 1px 2px rgba(0,0,0,0.05);
-                transition: all 0.1s ease;
+                font-weight: 600;
+                text-shadow: 0 1px 3px rgba(0,0,0,0.7), 0 0 0 rgba(255,255,255,0.1);
+                transition: all 0.15s ease;
+                filter: brightness(1.1) saturate(1.2);
             ">${escapeHtml(part)}</span>`
         }
         return escapeHtml(part)
@@ -137,13 +147,15 @@ function generateSimulatedConfidenceHtml(text: string): string {
     return `<div style="
         white-space: pre-wrap; 
         text-align: justify; 
-        line-height: 1.8;
-        letter-spacing: 0.2px;
-        word-spacing: 1px;
+        line-height: 1.9;
+        letter-spacing: 0.3px;
+        word-spacing: 1.2px;
         hyphens: auto;
         text-rendering: optimizeLegibility;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+        font-feature-settings: 'liga' 1, 'kern' 1;
+        color: #e2e8f0;
     ">${coloredWords.join('')}</div>`
 }
 
@@ -219,13 +231,13 @@ export const addAnsiCodes = (text: string): string => {
 export const getConfidenceLegend = (): string => {
     return `
     <div class="confidence-legend" style="
-        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255,255,255,0.1);
+        background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.12);
         border-radius: 16px;
         padding: 16px 20px;
         margin-bottom: 24px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
     ">
         <div style="
             display: flex;
@@ -237,9 +249,10 @@ export const getConfidenceLegend = (): string => {
             <h4 style="
                 font-size: 14px;
                 font-weight: 600;
-                color: #374151;
+                color: #e2e8f0;
                 margin: 0;
                 letter-spacing: 0.5px;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.5);
             ">Confidence</h4>
             
             <div style="
@@ -254,14 +267,15 @@ export const getConfidenceLegend = (): string => {
                     gap: 6px;
                     font-size: 11px;
                     font-weight: 500;
-                    color: #6b7280;
+                    color: #94a3b8;
                 ">
                     <div style="
                         width: 24px;
                         height: 6px;
                         border-radius: 3px;
-                        background: linear-gradient(90deg, #00af00 0%, #00d700 100%);
-                        box-shadow: 0 1px 3px rgba(0,175,0,0.3);
+                        background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+                        box-shadow: 0 2px 8px rgba(16,185,129,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+                        border: 1px solid rgba(16,185,129,0.3);
                     "></div>
                     High
                 </div>
@@ -272,14 +286,15 @@ export const getConfidenceLegend = (): string => {
                     gap: 6px;
                     font-size: 11px;
                     font-weight: 500;
-                    color: #6b7280;
+                    color: #94a3b8;
                 ">
                     <div style="
                         width: 24px;
                         height: 6px;
                         border-radius: 3px;
-                        background: linear-gradient(90deg, #dfff00 0%, #87d787 100%);
-                        box-shadow: 0 1px 3px rgba(223,255,0,0.3);
+                        background: linear-gradient(90deg, #eab308 0%, #a3e635 100%);
+                        box-shadow: 0 2px 8px rgba(234,179,8,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+                        border: 1px solid rgba(234,179,8,0.3);
                     "></div>
                     Med-High
                 </div>
@@ -290,14 +305,15 @@ export const getConfidenceLegend = (): string => {
                     gap: 6px;
                     font-size: 11px;
                     font-weight: 500;
-                    color: #6b7280;
+                    color: #94a3b8;
                 ">
                     <div style="
                         width: 24px;
                         height: 6px;
                         border-radius: 3px;
-                        background: linear-gradient(90deg, #ffaf5f 0%, #ffd700 100%);
-                        box-shadow: 0 1px 3px rgba(255,175,95,0.3);
+                        background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
+                        box-shadow: 0 2px 8px rgba(245,158,11,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+                        border: 1px solid rgba(245,158,11,0.3);
                     "></div>
                     Medium
                 </div>
@@ -308,14 +324,15 @@ export const getConfidenceLegend = (): string => {
                     gap: 6px;
                     font-size: 11px;
                     font-weight: 500;
-                    color: #6b7280;
+                    color: #94a3b8;
                 ">
                     <div style="
                         width: 24px;
                         height: 6px;
                         border-radius: 3px;
-                        background: linear-gradient(90deg, #ff0000 0%, #ff8700 100%);
-                        box-shadow: 0 1px 3px rgba(255,0,0,0.3);
+                        background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+                        box-shadow: 0 2px 8px rgba(239,68,68,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+                        border: 1px solid rgba(239,68,68,0.3);
                     "></div>
                     Low
                 </div>
@@ -326,14 +343,15 @@ export const getConfidenceLegend = (): string => {
                     gap: 6px;
                     font-size: 11px;
                     font-weight: 500;
-                    color: #6b7280;
+                    color: #94a3b8;
                 ">
                     <div style="
                         width: 16px;
                         height: 6px;
                         border-radius: 3px;
-                        background: #bcbcbc;
-                        box-shadow: 0 1px 3px rgba(188,188,188,0.3);
+                        background: #64748b;
+                        box-shadow: 0 2px 8px rgba(100,116,139,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+                        border: 1px solid rgba(100,116,139,0.3);
                     "></div>
                     Neutral
                 </div>
