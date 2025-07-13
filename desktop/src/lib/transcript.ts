@@ -151,30 +151,13 @@ export function asRawAnsi(segments: Segment[], speakerPrefix = 'Speaker', showTi
 	const hasConfidenceData = hasRealConfidenceData(uniqueSegments)
 	
 	if (!hasConfidenceData) {
-		// No confidence data available - show message once and plain text content
-		const noConfidenceMessage = `CONFIDENCE DATA NOT AVAILABLE
+		// No confidence data available - show only the informational message
+		return `CONFIDENCE DATA NOT AVAILABLE
 
 This transcription was processed without confidence analysis.
 To enable confidence visualization, please re-run the transcription with confidence enabled in your Whisper settings.
 
---- Plain Text Output ---
-
-`
-		
-		// Generate plain text segments
-		const plainSegments = uniqueSegments.map(segment => {
-			const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
-			const timestamp = showTimestamps 
-				? `[${formatTimestamp(segment.start, false, '.', false)} --> ${formatTimestamp(segment.stop, false, '.', false)}]`
-				: ''
-			
-			// Format with timestamp on separate line like other formats
-			const timestampLine = showTimestamps ? `${timestamp}\n` : ''
-			const contentLine = `${speakerText}${segment.text.trim()}`
-			return `${timestampLine}${contentLine}`
-		}).join('\n\n')
-		
-		return `${noConfidenceMessage}${plainSegments}`
+💡 Switch to "Text" format to view the transcript content.`
 	}
 	
 	// Has confidence data - process with ANSI codes
@@ -213,10 +196,10 @@ export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker',
 	const hasConfidenceData = hasRealConfidenceData(uniqueSegments)
 	
 	if (!hasConfidenceData) {
-		// No confidence data available - show message once and plain text content
-		const noConfidenceMessage = `
+		// No confidence data available - show only the informational message
+		return `
 			<div style="
-				padding: 20px;
+				padding: 32px 20px;
 				text-align: center;
 				color: #94a3b8;
 				background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.08) 100%);
@@ -224,75 +207,21 @@ export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker',
 				border-radius: 12px;
 				backdrop-filter: blur(8px);
 				font-size: 14px;
-				line-height: 1.5;
-				margin-bottom: 24px;
+				line-height: 1.6;
 				box-shadow: 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+				max-width: 500px;
+				margin: 40px auto;
 			">
-				<div style="margin-bottom: 8px; font-weight: 600; color: #e2e8f0; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">
+				<div style="margin-bottom: 12px; font-weight: 600; color: #e2e8f0; text-shadow: 0 1px 2px rgba(0,0,0,0.5); font-size: 16px;">
 					Confidence Data Not Available
 				</div>
-				<div>
+				<div style="margin-bottom: 16px;">
 					This transcription was processed without confidence analysis. 
 					To enable confidence visualization, please re-run the transcription with confidence enabled in your Whisper settings.
 				</div>
-			</div>
-		`
-		
-		// Generate plain text segments
-		const plainSegmentHtml = uniqueSegments.map((segment, index) => {
-			const speakerText = segment.speaker 
-				? `<span style="font-weight: 600; color: #60a5fa; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">${formatSpeaker(segment.speaker, speakerPrefix)}</span>` 
-				: ''
-			
-			const timestamp = showTimestamps 
-				? `<span style="color: #94a3b8; font-size: 11px; font-weight: 500; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${formatTimestamp(segment.start, false, '.', false)} --> ${formatTimestamp(segment.stop, false, '.', false)}</span>`
-				: ''
-			
-			const metaInfo = (timestamp || speakerText) ? `
-				<div style="
-					display: flex;
-					align-items: center;
-					gap: 8px;
-					margin-bottom: 8px;
-					padding-bottom: 4px;
-				">
-					${timestamp}
-					${speakerText}
+				<div style="font-size: 12px; color: #64748b; font-style: italic;">
+					💡 Switch to "Text" format to view the transcript content
 				</div>
-			` : ''
-			
-			const divider = index < uniqueSegments.length - 1 ? `
-				<div style="
-					width: 100%;
-					height: 1px;
-					background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%);
-					margin: 20px 0;
-					box-shadow: 0 1px 0 rgba(255,255,255,0.03);
-				"></div>
-			` : ''
-			
-			return `
-				<div style="margin-bottom: 16px;">
-					${metaInfo}
-					<div style="
-						padding-left: ${speakerText ? '12px' : '0'};
-						line-height: 1.7;
-						font-size: 16px;
-						color: #e2e8f0;
-						white-space: pre-wrap;
-						text-align: justify;
-					">
-						${escapeHtml(segment.text.trim())}
-					</div>
-					${divider}
-				</div>
-			`
-		}).join('')
-		
-		return `
-			${noConfidenceMessage}
-			<div class="confidence-transcript" style="padding: 0; margin: 0;">
-				${plainSegmentHtml}
 			</div>
 		`
 	}
