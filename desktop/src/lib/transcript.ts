@@ -129,11 +129,15 @@ export function asRawAnsi(segments: Segment[], speakerPrefix = 'Speaker', showTi
 	return uniqueSegments.map(segment => {
 		const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
 		const timestamp = showTimestamps 
-			? `[${formatTimestamp(segment.start, false, '.', false)}] `
+			? `[${formatTimestamp(segment.start, false, '.', false)} --> ${formatTimestamp(segment.stop, false, '.', false)}]`
 			: ''
 		// Generate actual ANSI escape sequences for confidence colors
 		const textWithAnsi = addAnsiCodes(segment.text)
-		return `${timestamp}${speakerText}${textWithAnsi}`
+		
+		// Format with timestamp on separate line like other formats
+		const timestampLine = showTimestamps ? `${timestamp}\n` : ''
+		const contentLine = `${speakerText}${textWithAnsi}`
+		return `${timestampLine}${contentLine}`
 	}).join('\n\n')
 }
 
@@ -159,7 +163,7 @@ export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker',
 			: ''
 		
 		const timestamp = showTimestamps 
-			? `<span style="color: #94a3b8; font-size: 11px; font-weight: 500; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${formatTimestamp(segment.start, false, '.', false)}</span>`
+			? `<span style="color: #94a3b8; font-size: 11px; font-weight: 500; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${formatTimestamp(segment.start, false, '.', false)} --> ${formatTimestamp(segment.stop, false, '.', false)}</span>`
 			: ''
 		
 		const metaInfo = (timestamp || speakerText) ? `
