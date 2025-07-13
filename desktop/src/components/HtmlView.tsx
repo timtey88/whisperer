@@ -7,6 +7,7 @@ interface HTMLViewProps {
 	segments: Segment[]
 	file: NamedPath
 	preference: Preference
+	showParagraphs?: boolean
 }
 
 export function formatDuration(start: number, stop: number, direction: 'rtl' | 'ltr' = 'ltr') {
@@ -20,7 +21,7 @@ export function formatDuration(start: number, stop: number, direction: 'rtl' | '
 	return duration
 }
 
-export default function HTMLView({ segments, file, preference }: HTMLViewProps) {
+export default function HTMLView({ segments, file, preference, showParagraphs = true }: HTMLViewProps) {
 	segments = mergeSpeakerSegments(segments)
 	const { t } = useTranslation()
 	return (
@@ -52,16 +53,22 @@ export default function HTMLView({ segments, file, preference }: HTMLViewProps) 
 				}}>
 				{file?.name}
 			</h1>
-			{segments.map((segment, index) => (
-				<div key={`${segment.text}-${index}`} className="segment" style={{ 
-					fontSize: '18px', 
-					display: 'flex', 
-					flexDirection: 'column', 
-					paddingTop: '24px',
-					borderBottom: '1px solid #e5e7eb',
-					paddingBottom: '16px'
-				}}>
-					<div style={{ marginBottom: '12px' }}>
+			{segments.map((segment, index) => {
+				// Adjust spacing based on paragraph setting
+				const paddingTop = showParagraphs ? '24px' : '8px'
+				const paddingBottom = showParagraphs ? '16px' : '4px'
+				const marginBottom = showParagraphs ? '12px' : '6px'
+				
+				return (
+					<div key={`${segment.text}-${index}`} className="segment" style={{ 
+						fontSize: '18px', 
+						display: 'flex', 
+						flexDirection: 'column', 
+						paddingTop,
+						borderBottom: '1px solid #e5e7eb',
+						paddingBottom
+					}}>
+						<div style={{ marginBottom }}>
 						{preference.showTimestamps && (
 							<div className="timestamp" style={{ 
 								fontSize: '13px', 
@@ -88,7 +95,8 @@ export default function HTMLView({ segments, file, preference }: HTMLViewProps) 
 						</div>
 					</div>
 				</div>
-			))}
+				)
+			})}
 		</div>
 	)
 }

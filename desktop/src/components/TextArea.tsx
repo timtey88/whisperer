@@ -310,23 +310,27 @@ export default function TextArea({
 				</div>
 
 
-				{/* Timestamp Toggle */}
-				<div className="tooltip tooltip-bottom" data-tip={preference.showTimestamps ? t('common.hide-timestamps') : t('common.show-timestamps')}>
-					<button
-						onMouseDown={() => preference.setShowTimestamps(!preference.showTimestamps)}
-						className={cx('btn btn-square btn-md', preference.showTimestamps && 'btn-active')}>
-						<ClockIcon className="w-6 h-6" />
-					</button>
-				</div>
+				{/* Timestamp Toggle - Only show for formats that support it */}
+				{['normal', 'html', 'pdf', 'docx', 'confidence', 'raw-ansi'].includes(preference.textFormat) && (
+					<div className="tooltip tooltip-bottom" data-tip={preference.showTimestamps ? t('common.hide-timestamps') : t('common.show-timestamps')}>
+						<button
+							onMouseDown={() => preference.setShowTimestamps(!preference.showTimestamps)}
+							className={cx('btn btn-square btn-md', preference.showTimestamps && 'btn-active')}>
+							<ClockIcon className="w-6 h-6" />
+						</button>
+					</div>
+				)}
 
-				{/* Paragraph Toggle */}
-				<div className="tooltip tooltip-bottom" data-tip={preference.showParagraphs ? 'Disable paragraph spacing' : 'Enable paragraph spacing'}>
-					<button
-						onMouseDown={() => preference.setShowParagraphs(!preference.showParagraphs)}
-						className={cx('btn btn-square btn-md', preference.showParagraphs && 'btn-active')}>
-						<ListIcon className="w-6 h-6" />
-					</button>
-				</div>
+				{/* Paragraph Toggle - Only show for formats that support it */}
+				{['normal', 'html', 'pdf', 'docx', 'confidence', 'raw-ansi'].includes(preference.textFormat) && (
+					<div className="tooltip tooltip-bottom" data-tip={preference.showParagraphs ? 'Disable paragraph spacing' : 'Enable paragraph spacing'}>
+						<button
+							onMouseDown={() => preference.setShowParagraphs(!preference.showParagraphs)}
+							className={cx('btn btn-square btn-md', preference.showParagraphs && 'btn-active')}>
+							<ListIcon className="w-6 h-6" />
+						</button>
+					</div>
+				)}
 
 				{/* Separator */}
 				<div className="hidden sm:block w-px h-8 bg-base-300"></div>
@@ -360,7 +364,12 @@ export default function TextArea({
 					</div>
 				) : ['html', 'pdf', 'docx'].includes(preference.textFormat) ? (
 					<div className="h-full overflow-auto">
-						<HTMLView preference={preference} segments={segments ?? []} file={file} />
+						<HTMLView 
+							preference={preference} 
+							segments={segments ?? []} 
+							file={file}
+							showParagraphs={preference.showParagraphs}
+						/>
 					</div>
 				) : (
 					<textarea
