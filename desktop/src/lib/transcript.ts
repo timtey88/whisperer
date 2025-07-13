@@ -81,13 +81,16 @@ export function mergeSpeakerSegments(segments: Segment[]) {
 
 export function asSrt(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true) {
 	segments = mergeSpeakerSegments(segments)
+	// Deduplicate segments based on content and timing to prevent duplicates during transcription
+	const uniqueSegments = deduplicateSegments(segments)
+	
 	if (!showTimestamps) {
 		// Return text-only format when timestamps disabled
-		return segments.reduce((transcript, segment) => {
+		return uniqueSegments.reduce((transcript, segment) => {
 			return transcript + `${segment.speaker ? formatSpeaker(segment.speaker, speakerPrefix) : ''}${segment.text.trim()}\n\n`
 		}, '')
 	}
-	return segments.reduce((transcript, segment, i) => {
+	return uniqueSegments.reduce((transcript, segment, i) => {
 		return (
 			transcript +
 			`${i > 0 ? '\n' : ''}${i + 1}\n` +
@@ -99,13 +102,16 @@ export function asSrt(segments: Segment[], speakerPrefix = 'Speaker', showTimest
 
 export function asVtt(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true) {
 	segments = mergeSpeakerSegments(segments)
+	// Deduplicate segments based on content and timing to prevent duplicates during transcription
+	const uniqueSegments = deduplicateSegments(segments)
+	
 	if (!showTimestamps) {
 		// Return text-only format when timestamps disabled  
-		return segments.reduce((transcript, segment) => {
+		return uniqueSegments.reduce((transcript, segment) => {
 			return transcript + `${segment.speaker ? formatSpeaker(segment.speaker, speakerPrefix) : ''}${segment.text.trim()}\n\n`
 		}, '')
 	}
-	return segments.reduce((transcript, segment) => {
+	return uniqueSegments.reduce((transcript, segment) => {
 		return (
 			transcript +
 			`${formatTimestamp(segment.start, false, '.')} --> ${formatTimestamp(segment.stop, false, '.')}\n` +
@@ -116,17 +122,19 @@ export function asVtt(segments: Segment[], speakerPrefix = 'Speaker', showTimest
 
 export function asText(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = false) {
 	segments = mergeSpeakerSegments(segments)
+	// Deduplicate segments based on content and timing to prevent duplicates during transcription
+	const uniqueSegments = deduplicateSegments(segments)
 	
 	if (!showTimestamps) {
 		// Return text-only format when timestamps disabled (original behavior)
-		return segments.map(segment => {
+		return uniqueSegments.map(segment => {
 			const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
 			return `${speakerText}${segment.text.trim()}`
 		}).join(' ')
 	}
 	
 	// Return format with timestamps on separate lines (like VTT)
-	return segments.map(segment => {
+	return uniqueSegments.map(segment => {
 		const timestamp = `${formatTimestamp(segment.start, false, '.', false)} --> ${formatTimestamp(segment.stop, false, '.', false)}`
 		const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
 		const content = `${speakerText}${segment.text.trim()}`
@@ -155,7 +163,11 @@ export function asRawAnsi(segments: Segment[], speakerPrefix = 'Speaker', showTi
 }
 
 export function asJson(segments: Segment[]) {
-	return JSON.stringify(segments, null, 4)
+	segments = mergeSpeakerSegments(segments)
+	// Deduplicate segments based on content and timing to prevent duplicates during transcription
+	const uniqueSegments = deduplicateSegments(segments)
+	
+	return JSON.stringify(uniqueSegments, null, 4)
 }
 
 export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true) {
