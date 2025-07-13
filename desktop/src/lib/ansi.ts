@@ -40,7 +40,7 @@ const ANSI_COLOR_MAP: Record<string, string> = {
  * @param str - The string to escape
  * @returns HTML-escaped string
  */
-const escapeHtml = (str: string): string =>
+export const escapeHtml = (str: string): string =>
     str.replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
@@ -63,8 +63,16 @@ export const ansiToHtml = (text: string): string => {
     const hasAnsiCodes = trimmedText.includes('\x1b[38;5;')
     
     if (!hasAnsiCodes) {
-        // No ANSI codes present, add basic simulated confidence colors
-        return generateSimulatedConfidenceHtml(trimmedText)
+        // No ANSI codes present - return plain text (format-level handles messaging)
+        return `<div style="
+            white-space: pre-wrap; 
+            text-align: justify; 
+            line-height: 1.8;
+            letter-spacing: 0.3px;
+            word-spacing: 1.2px;
+            color: #e2e8f0;
+            font-weight: 400;
+        ">${escapeHtml(trimmedText)}</div>`
     }
 
     // Match sequences like: \x1b[38;5;166m text \x1b[0m
@@ -105,91 +113,13 @@ export const ansiToHtml = (text: string): string => {
     ">${html}</div>`
 }
 
-/**
- * Generates simulated confidence colors for text without ANSI codes
- * Simple word-level coloring for demonstration purposes
- * 
- * @param text - Plain text to add confidence colors to
- * @returns HTML with simulated confidence colors
- */
-function generateSimulatedConfidenceHtml(text: string): string {
-    // Trim leading and trailing whitespace to prevent extra spaces
-    const trimmedText = text.trim()
-    const words = trimmedText.split(/(\s+|[.!?,:;])/)
-    
-    const coloredWords = words.map(part => {
-        if (/^\s+$/.test(part)) {
-            // Preserve spaces as-is
-            return part
-        } else if (/[.!?,:;]/.test(part)) {
-            // Punctuation in neutral gray with enhanced dark mode styling
-            return `<span style="
-                color: #64748b;
-                font-weight: 500;
-                text-shadow: 0 1px 3px rgba(0,0,0,0.7);
-                filter: brightness(1.1);
-            ">${escapeHtml(part)}</span>`
-        } else if (part.trim().length > 0) {
-            // Words get consistent confidence colors based on their content
-            const colorCode = getWordConfidenceColor(part)
-            const color = ANSI_COLOR_MAP[colorCode] || '#374151'
-            return `<span style="
-                color: ${color};
-                font-weight: 600;
-                text-shadow: 0 1px 3px rgba(0,0,0,0.7), 0 0 0 rgba(255,255,255,0.1);
-                transition: all 0.15s ease;
-                filter: brightness(1.1) saturate(1.2);
-            ">${escapeHtml(part)}</span>`
-        }
-        return escapeHtml(part)
-    })
-    
-    return `<div style="
-        white-space: pre-wrap; 
-        text-align: justify; 
-        line-height: 1.9;
-        letter-spacing: 0.3px;
-        word-spacing: 1.2px;
-        hyphens: auto;
-        text-rendering: optimizeLegibility;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-        font-feature-settings: 'liga' 1, 'kern' 1;
-        color: #e2e8f0;
-    ">${coloredWords.join('')}</div>`
-}
+
 
 /**
- * Generates a consistent confidence color for a word based on its characteristics
- * Uses simple heuristics to assign colors consistently
- */
-function getWordConfidenceColor(word: string): string {
-    const trimmed = word.trim().toLowerCase()
-    
-    // Simple hash-like function for consistency
-    let hash = 0
-    for (let i = 0; i < trimmed.length; i++) {
-        hash = (hash << 5) - hash + trimmed.charCodeAt(i)
-        hash = hash & hash // Convert to 32-bit integer
-    }
-    
-    const absHash = Math.abs(hash)
-    const confidence = absHash % 100
-    
-    // Distribute colors based on word characteristics and hash
-    if (confidence > 85 || trimmed.length <= 3) return '40' // High confidence - short words or high hash
-    if (confidence > 70) return '34' // High confidence - green
-    if (confidence > 50) return '190' // Medium-high - yellow-green  
-    if (confidence > 30) return '220' // Medium - yellow-orange
-    if (confidence > 15) return '208' // Low-medium - orange
-    return '196' // Low confidence - red
-}
-
-/**
- * Generates ANSI color codes for text using the same confidence logic as HTML version
+ * Processes ANSI color codes in text, preserving existing codes or returning plain text
  * 
- * @param text - Plain text to add ANSI color codes to
- * @returns Text with ANSI escape sequences for colors
+ * @param text - Text that may contain ANSI color codes
+ * @returns Text with ANSI codes preserved, or plain text if no codes present
  */
 export const addAnsiCodes = (text: string): string => {
     if (!text) return ''
@@ -202,25 +132,8 @@ export const addAnsiCodes = (text: string): string => {
         return text
     }
 
-    // Add ANSI codes using same logic as generateSimulatedConfidenceHtml
-    const words = text.split(/(\s+|[.!?,:;])/)
-    
-    const coloredWords = words.map(part => {
-        if (/^\s+$/.test(part)) {
-            // Preserve spaces as-is
-            return part
-        } else if (/[.!?,:;]/.test(part)) {
-            // Punctuation in neutral gray (250)
-            return `\x1b[38;5;250m${part}\x1b[0m`
-        } else if (part.trim().length > 0) {
-            // Words get consistent confidence colors based on their content
-            const colorCode = getWordConfidenceColor(part)
-            return `\x1b[38;5;${colorCode}m${part}\x1b[0m`
-        }
-        return part
-    })
-    
-    return coloredWords.join('')
+    // No ANSI codes present - return plain text without adding fake confidence
+    return text.trim()
 }
 
 /**

@@ -1,5 +1,5 @@
 import { formatSpeaker } from './utils'
-import { ansiToHtml, getConfidenceLegend, addAnsiCodes } from './ansi'
+import { ansiToHtml, getConfidenceLegend, addAnsiCodes, escapeHtml } from './ansi'
 
 export interface Duration {
 	secs: number
@@ -147,6 +147,37 @@ export function asRawAnsi(segments: Segment[], speakerPrefix = 'Speaker', showTi
 	// Deduplicate segments based on content and timing to prevent duplicates during transcription
 	const uniqueSegments = deduplicateSegments(segments)
 	
+	// Check if any segment has real confidence data
+	const hasConfidenceData = hasRealConfidenceData(uniqueSegments)
+	
+	if (!hasConfidenceData) {
+		// No confidence data available - show message once and plain text content
+		const noConfidenceMessage = `CONFIDENCE DATA NOT AVAILABLE
+
+This transcription was processed without confidence analysis.
+To enable confidence visualization, please re-run the transcription with confidence enabled in your Whisper settings.
+
+--- Plain Text Output ---
+
+`
+		
+		// Generate plain text segments
+		const plainSegments = uniqueSegments.map(segment => {
+			const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
+			const timestamp = showTimestamps 
+				? `[${formatTimestamp(segment.start, false, '.', false)} --> ${formatTimestamp(segment.stop, false, '.', false)}]`
+				: ''
+			
+			// Format with timestamp on separate line like other formats
+			const timestampLine = showTimestamps ? `${timestamp}\n` : ''
+			const contentLine = `${speakerText}${segment.text.trim()}`
+			return `${timestampLine}${contentLine}`
+		}).join('\n\n')
+		
+		return `${noConfidenceMessage}${plainSegments}`
+	}
+	
+	// Has confidence data - process with ANSI codes
 	return uniqueSegments.map(segment => {
 		const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
 		const timestamp = showTimestamps 
@@ -177,6 +208,94 @@ export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker',
 
 	// Deduplicate segments based on content and timing to prevent duplicates during transcription
 	const uniqueSegments = deduplicateSegments(segments)
+	
+	// Check if any segment has real confidence data
+	const hasConfidenceData = hasRealConfidenceData(uniqueSegments)
+	
+	if (!hasConfidenceData) {
+		// No confidence data available - show message once and plain text content
+		const noConfidenceMessage = `
+			<div style="
+				padding: 20px;
+				text-align: center;
+				color: #94a3b8;
+				background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.08) 100%);
+				border: 1px solid rgba(59, 130, 246, 0.2);
+				border-radius: 12px;
+				backdrop-filter: blur(8px);
+				font-size: 14px;
+				line-height: 1.5;
+				margin-bottom: 24px;
+				box-shadow: 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
+			">
+				<div style="margin-bottom: 8px; font-weight: 600; color: #e2e8f0; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">
+					Confidence Data Not Available
+				</div>
+				<div>
+					This transcription was processed without confidence analysis. 
+					To enable confidence visualization, please re-run the transcription with confidence enabled in your Whisper settings.
+				</div>
+			</div>
+		`
+		
+		// Generate plain text segments
+		const plainSegmentHtml = uniqueSegments.map((segment, index) => {
+			const speakerText = segment.speaker 
+				? `<span style="font-weight: 600; color: #60a5fa; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">${formatSpeaker(segment.speaker, speakerPrefix)}</span>` 
+				: ''
+			
+			const timestamp = showTimestamps 
+				? `<span style="color: #94a3b8; font-size: 11px; font-weight: 500; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${formatTimestamp(segment.start, false, '.', false)} --> ${formatTimestamp(segment.stop, false, '.', false)}</span>`
+				: ''
+			
+			const metaInfo = (timestamp || speakerText) ? `
+				<div style="
+					display: flex;
+					align-items: center;
+					gap: 8px;
+					margin-bottom: 8px;
+					padding-bottom: 4px;
+				">
+					${timestamp}
+					${speakerText}
+				</div>
+			` : ''
+			
+			const divider = index < uniqueSegments.length - 1 ? `
+				<div style="
+					width: 100%;
+					height: 1px;
+					background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%);
+					margin: 20px 0;
+					box-shadow: 0 1px 0 rgba(255,255,255,0.03);
+				"></div>
+			` : ''
+			
+			return `
+				<div style="margin-bottom: 16px;">
+					${metaInfo}
+					<div style="
+						padding-left: ${speakerText ? '12px' : '0'};
+						line-height: 1.7;
+						font-size: 16px;
+						color: #e2e8f0;
+						white-space: pre-wrap;
+						text-align: justify;
+					">
+						${escapeHtml(segment.text.trim())}
+					</div>
+					${divider}
+				</div>
+			`
+		}).join('')
+		
+		return `
+			${noConfidenceMessage}
+			<div class="confidence-transcript" style="padding: 0; margin: 0;">
+				${plainSegmentHtml}
+			</div>
+		`
+	}
 
 	const segmentHtml = uniqueSegments.map((segment, index) => {
 		// Convert ANSI codes to HTML (or display as plain text if no codes present)
@@ -277,4 +396,13 @@ function deduplicateSegments(segments: Segment[]): Segment[] {
 	}
 	
 	return uniqueSegments
+}
+
+/**
+ * Checks if any segment in the array contains real ANSI confidence codes
+ * @param segments - Array of segments to check
+ * @returns true if real confidence data is present, false otherwise
+ */
+function hasRealConfidenceData(segments: Segment[]): boolean {
+	return segments.some(segment => segment.text.includes('\x1b[38;5;'))
 }
