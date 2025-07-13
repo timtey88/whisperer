@@ -1,6 +1,34 @@
 import { formatSpeaker } from './utils'
 import { ansiToHtml, getConfidenceLegend, addAnsiCodes, escapeHtml } from './ansi'
 
+/**
+ * Helper functions for consistent formatting across all transcript formats
+ */
+
+/**
+ * Get the appropriate separator between segments based on paragraph setting
+ */
+function getSegmentSeparator(showParagraphs: boolean, format: 'text' | 'srt' | 'vtt' | 'raw-ansi'): string {
+	if (format === 'text') {
+		return showParagraphs ? '\n\n' : ' '
+	}
+	// For SRT, VTT, and Raw ANSI formats
+	return showParagraphs ? '\n\n' : '\n'
+}
+
+/**
+ * Apply paragraph spacing to HTML content
+ */
+function applyParagraphSpacing(content: string, showParagraphs: boolean): string {
+	if (!showParagraphs) {
+		// Reduce margins and spacing for compact mode
+		return content.replace(/margin: 20px 0/g, 'margin: 8px 0')
+			.replace(/margin-bottom: 16px/g, 'margin-bottom: 8px')
+			.replace(/margin-bottom: 24px/g, 'margin-bottom: 12px')
+	}
+	return content
+}
+
 export interface Duration {
 	secs: number
 	nanos: number
@@ -79,70 +107,75 @@ export function mergeSpeakerSegments(segments: Segment[]) {
 	}
 }
 
-export function asSrt(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true) {
+export function asSrt(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true, showParagraphs = true) {
 	segments = mergeSpeakerSegments(segments)
 	// Deduplicate segments based on content and timing to prevent duplicates during transcription
 	const uniqueSegments = deduplicateSegments(segments)
 	
 	if (!showTimestamps) {
 		// Return text-only format when timestamps disabled
-		return uniqueSegments.reduce((transcript, segment) => {
-			return transcript + `${segment.speaker ? formatSpeaker(segment.speaker, speakerPrefix) : ''}${segment.text.trim()}\n\n`
-		}, '')
+		const separator = getSegmentSeparator(showParagraphs, 'srt')
+		return uniqueSegments.map(segment => {
+			return `${segment.speaker ? formatSpeaker(segment.speaker, speakerPrefix) : ''}${segment.text.trim()}`
+		}).join(separator)
 	}
+	
+	const entrySeparator = showParagraphs ? '\n' : ''
 	return uniqueSegments.reduce((transcript, segment, i) => {
 		return (
 			transcript +
-			`${i > 0 ? '\n' : ''}${i + 1}\n` +
+			`${i > 0 ? entrySeparator : ''}${i + 1}\n` +
 			`${formatTimestamp(segment.start, true, ',')} --> ${formatTimestamp(segment.stop, true, ',')}\n` +
 			`${segment.speaker ? formatSpeaker(segment.speaker, speakerPrefix) : ''}${segment.text.trim().replace('-->', '->')}\n`
 		)
 	}, '')
 }
 
-export function asVtt(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true) {
+export function asVtt(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true, showParagraphs = true) {
 	segments = mergeSpeakerSegments(segments)
 	// Deduplicate segments based on content and timing to prevent duplicates during transcription
 	const uniqueSegments = deduplicateSegments(segments)
 	
 	if (!showTimestamps) {
 		// Return text-only format when timestamps disabled  
-		return uniqueSegments.reduce((transcript, segment) => {
-			return transcript + `${segment.speaker ? formatSpeaker(segment.speaker, speakerPrefix) : ''}${segment.text.trim()}\n\n`
-		}, '')
+		const separator = getSegmentSeparator(showParagraphs, 'vtt')
+		return uniqueSegments.map(segment => {
+			return `${segment.speaker ? formatSpeaker(segment.speaker, speakerPrefix) : ''}${segment.text.trim()}`
+		}).join(separator)
 	}
-	return uniqueSegments.reduce((transcript, segment) => {
-		return (
-			transcript +
-			`${formatTimestamp(segment.start, false, '.')} --> ${formatTimestamp(segment.stop, false, '.')}\n` +
-			`${segment.speaker ? formatSpeaker(segment.speaker, speakerPrefix) : ''}${segment.text.trim().replace('-->', '->')}\n`
-		)
-	}, '')
+	
+	const separator = getSegmentSeparator(showParagraphs, 'vtt')
+	return uniqueSegments.map(segment => {
+		return `${formatTimestamp(segment.start, false, '.')} --> ${formatTimestamp(segment.stop, false, '.')}\n` +
+			`${segment.speaker ? formatSpeaker(segment.speaker, speakerPrefix) : ''}${segment.text.trim().replace('-->', '->')}`
+	}).join('\n' + separator)
 }
 
-export function asText(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = false) {
+export function asText(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = false, showParagraphs = true) {
 	segments = mergeSpeakerSegments(segments)
 	// Deduplicate segments based on content and timing to prevent duplicates during transcription
 	const uniqueSegments = deduplicateSegments(segments)
 	
 	if (!showTimestamps) {
-		// Return text-only format when timestamps disabled (original behavior)
+		// Return text-only format when timestamps disabled
+		const separator = getSegmentSeparator(showParagraphs, 'text')
 		return uniqueSegments.map(segment => {
 			const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
 			return `${speakerText}${segment.text.trim()}`
-		}).join(' ')
+		}).join(separator)
 	}
 	
 	// Return format with timestamps on separate lines (like VTT)
+	const separator = getSegmentSeparator(showParagraphs, 'text')
 	return uniqueSegments.map(segment => {
 		const timestamp = `${formatTimestamp(segment.start, false, '.', false)} --> ${formatTimestamp(segment.stop, false, '.', false)}`
 		const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
 		const content = `${speakerText}${segment.text.trim()}`
 		return `${timestamp}\n${content}`
-	}).join('\n\n')
+	}).join(separator)
 }
 
-export function asRawAnsi(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true) {
+export function asRawAnsi(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true, showParagraphs = true) {
 	segments = mergeSpeakerSegments(segments)
 	// Deduplicate segments based on content and timing to prevent duplicates during transcription
 	const uniqueSegments = deduplicateSegments(segments)
@@ -161,6 +194,7 @@ To enable confidence visualization, please re-run the transcription with confide
 	}
 	
 	// Has confidence data - process with ANSI codes
+	const separator = getSegmentSeparator(showParagraphs, 'raw-ansi')
 	return uniqueSegments.map(segment => {
 		const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
 		const timestamp = showTimestamps 
@@ -173,7 +207,7 @@ To enable confidence visualization, please re-run the transcription with confide
 		const timestampLine = showTimestamps ? `${timestamp}\n` : ''
 		const contentLine = `${speakerText}${textWithAnsi}`
 		return `${timestampLine}${contentLine}`
-	}).join('\n\n')
+	}).join(separator)
 }
 
 export function asJson(segments: Segment[]) {
@@ -184,7 +218,7 @@ export function asJson(segments: Segment[]) {
 	return JSON.stringify(uniqueSegments, null, 4)
 }
 
-export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true) {
+export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true, showParagraphs = true) {
 	if (!segments || segments.length === 0) {
 		return getConfidenceLegend() + '<div style="text-align: center; color: #9ca3af; padding: 40px;">No transcript data available</div>'
 	}
@@ -244,7 +278,7 @@ export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker',
 				display: flex;
 				align-items: center;
 				gap: 8px;
-				margin-bottom: 8px;
+				margin-bottom: ${showParagraphs ? '8px' : '4px'};
 				padding-bottom: 4px;
 			">
 				${timestamp}
@@ -252,20 +286,22 @@ export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker',
 			</div>
 		` : ''
 		
-		// Add subtle divider except for last segment - dark mode version
+		// Add subtle divider except for last segment - adjust spacing based on paragraph setting
+		const dividerMargin = showParagraphs ? '20px 0' : '8px 0'
 		const divider = index < uniqueSegments.length - 1 ? `
 			<div style="
 				width: 100%;
 				height: 1px;
 				background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%);
-				margin: 20px 0;
+				margin: ${dividerMargin};
 				box-shadow: 0 1px 0 rgba(255,255,255,0.03);
 			"></div>
 		` : ''
 		
+		const marginBottom = showParagraphs ? '16px' : '8px'
 		return `
 			<div style="
-				margin-bottom: 16px;
+				margin-bottom: ${marginBottom};
 				transition: all 0.2s ease;
 			">
 				${metaInfo}
@@ -281,6 +317,7 @@ export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker',
 		`
 	}).join('')
 
+	const footerMarginTop = showParagraphs ? '32px' : '16px'
 	return `
 		${getConfidenceLegend()}
 		<div class="confidence-transcript" style="
@@ -290,7 +327,7 @@ export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker',
 			${segmentHtml}
 		</div>
 		<div style="
-			margin-top: 32px;
+			margin-top: ${footerMarginTop};
 			padding: 16px;
 			background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.08) 100%);
 			border: 1px solid rgba(59, 130, 246, 0.2);

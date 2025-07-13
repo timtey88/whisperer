@@ -6,6 +6,7 @@ import { ReactComponent as CopyIcon } from '~/icons/copy.svg'
 import { ReactComponent as DownloadIcon } from '~/icons/download.svg'
 import { ReactComponent as PrintIcon } from '~/icons/print.svg'
 import { ReactComponent as ClockIcon } from '~/icons/clock.svg'
+import { ReactComponent as ListIcon } from '~/icons/list.svg'
 import { Segment, asJson, asSrt, asText, asVtt, asConfidenceHtml, asRawAnsi } from '~/lib/transcript'
 import { ModifyState, NamedPath, cx, openPath } from '~/lib/utils'
 import { TextFormat, formatExtensions } from './FormatSelect'
@@ -150,21 +151,21 @@ export default function TextArea({
 		if (segments) {
 			setText(
 				preference.textFormat === 'vtt'
-					? asVtt(segments, t('common.speaker-prefix'), preference.showTimestamps)
+					? asVtt(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
 					: preference.textFormat === 'srt'
-					? asSrt(segments, t('common.speaker-prefix'), preference.showTimestamps)
+					? asSrt(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
 					: preference.textFormat === 'json'
 					? asJson(segments)
 					: preference.textFormat === 'confidence'
-					? asConfidenceHtml(segments, t('common.speaker-prefix'), preference.showTimestamps)
+					? asConfidenceHtml(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
 					: preference.textFormat === 'raw-ansi'
-					? asRawAnsi(segments, t('common.speaker-prefix'), preference.showTimestamps)
-					: asText(segments, t('common.speaker-prefix'), preference.showTimestamps)
+					? asRawAnsi(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
+					: asText(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
 			)
 		} else {
 			setText('')
 		}
-	}, [preference.textFormat, preference.showTimestamps, segments])
+	}, [preference.textFormat, preference.showTimestamps, preference.showParagraphs, segments])
 
 	async function download(text: string, format: TextFormat, file: NamedPath) {
 		if (format === 'html') {
@@ -315,6 +316,15 @@ export default function TextArea({
 						onMouseDown={() => preference.setShowTimestamps(!preference.showTimestamps)}
 						className={cx('btn btn-square btn-md', preference.showTimestamps && 'btn-active')}>
 						<ClockIcon className="w-6 h-6" />
+					</button>
+				</div>
+
+				{/* Paragraph Toggle */}
+				<div className="tooltip tooltip-bottom" data-tip={preference.showParagraphs ? 'Disable paragraph spacing' : 'Enable paragraph spacing'}>
+					<button
+						onMouseDown={() => preference.setShowParagraphs(!preference.showParagraphs)}
+						className={cx('btn btn-square btn-md', preference.showParagraphs && 'btn-active')}>
+						<ListIcon className="w-6 h-6" />
 					</button>
 				</div>
 
