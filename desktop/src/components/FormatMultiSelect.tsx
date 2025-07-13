@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
 
-export type TextFormat = 'normal' | 'srt' | 'vtt' | 'html' | 'pdf' | 'json' | 'docx'
+export type TextFormat = 'normal' | 'srt' | 'vtt' | 'document' | 'json'
 export type FormatExtensions = {
 	[name in TextFormat]: string
 }
@@ -9,10 +9,8 @@ export const formatExtensions: FormatExtensions = {
 	normal: '.txt',
 	srt: '.srt',
 	vtt: '.vtt',
-	html: '.html',
-	pdf: '.pdf',
+	document: '.html', // Default document extension
 	json: '.json',
-	docx: '.docx',
 }
 
 interface FormatMultiSelectProps {
@@ -40,7 +38,7 @@ export default function FormatMultiSelect({ formats, setFormats }: FormatMultiSe
 			</div>
 
 			<div className="flex flex-wrap gap-2 justify-center">
-				{['normal', 'srt', 'docx', 'vtt', 'json'].map((formatOption) => (
+				{['normal', 'document', 'srt', 'vtt', 'json'].map((formatOption) => (
 					<button
 						key={formatOption}
 						className={`btn btn-xs ${formats.includes(formatOption as TextFormat) ? 'btn-primary' : ''}`}

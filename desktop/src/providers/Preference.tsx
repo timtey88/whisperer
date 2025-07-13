@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core'
 import { ReactNode, createContext, useContext, useEffect, useRef } from 'react'
 import { useLocalStorage } from 'usehooks-ts'
-import { TextFormat } from '~/components/FormatSelect'
+import { TextFormat, ExportFormat } from '~/components/FormatSelect'
 import { ModifyState } from '~/lib/utils'
 import * as os from '@tauri-apps/plugin-os'
 import { supportedLanguages } from '~/lib/i18n'
@@ -34,6 +34,8 @@ export interface Preference {
 	setTextAreaDirection: ModifyState<Direction>
 	textFormat: TextFormat
 	setTextFormat: ModifyState<TextFormat>
+	exportFormat: ExportFormat
+	setExportFormat: ModifyState<ExportFormat>
 	showTimestamps: boolean
 	setShowTimestamps: ModifyState<boolean>
 	showParagraphs: boolean
@@ -201,7 +203,8 @@ export function PreferenceProvider({ children }: { children: ReactNode }) {
 	const [modelPath, setModelPath] = useLocalStorage<string | null>('prefs_model_path', null)
 	const [skippedSetup, setSkippedSetup] = useLocalStorage<boolean>('prefs_skipped_setup', false)
 	const [textAreaDirection, setTextAreaDirection] = useLocalStorage<Direction>('prefs_textarea_direction', 'ltr')
-	const [textFormat, setTextFormat] = useLocalStorage<TextFormat>('prefs_text_format', 'pdf')
+	const [textFormat, setTextFormat] = useLocalStorage<TextFormat>('prefs_text_format', 'document')
+	const [exportFormat, setExportFormat] = useLocalStorage<ExportFormat>('prefs_export_format', 'html')
 	const [showTimestamps, setShowTimestamps] = useLocalStorage<boolean>('prefs_show_timestamps', true)
 	const [showParagraphs, setShowParagraphs] = useLocalStorage<boolean>('prefs_show_paragraphs', true)
 	const isMounted = useRef<boolean>()
@@ -305,6 +308,8 @@ export function PreferenceProvider({ children }: { children: ReactNode }) {
 		setStoreRecordInDocuments,
 		textFormat,
 		setTextFormat,
+		exportFormat,
+		setExportFormat,
 		showTimestamps,
 		setShowTimestamps,
 		showParagraphs,

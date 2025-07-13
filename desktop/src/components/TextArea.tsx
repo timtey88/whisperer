@@ -9,7 +9,8 @@ import { ReactComponent as ClockIcon } from '~/icons/clock.svg'
 import { ReactComponent as ListIcon } from '~/icons/list.svg'
 import { Segment, asJson, asSrt, asText, asVtt, asConfidenceHtml, asRawAnsi } from '~/lib/transcript'
 import { ModifyState, NamedPath, cx, openPath } from '~/lib/utils'
-import { TextFormat, formatExtensions } from './FormatSelect'
+import { TextFormat, ExportFormat, formatExtensions, exportExtensions } from './FormatSelect'
+import DocumentExportMenu from './DocumentExportMenu'
 import { usePreferenceProvider } from '~/providers/Preference'
 import HTMLView from './HtmlView'
 import ConfidenceView from './ConfidenceView'
@@ -156,6 +157,8 @@ export default function TextArea({
 					? asSrt(segments, t('common.speaker-prefix'), true, true) // Always use standard SRT format
 					: preference.textFormat === 'json'
 					? asJson(segments)
+					: preference.textFormat === 'document'
+					? '' // Document format uses HTMLView component, not text
 					: preference.textFormat === 'confidence'
 					? asConfidenceHtml(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
 					: preference.textFormat === 'raw-ansi'
@@ -169,12 +172,78 @@ export default function TextArea({
 		preference.textFormat, 
 		segments,
 		// Only include toggle dependencies for formats that support them
-		...((['normal', 'html', 'pdf', 'docx', 'confidence', 'raw-ansi'].includes(preference.textFormat)) 
+		...((['normal', 'document', 'confidence', 'raw-ansi'].includes(preference.textFormat)) 
 			? [preference.showTimestamps, preference.showParagraphs] 
 			: [])
 	])
 
+	async function exportDocument(exportFormat: ExportFormat) {
+		if (!segments) return
+
+		if (exportFormat === 'pdf') {
+			window.print()
+			return
+		}
+
+		let text = ''
+		let ext = exportExtensions[exportFormat].slice(1)
+
+		if (exportFormat === 'html') {
+			text = document.querySelector('.html')!.outerHTML.replace(`contenteditable="true"`, `contenteditable="false"`)
+		} else if (exportFormat === 'docx') {
+			// DOCX handling will use segments directly
+		}
+
+		const defaultPath = await invoke<NamedPath>('get_save_path', { srcPath: file.path, targetExt: ext })
+		const filePath = await dialog.save({
+			filters: [
+				{
+					name: ``,
+					extensions: [ext],
+				},
+			],
+			canCreateDirectories: true,
+			defaultPath: defaultPath.path,
+		})
+
+		if (filePath) {
+			if (exportFormat === 'docx') {
+				const fileName = await path.basename(filePath)
+				const doc = await toDocx(fileName, segments, preference.textAreaDirection)
+				const arrayBuffer = await doc.arrayBuffer()
+				const buffer = new Uint8Array(arrayBuffer)
+				await fs.writeFile(filePath, buffer)
+			} else if (exportFormat === 'html') {
+				await fs.writeTextFile(filePath, text)
+			}
+
+			toast(
+				(mytoast) => (
+					<span>
+						{`${t('common.save-success')}`}
+						<button
+							onClick={() => {
+								toast.dismiss(mytoast.id)
+								openPath({ name: '', path: filePath ?? '' })
+							}}>
+							<div className="link link-primary ms-5">{defaultPath?.name}</div>
+						</button>
+					</span>
+				),
+				{
+					duration: 5000,
+					position: 'bottom-center',
+					iconTheme: {
+						primary: '#000',
+						secondary: '#fff',
+					},
+				}
+			)
+		}
+	}
+
 	async function download(text: string, format: TextFormat, file: NamedPath) {
+		// Legacy format handling - should not be used with new document format
 		if (format === 'html') {
 			text = document.querySelector('.html')!.outerHTML.replace(`contenteditable="true"`, `contenteditable="false"`)
 		}
@@ -293,7 +362,23 @@ export default function TextArea({
 			<div className="w-full bg-base-200 rounded-tl-lg rounded-tr-lg flex flex-col sm:flex-row items-center gap-3 px-4 py-3 min-h-[64px] border-b border-base-300">
 				{/* Action Buttons Group */}
 				<div className="flex items-center gap-2">
-					{preference.textFormat !== 'confidence' ? (
+					{preference.textFormat === 'document' ? (
+						<>
+							<Copy text={document.querySelector('.html')?.textContent || ''} />
+							<DocumentExportMenu 
+								onExport={(format) => {
+									preference.setExportFormat(format)
+									exportDocument(format)
+								}}
+								defaultFormat={preference.exportFormat}
+							/>
+							<div className="tooltip tooltip-bottom" data-tip={t('common.print-tooltip')}>
+								<button onMouseDown={() => window.print()} className="btn btn-square btn-md">
+									<PrintIcon className="w-6 h-6" />
+								</button>
+							</div>
+						</>
+					) : preference.textFormat !== 'confidence' ? (
 						<>
 							<Copy text={text} />
 							<div className="tooltip tooltip-bottom" data-tip={t('common.save-transcript')}>
@@ -307,18 +392,11 @@ export default function TextArea({
 							Display-only format (no copy/download)
 						</div>
 					)}
-					{['html', 'pdf'].includes(preference.textFormat) && (
-						<div className="tooltip tooltip-bottom" data-tip={t('common.print-tooltip')}>
-							<button onMouseDown={() => window.print()} className="btn btn-square btn-md">
-								<PrintIcon className="w-6 h-6" />
-							</button>
-						</div>
-					)}
 				</div>
 
 
 				{/* Timestamp Toggle - Only show for formats that support it */}
-				{['normal', 'html', 'pdf', 'docx', 'confidence', 'raw-ansi'].includes(preference.textFormat) && (
+				{['normal', 'document', 'confidence', 'raw-ansi'].includes(preference.textFormat) && (
 					<div className="tooltip tooltip-bottom" data-tip={preference.showTimestamps ? t('common.hide-timestamps') : t('common.show-timestamps')}>
 						<button
 							onMouseDown={() => preference.setShowTimestamps(!preference.showTimestamps)}
@@ -329,7 +407,7 @@ export default function TextArea({
 				)}
 
 				{/* Paragraph Toggle - Only show for formats that support it */}
-				{['normal', 'html', 'pdf', 'docx', 'confidence', 'raw-ansi'].includes(preference.textFormat) && (
+				{['normal', 'document', 'confidence', 'raw-ansi'].includes(preference.textFormat) && (
 					<div className="tooltip tooltip-bottom" data-tip={preference.showParagraphs ? 'Disable paragraph spacing' : 'Enable paragraph spacing'}>
 						<button
 							onMouseDown={() => preference.setShowParagraphs(!preference.showParagraphs)}
@@ -369,7 +447,7 @@ export default function TextArea({
 					<div className="h-full overflow-auto">
 						<ConfidenceView confidenceHtml={text} file={file} preference={preference} />
 					</div>
-				) : ['html', 'pdf', 'docx'].includes(preference.textFormat) ? (
+				) : preference.textFormat === 'document' ? (
 					<div className="h-full overflow-auto">
 						<HTMLView 
 							preference={preference} 
