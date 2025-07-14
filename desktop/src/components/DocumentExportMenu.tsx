@@ -62,7 +62,7 @@ export default function DocumentExportMenu({
 
 			{/* Dropdown Menu */}
 			{isOpen && (
-				<div className="absolute top-full mt-1 right-0 z-50 bg-base-100 border border-base-300 rounded-lg shadow-lg min-w-44">
+				<div className="absolute top-full mt-1 left-0 z-50 bg-base-100 border border-base-300 rounded-lg shadow-lg min-w-44">
 					{Object.entries(formatLabels).map(([format, label]) => (
 						<button
 							key={format}

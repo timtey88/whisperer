@@ -57,7 +57,7 @@ export default function TextViewModeSelector({
 
 			{/* Dropdown Menu */}
 			{isOpen && (
-				<div className="absolute top-full mt-1 right-0 z-50 bg-base-100 border border-base-300 rounded-lg shadow-lg min-w-40">
+				<div className="absolute top-full mt-1 left-0 z-50 bg-base-100 border border-base-300 rounded-lg shadow-lg min-w-40">
 					{Object.entries(viewModeLabels).map(([mode, label]) => (
 						<button
 							key={mode}
