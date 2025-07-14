@@ -1,19 +1,24 @@
 import { Dispatch, SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
 
-export type TextFormat = 'normal' | 'srt' | 'vtt' | 'document' | 'json' | 'confidence' | 'raw-ansi'
+export type TextFormat = 'text' | 'srt' | 'vtt' | 'document' | 'json'
 export type ExportFormat = 'html' | 'pdf' | 'docx'
+export type TextViewMode = 'plain' | 'confidence' | 'raw-ansi'
 export type FormatExtensions = {
 	[name in TextFormat]: string
 }
 export const formatExtensions: FormatExtensions = {
-	normal: '.txt',
+	text: '.txt', // Default text extension (can be changed via view mode)
 	srt: '.srt',
 	vtt: '.vtt',
 	document: '.html', // Default document extension (can be changed via export menu)
 	json: '.json',
-	confidence: '.html', // Display only format, no actual download
-	'raw-ansi': '.txt', // Raw ANSI codes preserved in text file
+}
+
+export const textViewExtensions: Record<TextViewMode, string> = {
+	plain: '.txt',
+	confidence: '.html',
+	'raw-ansi': '.txt',
 }
 
 export const exportExtensions: Record<ExportFormat, string> = {
@@ -39,13 +44,11 @@ export default function FormatSelect({ format, setFormat }: FormatSelectProps) {
 					setFormat(event.target.value as unknown as TextFormat)
 				}}
 				className="select select-bordered">
-				<option value="normal">{t('common.mode-text')}</option>
+				<option value="text">{t('common.mode-text')}</option>
 				<option value="document">Document</option>
 				<option value="srt">SRT</option>
 				<option value="vtt">VTT</option>
 				<option value="json">JSON</option>
-				<option value="confidence">Confidence</option>
-				<option value="raw-ansi">Raw ANSI</option>
 			</select>
 		</label>
 	)

@@ -9,8 +9,9 @@ import { ReactComponent as ClockIcon } from '~/icons/clock.svg'
 import { ReactComponent as ListIcon } from '~/icons/list.svg'
 import { Segment, asJson, asSrt, asText, asVtt, asConfidenceHtml, asRawAnsi } from '~/lib/transcript'
 import { ModifyState, NamedPath, cx, openPath } from '~/lib/utils'
-import { TextFormat, ExportFormat, formatExtensions, exportExtensions } from './FormatSelect'
+import { TextFormat, ExportFormat, TextViewMode, formatExtensions, exportExtensions, textViewExtensions } from './FormatSelect'
 import DocumentExportMenu from './DocumentExportMenu'
+import TextViewModeSelector from './TextViewModeSelector'
 import { usePreferenceProvider } from '~/providers/Preference'
 import HTMLView from './HtmlView'
 import ConfidenceView from './ConfidenceView'
@@ -159,10 +160,12 @@ export default function TextArea({
 					? asJson(segments)
 					: preference.textFormat === 'document'
 					? '' // Document format uses HTMLView component, not text
-					: preference.textFormat === 'confidence'
-					? asConfidenceHtml(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
-					: preference.textFormat === 'raw-ansi'
-					? asRawAnsi(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
+					: preference.textFormat === 'text'
+					? (preference.textViewMode === 'confidence'
+						? asConfidenceHtml(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
+						: preference.textViewMode === 'raw-ansi'
+						? asRawAnsi(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
+						: asText(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs))
 					: asText(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
 			)
 		} else {
@@ -170,9 +173,10 @@ export default function TextArea({
 		}
 	}, [
 		preference.textFormat, 
+		preference.textViewMode,
 		segments,
 		// Only include toggle dependencies for formats that support them
-		...((['normal', 'document', 'confidence', 'raw-ansi'].includes(preference.textFormat)) 
+		...((['text', 'document'].includes(preference.textFormat)) 
 			? [preference.showTimestamps, preference.showParagraphs] 
 			: [])
 	])
@@ -243,16 +247,13 @@ export default function TextArea({
 	}
 
 	async function download(text: string, format: TextFormat, file: NamedPath) {
-		// Legacy format handling - should not be used with new document format
-		if (format === 'html') {
-			text = document.querySelector('.html')!.outerHTML.replace(`contenteditable="true"`, `contenteditable="false"`)
+		// Get the appropriate extension based on format and view mode
+		let ext: string
+		if (format === 'text') {
+			ext = textViewExtensions[preference.textViewMode].slice(1)
+		} else {
+			ext = formatExtensions[format].slice(1)
 		}
-		if (format == 'pdf') {
-			window.print()
-			return
-		}
-
-		const ext = formatExtensions[format].slice(1)
 		const defaultPath = await invoke<NamedPath>('get_save_path', { srcPath: file.path, targetExt: ext })
 		const filePath = await dialog.save({
 			filters: [
@@ -374,7 +375,7 @@ export default function TextArea({
 								</button>
 							</div>
 						</>
-					) : preference.textFormat !== 'confidence' ? (
+					) : (preference.textFormat !== 'text' || preference.textViewMode !== 'confidence') ? (
 						<>
 							<Copy text={text} />
 							<div className="tooltip tooltip-bottom" data-tip={t('common.save-transcript')}>
@@ -391,8 +392,17 @@ export default function TextArea({
 				</div>
 
 
+				{/* Text View Mode Selector - Only show for text format */}
+				{preference.textFormat === 'text' && (
+					<TextViewModeSelector 
+						viewMode={preference.textViewMode}
+						onViewModeChange={preference.setTextViewMode}
+						className="ml-2"
+					/>
+				)}
+
 				{/* Timestamp Toggle - Only show for formats that support it */}
-				{['normal', 'document', 'confidence', 'raw-ansi'].includes(preference.textFormat) && (
+				{['text', 'document'].includes(preference.textFormat) && (
 					<div className="tooltip tooltip-bottom" data-tip={preference.showTimestamps ? t('common.hide-timestamps') : t('common.show-timestamps')}>
 						<button
 							onMouseDown={() => preference.setShowTimestamps(!preference.showTimestamps)}
@@ -403,7 +413,7 @@ export default function TextArea({
 				)}
 
 				{/* Paragraph Toggle - Only show for formats that support it */}
-				{['normal', 'document', 'confidence', 'raw-ansi'].includes(preference.textFormat) && (
+				{['text', 'document'].includes(preference.textFormat) && (
 					<div className="tooltip tooltip-bottom" data-tip={preference.showParagraphs ? 'Disable paragraph spacing' : 'Enable paragraph spacing'}>
 						<button
 							onMouseDown={() => preference.setShowParagraphs(!preference.showParagraphs)}
@@ -425,19 +435,17 @@ export default function TextArea({
 							preference.setTextFormat(event.target.value as unknown as TextFormat)
 						}}
 						className="select select-bordered select-sm w-full sm:w-32">
-						<option value="normal">{t('common.mode-text')}</option>
+						<option value="text">{t('common.mode-text')}</option>
 						<option value="document">Document</option>
 						<option value="srt">SRT</option>
 						<option value="vtt">VTT</option>
 						<option value="json">JSON</option>
-						<option value="confidence">Confidence</option>
-						<option value="raw-ansi">Raw ANSI</option>
 					</select>
 				</div>
 			</div>
 			{/* Content Area with proper flex growth */}
 			<div className="flex-1 overflow-hidden rounded-bl-lg rounded-br-lg">
-				{preference.textFormat === 'confidence' ? (
+				{preference.textFormat === 'text' && preference.textViewMode === 'confidence' ? (
 					<div className="h-full overflow-auto">
 						<ConfidenceView confidenceHtml={text} file={file} preference={preference} />
 					</div>
@@ -464,7 +472,7 @@ export default function TextArea({
 						dir={preference.textAreaDirection}
 						className={cx(
 							"textarea textarea-bordered w-full h-full text-lg rounded-none border-0 focus:outline-none resize-none bg-base-100",
-							preference.textFormat === 'raw-ansi' ? 'font-mono text-sm' : 'text-justify'
+							(preference.textFormat === 'text' && preference.textViewMode === 'raw-ansi') ? 'font-mono text-sm' : 'text-justify'
 						)}
 						style={{ lineHeight: '1.6', padding: '20px' }}
 					/>
