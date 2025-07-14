@@ -42,17 +42,6 @@ export default function TextViewModeSelector({
 		'raw-ansi': 'Raw ANSI'
 	}
 
-	const viewModeIcons: Record<TextViewMode, string> = {
-		plain: '📝',
-		confidence: '🌈',
-		'raw-ansi': '⚡'
-	}
-
-	const viewModeDescriptions: Record<TextViewMode, string> = {
-		plain: 'Standard text format',
-		confidence: 'Color-coded confidence levels',
-		'raw-ansi': 'ANSI escape sequences'
-	}
 
 	return (
 		<div className={cx('relative', className)} ref={dropdownRef}>
@@ -62,28 +51,23 @@ export default function TextViewModeSelector({
 				className="btn btn-sm"
 				title={`View: ${viewModeLabels[viewMode]}`}
 			>
-				<span className="text-sm">{viewModeIcons[viewMode]}</span>
-				<span className="hidden sm:inline ml-1 text-xs">{viewModeLabels[viewMode]}</span>
+				<span className="text-xs">{viewModeLabels[viewMode]}</span>
 				<ChevronDownIcon className={cx('w-3 h-3 ml-1 transition-transform', isOpen && 'rotate-180')} />
 			</button>
 
 			{/* Dropdown Menu */}
 			{isOpen && (
-				<div className="absolute top-full mt-1 right-0 z-50 bg-base-100 border border-base-300 rounded-lg shadow-lg min-w-48">
+				<div className="absolute top-full mt-1 right-0 z-50 bg-base-100 border border-base-300 rounded-lg shadow-lg min-w-40">
 					{Object.entries(viewModeLabels).map(([mode, label]) => (
 						<button
 							key={mode}
 							onMouseDown={() => handleViewModeSelect(mode as TextViewMode)}
 							className={cx(
-								'w-full text-left px-4 py-3 hover:bg-base-200 first:rounded-t-lg last:rounded-b-lg flex items-center gap-3',
+								'w-full text-left px-3 py-2 hover:bg-base-200 first:rounded-t-lg last:rounded-b-lg text-sm',
 								viewMode === mode && 'bg-primary/10 text-primary'
 							)}
 						>
-							<span className="text-lg">{viewModeIcons[mode as TextViewMode]}</span>
-							<div className="flex flex-col">
-								<span className="font-medium">{label}</span>
-								<span className="text-xs opacity-70">{viewModeDescriptions[mode as TextViewMode]}</span>
-							</div>
+							{label}
 						</button>
 					))}
 				</div>
