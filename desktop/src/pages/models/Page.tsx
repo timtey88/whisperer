@@ -53,7 +53,7 @@ export default function ModelsPage() {
 					<h1 className="text-2xl font-bold flex-1">{t('common.models-management')}</h1>
 					<button
 						onClick={vm.manualRefresh}
-						disabled={vm.loading || vm.isRefreshing}
+						disabled={vm.isRefreshing}
 						className="btn btn-ghost btn-sm"
 						title={t('common.refresh')}
 					>
@@ -195,7 +195,7 @@ export default function ModelsPage() {
 				</div>
 
 				{/* Empty state */}
-				{vm.filteredModels.length === 0 && vm.models.length > 0 && !vm.loading && (
+				{vm.filteredModels.length === 0 && vm.models.length > 0 && (
 					<div className="text-center py-12">
 						<p className="text-lg opacity-60">
 							{vm.activeTab === 'models' ? t('common.no-models-found') : t('common.no-encoders-found')}

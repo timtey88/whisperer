@@ -32,7 +32,6 @@ export function viewModel() {
 	const [downloadingModels, setDownloadingModels] = useState<Set<string>>(new Set())
 	const [deletingModels, setDeletingModels] = useState<Set<string>>(new Set())
 	const [downloadProgress, setDownloadProgress] = useState<Map<string, DownloadProgress>>(new Map())
-	const [loading, setLoading] = useState(true)
 	const [isRefreshing, setIsRefreshing] = useState(false)
 
 	// Load models and check download status
@@ -47,7 +46,7 @@ export function viewModel() {
 		const startInterval = () => {
 			if (interval) clearInterval(interval)
 			interval = setInterval(() => {
-				if (!loading && !isRefreshing && document.visibilityState === 'visible') {
+				if (!isRefreshing && document.visibilityState === 'visible') {
 					refreshModelStatus()
 				}
 			}, 5000) // Check every 5 seconds when active
@@ -56,7 +55,7 @@ export function viewModel() {
 		const handleVisibilityChange = () => {
 			if (document.visibilityState === 'visible') {
 				// Page became visible - refresh immediately and start interval
-				if (!loading && !isRefreshing) {
+				if (!isRefreshing) {
 					refreshModelStatus()
 				}
 				startInterval()
@@ -81,7 +80,7 @@ export function viewModel() {
 			if (interval) clearInterval(interval)
 			document.removeEventListener('visibilitychange', handleVisibilityChange)
 		}
-	}, [loading, isRefreshing])
+	}, [isRefreshing])
 
 	// Function to refresh model status without reloading all model data
 	async function refreshModelStatus() {
@@ -126,8 +125,6 @@ export function viewModel() {
 
 	async function loadModels() {
 		try {
-			setLoading(true)
-			
 			// Combine regular models and encoders with category tags
 			const regularModels = (modelsData as ModelInfo[]).map(model => ({ 
 				...model, 
@@ -159,8 +156,6 @@ export function viewModel() {
 			setModels(modelsWithStatus)
 		} catch (error) {
 			console.error('Failed to load models:', error)
-		} finally {
-			setLoading(false)
 		}
 	}
 
@@ -306,7 +301,6 @@ export function viewModel() {
 		downloadingModels,
 		deletingModels,
 		downloadProgress,
-		loading,
 		isRefreshing,
 		downloadModel,
 		deleteModel,
