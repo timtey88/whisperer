@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { ReactComponent as CpuIcon } from '~/icons/cpu.svg'
 import { ReactComponent as GpuIcon } from '~/icons/gpu.svg'
 import { ReactComponent as MicrophoneIcon } from '~/icons/microphone.svg'
+import { ReactComponent as ClockIcon } from '~/icons/clock.svg'
 import { cx } from '~/lib/utils'
 import { ModelOptions } from '~/providers/Preference'
 import AnimatedLoader from './AnimatedLoader'
@@ -39,18 +40,78 @@ export default function EnhancedProgressPanel({
 	const { t } = useTranslation()
 	const [startTime] = useState(Date.now())
 	const [elapsedTime, setElapsedTime] = useState(0)
+	const [progressHistory, setProgressHistory] = useState<Array<{time: number, progress: number}>>([])
 
 	const modelInfo = getModelInfo(modelPath ?? null)
 	const languageName = getLanguageDisplayName(modelOptions.lang)
 
 
-	// Update elapsed time
+	// Update elapsed time and track progress
 	useEffect(() => {
 		const interval = setInterval(() => {
 			setElapsedTime(Date.now() - startTime)
+			
+			// Track progress history for speed calculation
+			if (progress && progress > 0) {
+				setProgressHistory(prev => {
+					const newEntry = { time: Date.now(), progress }
+					// Keep only last 10 entries for calculation
+					const updated = [...prev, newEntry].slice(-10)
+					return updated
+				})
+			}
 		}, 1000)
 		return () => clearInterval(interval)
-	}, [startTime])
+	}, [startTime, progress])
+
+	// Calculate estimated time remaining and processing speed
+	const getProgressStats = () => {
+		if (!progress || progress <= 0 || progressHistory.length < 2) {
+			return { estimatedTimeRemaining: null, processingSpeed: null }
+		}
+
+		// Calculate average progress per second from recent history
+		const recentHistory = progressHistory.slice(-5) // Use last 5 data points
+		if (recentHistory.length < 2) {
+			return { estimatedTimeRemaining: null, processingSpeed: null }
+		}
+
+		const timeSpan = recentHistory[recentHistory.length - 1].time - recentHistory[0].time
+		const progressSpan = recentHistory[recentHistory.length - 1].progress - recentHistory[0].progress
+		
+		if (timeSpan <= 0 || progressSpan <= 0) {
+			return { estimatedTimeRemaining: null, processingSpeed: null }
+		}
+
+		const progressPerSecond = (progressSpan / timeSpan) * 1000 // Convert to per second
+		const remainingProgress = 100 - progress
+		const estimatedTimeRemaining = remainingProgress / progressPerSecond
+
+		return {
+			estimatedTimeRemaining: estimatedTimeRemaining > 0 ? estimatedTimeRemaining : null,
+			processingSpeed: progressPerSecond
+		}
+	}
+
+	const { estimatedTimeRemaining, processingSpeed } = getProgressStats()
+
+	// Format time in human readable format
+	const formatTime = (seconds: number) => {
+		if (seconds < 60) return `${Math.round(seconds)}s`
+		if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${Math.round(seconds % 60)}s`
+		return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
+	}
+
+	// Get phase display info
+	const getPhaseInfo = (phase: string) => {
+		const phaseMap: Record<string, { label: string; color: string }> = {
+			'Loading Model': { label: 'Loading Model', color: 'text-blue-500' },
+			'Processing Audio': { label: 'Processing Audio', color: 'text-green-500' },
+			'Transcribing': { label: 'Transcribing Speech', color: 'text-purple-500' },
+			'Finalizing': { label: 'Finalizing Results', color: 'text-orange-500' },
+		}
+		return phaseMap[phase] || { label: phase, color: 'text-primary' }
+	}
 
 
 
@@ -98,21 +159,82 @@ export default function EnhancedProgressPanel({
 						{/* Progress Info */}
 						<div className="bg-base-100/60 backdrop-blur-sm p-4 rounded-xl border border-base-300/30 shadow-sm hover:shadow-md transition-all duration-300">
 							<h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
-								<span className="text-primary">⚡</span>
+								<ClockIcon className="w-4 h-4 text-primary" />
 								Progress Info
 							</h4>
-							<div className="flex items-center justify-between mb-2">
-								<span className="text-sm font-medium animate-pulse">{currentPhase}</span>
-								<span className="text-sm font-mono font-semibold text-primary">
+							
+							{/* Phase and Progress Row */}
+							<div className="flex items-center justify-between mb-3">
+								<div className="flex items-center gap-2">
+									<span className={cx("text-sm font-medium", getPhaseInfo(currentPhase).color)}>
+										{getPhaseInfo(currentPhase).label}
+									</span>
+									<div className="flex gap-1">
+										{[0, 1, 2].map((i) => (
+											<div
+												key={i}
+												className={cx(
+													"w-1 h-1 rounded-full animate-pulse",
+													getPhaseInfo(currentPhase).color.replace('text-', 'bg-')
+												)}
+												style={{ animationDelay: `${i * 0.2}s` }}
+											/>
+										))}
+									</div>
+								</div>
+								<span className="text-lg font-mono font-bold text-primary">
 									{progress ? `${Math.round(progress)}%` : '0%'}
 								</span>
 							</div>
 
-							<div className="w-full bg-base-300/50 rounded-full h-2 overflow-hidden">
+							{/* Enhanced Progress Bar */}
+							<div className="w-full bg-base-300/50 rounded-full h-3 overflow-hidden mb-3 relative">
 								<div
-									className="bg-gradient-to-r from-primary to-primary/80 h-2 rounded-full transition-all duration-500 ease-out"
+									className={cx(
+										"h-3 rounded-full transition-all duration-700 ease-out relative overflow-hidden",
+										"bg-gradient-to-r from-primary via-primary to-primary/80"
+									)}
 									style={{ width: `${progress || 0}%` }}
-								></div>
+								>
+									{/* Animated shine effect */}
+									<div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+								</div>
+								{/* Progress segments */}
+								<div className="absolute inset-0 flex">
+									{[25, 50, 75].map((segment) => (
+										<div
+											key={segment}
+											className="flex-1 border-r border-base-300/30 last:border-r-0"
+											style={{ 
+												background: (progress || 0) >= segment 
+													? 'transparent' 
+													: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px)'
+											}}
+										/>
+									))}
+								</div>
+							</div>
+
+							{/* Stats Row */}
+							<div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-xs">
+								<div className="flex items-center justify-between sm:justify-start gap-1">
+									<span className="opacity-60">Time Left:</span>
+									<span className="font-medium">
+										{estimatedTimeRemaining && estimatedTimeRemaining < 3600 
+											? formatTime(estimatedTimeRemaining)
+											: '∞'
+										}
+									</span>
+								</div>
+								<div className="flex items-center justify-between sm:justify-start gap-1">
+									<span className="opacity-60">Speed:</span>
+									<span className="font-medium">
+										{processingSpeed && processingSpeed > 0.01
+											? `${processingSpeed.toFixed(1)}%/s`
+											: '—'
+										}
+									</span>
+								</div>
 							</div>
 						</div>
 					</div>
