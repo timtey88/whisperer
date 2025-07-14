@@ -40,9 +40,9 @@ export default function DocumentExportMenu({
 	}
 
 	const formatLabels: Record<ExportFormat, string> = {
-		html: 'Save as HTML',
-		pdf: 'Print as PDF',
-		docx: 'Save as DOCX'
+		html: 'HTML',
+		pdf: 'PDF',
+		docx: 'DOCX'
 	}
 
 	const formatIcons: Record<ExportFormat, string> = {
@@ -58,10 +58,10 @@ export default function DocumentExportMenu({
 				<button
 					onMouseDown={() => handleExport(selectedFormat)}
 					className="btn btn-md rounded-r-none border-r-0"
-					title={formatLabels[selectedFormat]}
+					title={`Save as ${formatLabels[selectedFormat]}`}
 				>
 					<DownloadIcon className="w-5 h-5" />
-					<span className="hidden sm:inline ml-1">{formatLabels[selectedFormat].split(' ')[0]}</span>
+					<span className="hidden sm:inline ml-1">Save As</span>
 				</button>
 				
 				{/* Dropdown Toggle */}

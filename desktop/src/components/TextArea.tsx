@@ -430,9 +430,7 @@ export default function TextArea({
 						}}
 						className="select select-bordered select-sm w-full sm:w-32">
 						<option value="normal">{t('common.mode-text')}</option>
-						<option value="html">HTML</option>
-						<option value="pdf">PDF</option>
-						<option value="docx">DOCX</option>
+						<option value="document">Document</option>
 						<option value="srt">SRT</option>
 						<option value="vtt">VTT</option>
 						<option value="json">JSON</option>
