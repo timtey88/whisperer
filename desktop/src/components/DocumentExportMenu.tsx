@@ -7,18 +7,15 @@ import { cx } from '~/lib/utils'
 
 interface DocumentExportMenuProps {
 	onExport: (format: ExportFormat) => void
-	defaultFormat?: ExportFormat
 	className?: string
 }
 
 export default function DocumentExportMenu({ 
 	onExport, 
-	defaultFormat = 'html',
 	className = ''
 }: DocumentExportMenuProps) {
 	const { t } = useTranslation()
 	const [isOpen, setIsOpen] = useState(false)
-	const [selectedFormat, setSelectedFormat] = useState<ExportFormat>(defaultFormat)
 	const dropdownRef = useRef<HTMLDivElement>(null)
 
 	// Close dropdown when clicking outside
@@ -34,7 +31,6 @@ export default function DocumentExportMenu({
 	}, [])
 
 	const handleExport = (format: ExportFormat) => {
-		setSelectedFormat(format)
 		setIsOpen(false)
 		onExport(format)
 	}
@@ -53,26 +49,16 @@ export default function DocumentExportMenu({
 
 	return (
 		<div className={cx('relative', className)} ref={dropdownRef}>
-			{/* Main Export Button */}
-			<div className="flex">
-				<button
-					onMouseDown={() => handleExport(selectedFormat)}
-					className="btn btn-md rounded-r-none border-r-0"
-					title={`Save as ${formatLabels[selectedFormat]}`}
-				>
-					<DownloadIcon className="w-5 h-5" />
-					<span className="hidden sm:inline ml-1">Save As</span>
-				</button>
-				
-				{/* Dropdown Toggle */}
-				<button
-					onMouseDown={() => setIsOpen(!isOpen)}
-					className="btn btn-md rounded-l-none border-l-0 px-2"
-					title="Export options"
-				>
-					<ChevronDownIcon className={cx('w-4 h-4 transition-transform', isOpen && 'rotate-180')} />
-				</button>
-			</div>
+			{/* Single Dropdown Button */}
+			<button
+				onMouseDown={() => setIsOpen(!isOpen)}
+				className="btn btn-md"
+				title="Export document"
+			>
+				<DownloadIcon className="w-5 h-5" />
+				<span className="hidden sm:inline ml-1">Save As</span>
+				<ChevronDownIcon className={cx('w-4 h-4 ml-1 transition-transform', isOpen && 'rotate-180')} />
+			</button>
 
 			{/* Dropdown Menu */}
 			{isOpen && (
@@ -81,10 +67,7 @@ export default function DocumentExportMenu({
 						<button
 							key={format}
 							onMouseDown={() => handleExport(format as ExportFormat)}
-							className={cx(
-								'w-full text-left px-4 py-2 hover:bg-base-200 first:rounded-t-lg last:rounded-b-lg flex items-center gap-3',
-								selectedFormat === format && 'bg-primary/10 text-primary'
-							)}
+							className="w-full text-left px-4 py-2 hover:bg-base-200 first:rounded-t-lg last:rounded-b-lg flex items-center gap-3"
 						>
 							<span className="text-lg">{formatIcons[format as ExportFormat]}</span>
 							<span className="font-medium">{label}</span>

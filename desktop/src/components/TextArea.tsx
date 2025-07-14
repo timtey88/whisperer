@@ -366,11 +366,7 @@ export default function TextArea({
 						<>
 							<Copy text={document.querySelector('.html')?.textContent || ''} />
 							<DocumentExportMenu 
-								onExport={(format) => {
-									preference.setExportFormat(format)
-									exportDocument(format)
-								}}
-								defaultFormat={preference.exportFormat}
+								onExport={exportDocument}
 							/>
 							<div className="tooltip tooltip-bottom" data-tip={t('common.print-tooltip')}>
 								<button onMouseDown={() => window.print()} className="btn btn-square btn-md">
