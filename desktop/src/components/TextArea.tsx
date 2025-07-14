@@ -21,18 +21,26 @@ import * as clipboard from '@tauri-apps/plugin-clipboard-manager'
 import { toDocx } from '~/lib/docx'
 import { path } from '@tauri-apps/api'
 
-function Copy({ text }: { text: string }) {
+function Copy({ text, disabled = false }: { text: string; disabled?: boolean }) {
 	const { t } = useTranslation()
 	const [info, setInfo] = useState(t('common.copy'))
 
 	function onCopy() {
+		if (disabled) return
 		clipboard.writeText(text)
 		setInfo(t('common.copied'))
 		setTimeout(() => setInfo(t('common.copy')), 1000)
 	}
+	
+	const tooltipText = disabled ? 'Copy not available for this view' : info
+	
 	return (
-		<div className="tooltip tooltip-bottom" data-tip={info}>
-			<button className="btn btn-square btn-md" onMouseDown={onCopy}>
+		<div className="tooltip tooltip-bottom" data-tip={tooltipText}>
+			<button 
+				className={cx("btn btn-square btn-md", disabled && "btn-disabled")} 
+				onMouseDown={onCopy}
+				disabled={disabled}
+			>
 				<CopyIcon className="h-6 w-6" />
 			</button>
 		</div>
@@ -375,19 +383,29 @@ export default function TextArea({
 								</button>
 							</div>
 						</>
-					) : (preference.textFormat !== 'text' || preference.textViewMode !== 'confidence') ? (
+					) : (
 						<>
-							<Copy text={text} />
-							<div className="tooltip tooltip-bottom" data-tip={t('common.save-transcript')}>
-								<button onMouseDown={() => download(text, preference.textFormat, file)} className="btn btn-square btn-md">
+							<Copy 
+								text={text} 
+								disabled={preference.textFormat === 'text' && preference.textViewMode === 'confidence'} 
+							/>
+							<div className="tooltip tooltip-bottom" data-tip={
+								preference.textFormat === 'text' && preference.textViewMode === 'confidence'
+									? 'Download not available for this view'
+									: t('common.save-transcript')
+							}>
+								<button 
+									onMouseDown={() => download(text, preference.textFormat, file)} 
+									className={cx(
+										"btn btn-square btn-md",
+										preference.textFormat === 'text' && preference.textViewMode === 'confidence' && "btn-disabled"
+									)}
+									disabled={preference.textFormat === 'text' && preference.textViewMode === 'confidence'}
+								>
 									<DownloadIcon className="h-6 w-6" />
 								</button>
 							</div>
 						</>
-					) : (
-						<div className="text-sm text-gray-500 px-3 py-2 bg-base-300 rounded-lg">
-							Display-only format (no copy/download)
-						</div>
 					)}
 				</div>
 
