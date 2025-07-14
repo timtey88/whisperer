@@ -8,6 +8,7 @@ import { cx } from '~/lib/utils'
 import { ModelOptions } from '~/providers/Preference'
 import AnimatedLoader from './AnimatedLoader'
 import AnimatedTimer from './AnimatedTimer'
+import AnimatedNumber from './AnimatedNumber'
 import {
 	getModelInfo,
 	getLanguageDisplayName,
@@ -182,9 +183,12 @@ export default function EnhancedProgressPanel({
 										))}
 									</div>
 								</div>
-								<span className="text-lg font-mono font-bold text-primary">
-									{progress ? `${Math.round(progress)}%` : '0%'}
-								</span>
+								<AnimatedNumber 
+									value={progress || 0}
+									suffix="%"
+									className="text-lg font-mono font-bold text-primary"
+									decimalPlaces={0}
+								/>
 							</div>
 
 							{/* Enhanced Progress Bar */}
@@ -199,18 +203,23 @@ export default function EnhancedProgressPanel({
 									{/* Animated shine effect */}
 									<div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
 								</div>
-								{/* Progress segments */}
-								<div className="absolute inset-0 flex">
+								{/* Subtle progress indicators (no visible borders) */}
+								<div className="absolute inset-0 flex pointer-events-none">
 									{[25, 50, 75].map((segment) => (
 										<div
 											key={segment}
-											className="flex-1 border-r border-base-300/30 last:border-r-0"
-											style={{ 
-												background: (progress || 0) >= segment 
-													? 'transparent' 
-													: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px)'
-											}}
-										/>
+											className="flex-1 relative"
+										>
+											{/* Only show subtle marker at the segment boundary */}
+											<div 
+												className="absolute top-0 right-0 w-px h-full opacity-20"
+												style={{
+													background: (progress || 0) >= segment 
+														? 'transparent' 
+														: 'rgba(255,255,255,0.3)'
+												}}
+											/>
+										</div>
 									))}
 								</div>
 							</div>
@@ -228,12 +237,16 @@ export default function EnhancedProgressPanel({
 								</div>
 								<div className="flex items-center justify-between sm:justify-start gap-1">
 									<span className="opacity-60">Speed:</span>
-									<span className="font-medium">
-										{processingSpeed && processingSpeed > 0.01
-											? `${processingSpeed.toFixed(1)}%/s`
-											: '—'
-										}
-									</span>
+									{processingSpeed && processingSpeed > 0.01 ? (
+										<AnimatedNumber 
+											value={processingSpeed}
+											suffix="%/s"
+											className="font-medium"
+											decimalPlaces={1}
+										/>
+									) : (
+										<span className="font-medium">—</span>
+									)}
 								</div>
 							</div>
 						</div>
