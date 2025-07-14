@@ -90,7 +90,7 @@ export default function AnimatedNumber({
         return
       }
 
-      setDisplayValue(currentValue)
+      setDisplayValue(Math.round(currentValue))
       animationRef.current = setTimeout(animateStep, incrementDelay)
     }
 
@@ -113,9 +113,11 @@ export default function AnimatedNumber({
       const char = numberString[i]
       const isStatic = char === '.' || char === '%' || char === '/' || char === 's'
       
-      // Create unique keys for each position and character
-      // This ensures proper animation when digits change
-      const key = isStatic ? `static-${char}-${i}` : `digit-${char}-${i}-${displayValue}`
+      // Create stable keys based on position only for non-static characters
+      // This prevents blinking during rapid counting
+      const key = isStatic 
+        ? `static-${char}-${i}` 
+        : `digit-position-${i}`
       
       digits.push({
         character: char,
@@ -129,31 +131,28 @@ export default function AnimatedNumber({
 
   const digitAnimation = {
     initial: { 
-      y: -15, 
+      y: -8, 
       opacity: 0,
-      rotateX: -90,
-      scale: 0.9
+      scale: 0.95
     },
     animate: { 
       y: 0, 
       opacity: 1,
-      rotateX: 0,
       scale: 1,
       transition: {
         type: "spring",
-        stiffness: 600,
-        damping: 30,
-        duration: 0.3
+        stiffness: 800,
+        damping: 35,
+        duration: 0.1
       }
     },
     exit: { 
-      y: 15, 
+      y: 8, 
       opacity: 0,
-      rotateX: 90,
-      scale: 0.9,
+      scale: 0.95,
       transition: {
-        duration: 0.15,
-        ease: "easeInOut"
+        duration: 0.05,
+        ease: "easeOut"
       }
     }
   }
