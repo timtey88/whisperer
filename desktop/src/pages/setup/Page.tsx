@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next'
 import { viewModel } from './viewModel'
 import { AnimatedDownload } from '~/components/AnimatedDownload'
 import AnimatedLoader from '~/components/AnimatedLoader'
-import LoadingText from '~/components/LoadingText'
 
 function App() {
 	const { t } = useTranslation()
@@ -42,7 +41,6 @@ function App() {
 				{vm.downloadProgress === 0 && (
 					<div className="flex flex-col items-center justify-center space-y-8">
 						<AnimatedLoader size={120} strokeWidth={6} />
-						<LoadingText />
 					</div>
 				)}
 

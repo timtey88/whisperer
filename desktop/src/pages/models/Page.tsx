@@ -8,7 +8,6 @@ import Layout from '~/components/Layout'
 import { cx } from '~/lib/utils'
 import { viewModel } from './viewModel'
 import AnimatedLoader from '~/components/AnimatedLoader'
-import LoadingText from '~/components/LoadingText'
 import { AnimatedDownload } from '~/components/AnimatedDownload'
 
 export default function ModelsPage() {
@@ -207,15 +206,6 @@ export default function ModelsPage() {
 					</div>
 				)}
 
-				{/* Loading state */}
-				{vm.loading && (
-					<div className="text-center py-12">
-						<AnimatedLoader size={120} strokeWidth={6} />
-						<div className="mt-8">
-							<LoadingText />
-						</div>
-					</div>
-				)}
 			</div>
 		</Layout>
 	)
