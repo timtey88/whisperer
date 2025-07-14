@@ -5,6 +5,7 @@ import { ReactComponent as SettingsIcon } from '~/icons/settings.svg'
 import { ReactComponent as ResetIcon } from '~/icons/reset.svg'
 import Layout from '~/components/Layout'
 import { InfoTooltip } from '~/components/InfoTooltip'
+import CustomSelect, { SelectOption } from '~/components/CustomSelect'
 import { cx } from '~/lib/utils'
 import { usePreferenceProvider } from '~/providers/Preference'
 import { useState } from 'react'
@@ -15,6 +16,23 @@ export default function ModelOptionsPage() {
 	const navigate = useNavigate()
 	const preference = usePreferenceProvider()
 	const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['basic']))
+
+	// Language options for the language selector
+	const languageOptions: SelectOption[] = [
+		{ value: 'auto', label: t('common.auto-detect') },
+		{ value: 'en', label: 'English' },
+		{ value: 'es', label: 'Spanish' },
+		{ value: 'fr', label: 'French' },
+		{ value: 'de', label: 'German' },
+		{ value: 'it', label: 'Italian' },
+		{ value: 'pt', label: 'Portuguese' },
+		{ value: 'ru', label: 'Russian' },
+		{ value: 'ja', label: 'Japanese' },
+		{ value: 'ko', label: 'Korean' },
+		{ value: 'zh', label: 'Chinese' },
+		{ value: 'ar', label: 'Arabic' },
+		{ value: 'hi', label: 'Hindi' },
+	]
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const toggleSection = (section: string) => {
@@ -175,28 +193,16 @@ export default function ModelOptionsPage() {
 					description={t('common.basic-options-description')}
 				>
 					<OptionRow label={t('common.language')} optionKey="language">
-						<select
+						<CustomSelect
+							options={languageOptions}
 							value={preference.modelOptions.lang}
-							onChange={(e) => preference.setModelOptions({
+							onChange={(value) => preference.setModelOptions({
 								...preference.modelOptions,
-								lang: e.target.value
+								lang: value
 							})}
-							className="select select-bordered select-sm w-48"
-						>
-							<option value="auto">{t('common.auto-detect')}</option>
-							<option value="en">English</option>
-							<option value="es">Spanish</option>
-							<option value="fr">French</option>
-							<option value="de">German</option>
-							<option value="it">Italian</option>
-							<option value="pt">Portuguese</option>
-							<option value="ru">Russian</option>
-							<option value="ja">Japanese</option>
-							<option value="ko">Korean</option>
-							<option value="zh">Chinese</option>
-							<option value="ar">Arabic</option>
-							<option value="hi">Hindi</option>
-						</select>
+							size="sm"
+							className="w-48"
+						/>
 					</OptionRow>
 
 					<OptionRow label={t('common.temperature')} optionKey="temperature">

@@ -18,6 +18,7 @@ import * as os from '@tauri-apps/plugin-os'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ModifyState } from '~/lib/utils'
+import CustomSelect, { SelectOption } from '~/components/CustomSelect'
 
 interface SettingsPageProps {
 	setVisible?: ModifyState<boolean>
@@ -29,6 +30,24 @@ export default function SettingsPage({ setVisible }: SettingsPageProps = {}) {
 	const navigate = useNavigate()
 
 	const [platform, setPlatform] = useState<os.Platform | null>(null)
+
+	// Create language options for CustomSelect
+	const languageOptions: SelectOption[] = Object.entries(supportedLanguages).map(([code, name]) => ({
+		value: code,
+		label: code === i18n.language ? t(`language.${name}`) : name
+	}))
+
+	// Create theme options for CustomSelect
+	const themeOptions: SelectOption[] = config.themes.map((theme) => ({
+		value: theme,
+		label: t(`common.${theme}`)
+	}))
+
+	// Create model options for CustomSelect
+	const modelOptions: SelectOption[] = vm.models.map((model) => ({
+		value: model.path,
+		label: model.name
+	}))
 
 	// Redirect to home page with settings tab active if accessed directly
 	useEffect(() => {
@@ -55,36 +74,24 @@ export default function SettingsPage({ setVisible }: SettingsPageProps = {}) {
 				<div className="label">
 					<span className="label-text">{t('common.language')}</span>
 				</div>
-				<select
-					onChange={(e) => {
-						vm.preference.setDisplayLanguage(e.target.value)
-					}}
+				<CustomSelect
+					options={languageOptions}
 					value={vm.preference.displayLanguage}
-					className="select select-bordered capitalize">
-					<option>{t('common.select-language')}</option>
-					{Object.entries(supportedLanguages).map(([code, name], index) => (
-						<option key={index} value={code}>
-							{code === i18n.language ? t(`language.${name}`) : name}
-						</option>
-					))}
-				</select>
+					onChange={(value) => vm.preference.setDisplayLanguage(value)}
+					placeholder={t('common.select-language')}
+				/>
 			</label>
 
 			<label className="form-control w-full">
 				<div className="label">
 					<span className="label-text">{t('common.theme')}</span>
 				</div>
-				<select
-					onChange={(e) => vm.preference.setTheme(e.target.value as any)}
+				<CustomSelect
+					options={themeOptions}
 					value={vm.preference.theme}
-					className="select select-bordered capitalize">
-					<option>{t('common.select-theme')}</option>
-					{config.themes.map((theme) => (
-						<option key={theme} value={theme}>
-							{t(`common.${theme}`)}
-						</option>
-					))}
-				</select>
+					onChange={(value) => vm.preference.setTheme(value as any)}
+					placeholder={t('common.select-theme')}
+				/>
 			</label>
 
 			<div className="label mt-5">
@@ -119,18 +126,14 @@ export default function SettingsPage({ setVisible }: SettingsPageProps = {}) {
 				</span>
 			</div>
 			<div className="flex flex-col gap-1">
-				<select
-					onFocus={vm.loadModels}
-					onChange={(e) => vm.preference.setModelPath(e.target.value)}
-					value={vm.preference.modelPath ?? undefined}
-					className="select select-bordered flex-1">
-					<option>{t('common.select-model')}</option>
-					{vm.models.map((model, index) => (
-						<option key={index} value={model.path}>
-							{model.name}
-						</option>
-					))}
-				</select>
+				<div onFocus={vm.loadModels}>
+					<CustomSelect
+						options={modelOptions}
+						value={vm.preference.modelPath ?? ''}
+						onChange={(value) => vm.preference.setModelPath(value)}
+						placeholder={t('common.select-model')}
+					/>
+				</div>
 
 				<button onMouseDown={() => navigate('/models')} className="btn bg-base-300 text-base-content">
 					{t('common.manage-models')}

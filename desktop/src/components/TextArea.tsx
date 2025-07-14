@@ -12,6 +12,7 @@ import { ModifyState, NamedPath, cx, openPath } from '~/lib/utils'
 import { TextFormat, ExportFormat, TextViewMode, formatExtensions, exportExtensions, textViewExtensions } from './FormatSelect'
 import DocumentExportMenu from './DocumentExportMenu'
 import TextViewModeSelector from './TextViewModeSelector'
+import CustomSelect, { SelectOption } from './CustomSelect'
 import { usePreferenceProvider } from '~/providers/Preference'
 import HTMLView from './HtmlView'
 import ConfidenceView from './ConfidenceView'
@@ -150,6 +151,15 @@ export default function TextArea({
 	const { t } = useTranslation()
 	const preference = usePreferenceProvider()
 	const [text, setText] = useState('')
+
+	// Format options for CustomSelect
+	const formatOptions: SelectOption[] = [
+		{ value: 'text', label: t('common.mode-text') },
+		{ value: 'document', label: 'Document' },
+		{ value: 'srt', label: 'SRT' },
+		{ value: 'vtt', label: 'VTT' },
+		{ value: 'json', label: 'JSON' },
+	]
 	const [replaceBoxVisible, setReplaceBoxVisible] = useState(false)
 	const replaceBoxVisibleRef = useRef(false)
 	const [replaceBoxPos, setReplaceBoxPos] = useState({ x: 0, y: 0 })
@@ -447,18 +457,13 @@ export default function TextArea({
 				{/* Format Selector */}
 				<div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto justify-center sm:justify-end">
 					<span className="text-sm font-medium opacity-70">{t('common.format')}:</span>
-					<select
+					<CustomSelect
+						options={formatOptions}
 						value={preference.textFormat}
-						onChange={(event) => {
-							preference.setTextFormat(event.target.value as unknown as TextFormat)
-						}}
-						className="select select-bordered select-sm w-full sm:w-32">
-						<option value="text">{t('common.mode-text')}</option>
-						<option value="document">Document</option>
-						<option value="srt">SRT</option>
-						<option value="vtt">VTT</option>
-						<option value="json">JSON</option>
-					</select>
+						onChange={(value) => preference.setTextFormat(value as TextFormat)}
+						size="sm"
+						className="w-full sm:w-32"
+					/>
 				</div>
 			</div>
 			{/* Content Area with proper flex growth */}

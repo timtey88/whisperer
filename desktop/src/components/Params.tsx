@@ -4,6 +4,7 @@ import { ReactComponent as ChevronDown } from '~/icons/chevron-down.svg'
 import { ReactComponent as ChevronUp } from '~/icons/chevron-up.svg'
 import { ModifyState, cx } from '~/lib/utils'
 import { InfoTooltip } from './InfoTooltip'
+import CustomSelect, { SelectOption } from './CustomSelect'
 import { ModelOptions as IModelOptions, usePreferenceProvider } from '~/providers/Preference'
 import { useToastProvider } from '~/providers/Toast'
 import { listen } from '@tauri-apps/api/event'
@@ -204,10 +205,13 @@ export default function ModelOptions({ options, setOptions }: ParamsProps) {
 						<div className="label">
 							<span className="label-text flex items-center gap-1">{t('common.llm-platform')}</span>
 						</div>
-						<select
-							value={llmConfig?.platform}
-							onChange={(e) => {
-								const newPlatform = e.target.value
+						<CustomSelect
+							options={[
+								{ value: 'claude', label: 'Claude' },
+								{ value: 'ollama', label: 'Ollama' }
+							]}
+							value={llmConfig?.platform || 'claude'}
+							onChange={(newPlatform) => {
 								if (newPlatform === 'ollama') {
 									const defaultConfig = defaultOllamaConfig()
 									setLlmConfig({
@@ -226,13 +230,7 @@ export default function ModelOptions({ options, setOptions }: ParamsProps) {
 									})
 								}
 							}}
-							className="select select-bordered capitalize">
-							{['claude', 'ollama'].map((name) => (
-								<option key={name} value={name}>
-									{name}
-								</option>
-							))}
-						</select>
+						/>
 					</label>
 
 					{llmConfig?.platform === 'claude' && (
@@ -452,19 +450,16 @@ export default function ModelOptions({ options, setOptions }: ParamsProps) {
 							</span>
 						</div>
 
-						<select
+						<CustomSelect
+							options={[
+								{ value: 'beam search', label: 'Beam Search' },
+								{ value: 'greedy', label: 'Greedy' }
+							]}
 							value={preference.modelOptions.sampling_strategy}
-							onChange={(e) => {
-								const newStrategy = e.target.value
+							onChange={(newStrategy) => {
 								preference.setModelOptions({ ...preference.modelOptions, sampling_strategy: newStrategy as 'greedy' | 'beam search' })
 							}}
-							className="select select-bordered capitalize">
-							{['beam search', 'greedy'].map((name) => (
-								<option key={name} value={name}>
-									{name}
-								</option>
-							))}
-						</select>
+						/>
 					</label>
 					<label className="form-control w-full">
 						<div className="label">
