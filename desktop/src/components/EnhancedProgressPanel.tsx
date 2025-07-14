@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ReactComponent as CpuIcon } from '~/icons/cpu.svg'
 import { ReactComponent as GpuIcon } from '~/icons/gpu.svg'
@@ -42,6 +42,9 @@ export default function EnhancedProgressPanel({
 	const [startTime] = useState(Date.now())
 	const [elapsedTime, setElapsedTime] = useState(0)
 	const [progressHistory, setProgressHistory] = useState<Array<{time: number, progress: number}>>([])
+	const [displayProgress, setDisplayProgress] = useState(0)
+	const [isProgressAnimating, setIsProgressAnimating] = useState(false)
+	const progressAnimationRef = useRef<number | null>(null)
 
 	const modelInfo = getModelInfo(modelPath ?? null)
 	const languageName = getLanguageDisplayName(modelOptions.lang)
@@ -104,6 +107,59 @@ export default function EnhancedProgressPanel({
 	}
 
 	// Get phase display info
+	// Cleanup progress animation on unmount
+	useEffect(() => {
+		return () => {
+			if (progressAnimationRef.current) {
+				clearTimeout(progressAnimationRef.current)
+			}
+		}
+	}, [])
+
+	// Smooth progress bar animation
+	useEffect(() => {
+		const targetProgress = progress || 0
+		
+		if (targetProgress === displayProgress || isProgressAnimating) {
+			return
+		}
+
+		// Don't animate tiny changes
+		if (Math.abs(targetProgress - displayProgress) < 0.5) {
+			setDisplayProgress(targetProgress)
+			return
+		}
+
+		setIsProgressAnimating(true)
+		const startProgress = displayProgress
+		const difference = targetProgress - startProgress
+		
+		// Animation settings - faster for smaller jumps
+		const incrementDelay = 30 // 30ms between steps for smooth animation
+		const increment = difference > 0 ? Math.max(0.3, Math.abs(difference) / 100) : Math.min(-0.3, difference / 100)
+		
+		let currentProgress = startProgress
+
+		const animateProgressStep = () => {
+			currentProgress += increment
+
+			// Ensure we don't overshoot the target
+			if ((increment > 0 && currentProgress >= targetProgress) || 
+				(increment < 0 && currentProgress <= targetProgress)) {
+				setDisplayProgress(targetProgress)
+				setIsProgressAnimating(false)
+				return
+			}
+
+			setDisplayProgress(currentProgress)
+			progressAnimationRef.current = setTimeout(animateProgressStep, incrementDelay)
+		}
+
+		// Start progress animation
+		progressAnimationRef.current = setTimeout(animateProgressStep, incrementDelay)
+
+	}, [progress, displayProgress, isProgressAnimating])
+
 	const getPhaseInfo = (phase: string) => {
 		const phaseMap: Record<string, { label: string; color: string }> = {
 			'Loading Model': { label: 'Loading Model', color: 'text-blue-500' },
@@ -184,10 +240,12 @@ export default function EnhancedProgressPanel({
 									</div>
 								</div>
 								<AnimatedNumber 
-									value={progress || 0}
+									value={displayProgress}
 									suffix="%"
 									className="text-lg font-mono font-bold text-primary"
 									decimalPlaces={0}
+									animationSpeed="fast"
+									maxDuration={1500}
 								/>
 							</div>
 
@@ -198,7 +256,7 @@ export default function EnhancedProgressPanel({
 										"h-3 rounded-full transition-all duration-700 ease-out relative overflow-hidden",
 										"bg-gradient-to-r from-primary via-primary to-primary/80"
 									)}
-									style={{ width: `${progress || 0}%` }}
+									style={{ width: `${displayProgress}%` }}
 								>
 									{/* Animated shine effect */}
 									<div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
@@ -214,7 +272,7 @@ export default function EnhancedProgressPanel({
 											<div 
 												className="absolute top-0 right-0 w-px h-full opacity-20"
 												style={{
-													background: (progress || 0) >= segment 
+													background: displayProgress >= segment 
 														? 'transparent' 
 														: 'rgba(255,255,255,0.3)'
 												}}
