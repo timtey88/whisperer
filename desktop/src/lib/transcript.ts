@@ -1,5 +1,4 @@
 import { formatSpeaker } from './utils'
-import { ansiToHtml, getConfidenceLegend, addAnsiCodes } from './ansi'
 
 /**
  * Helper functions for consistent formatting across all transcript formats
@@ -8,11 +7,11 @@ import { ansiToHtml, getConfidenceLegend, addAnsiCodes } from './ansi'
 /**
  * Get the appropriate separator between segments based on paragraph setting
  */
-function getSegmentSeparator(showParagraphs: boolean, format: 'text' | 'srt' | 'vtt' | 'raw-ansi'): string {
+function getSegmentSeparator(showParagraphs: boolean, format: 'text' | 'srt' | 'vtt'): string {
 	if (format === 'text') {
 		return showParagraphs ? '\n\n' : ' '
 	}
-	// For SRT, VTT, and Raw ANSI formats
+	// For SRT and VTT formats
 	return showParagraphs ? '\n\n' : '\n'
 }
 
@@ -179,49 +178,6 @@ export function asText(segments: Segment[], speakerPrefix = 'Speaker', showTimes
 	}).join(separator)
 }
 
-export function asRawAnsi(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true, showParagraphs = true) {
-	segments = mergeSpeakerSegments(segments)
-	// Deduplicate segments based on content and timing to prevent duplicates during transcription
-	const uniqueSegments = deduplicateSegments(segments)
-	
-	// Check if any segment has real confidence data
-	const hasConfidenceData = hasRealConfidenceData(uniqueSegments)
-	
-	if (!hasConfidenceData) {
-		// No confidence data available - show only the informational message
-		return `CONFIDENCE DATA NOT AVAILABLE
-
-This transcription was processed without confidence analysis.
-To enable confidence visualization, please re-run the transcription with confidence enabled in your Whisper settings.
-
-💡 Switch to "Text" format to view the transcript content.`
-	}
-	
-	// Has confidence data - process with ANSI codes
-	if (!showParagraphs) {
-		// Combine all segments into one continuous ANSI text block
-		return uniqueSegments.map(segment => {
-			const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
-			const textWithAnsi = addAnsiCodes(segment.text)
-			return `${speakerText}${textWithAnsi}`
-		}).join(' ') // Single space, no line breaks or timestamps
-	}
-	
-	const separator = getSegmentSeparator(showParagraphs, 'raw-ansi')
-	return uniqueSegments.map(segment => {
-		const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, speakerPrefix)}: ` : ''
-		const timestamp = showTimestamps 
-			? `[${formatTimestamp(segment.start, false, '.', false)} --> ${formatTimestamp(segment.stop, false, '.', false)}]`
-			: ''
-		// Generate actual ANSI escape sequences for confidence colors
-		const textWithAnsi = addAnsiCodes(segment.text)
-		
-		// Format with timestamp on separate line like other formats
-		const timestampLine = showTimestamps ? `${timestamp}\n` : ''
-		const contentLine = `${speakerText}${textWithAnsi}`
-		return `${timestampLine}${contentLine}`
-	}).join(separator)
-}
 
 export function asJson(segments: Segment[]) {
 	segments = mergeSpeakerSegments(segments)
@@ -231,167 +187,6 @@ export function asJson(segments: Segment[]) {
 	return JSON.stringify(uniqueSegments, null, 4)
 }
 
-export function asConfidenceHtml(segments: Segment[], speakerPrefix = 'Speaker', showTimestamps = true, showParagraphs = true) {
-	if (!segments || segments.length === 0) {
-		return getConfidenceLegend() + '<div style="text-align: center; color: #9ca3af; padding: 40px;">No transcript data available</div>'
-	}
-
-	// Deduplicate segments based on content and timing to prevent duplicates during transcription
-	const uniqueSegments = deduplicateSegments(segments)
-	
-	// Check if any segment has real confidence data
-	const hasConfidenceData = hasRealConfidenceData(uniqueSegments)
-	
-	if (!hasConfidenceData) {
-		// No confidence data available - show only the informational message
-		return `
-			<div style="
-				padding: 32px 20px;
-				text-align: center;
-				color: #94a3b8;
-				background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.08) 100%);
-				border: 1px solid rgba(59, 130, 246, 0.2);
-				border-radius: 12px;
-				backdrop-filter: blur(8px);
-				font-size: 14px;
-				line-height: 1.6;
-				box-shadow: 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
-				max-width: 500px;
-				margin: 40px auto;
-			">
-				<div style="margin-bottom: 12px; font-weight: 600; color: #e2e8f0; text-shadow: 0 1px 2px rgba(0,0,0,0.5); font-size: 16px;">
-					Confidence Data Not Available
-				</div>
-				<div style="margin-bottom: 16px;">
-					This transcription was processed without confidence analysis. 
-					To enable confidence visualization, please re-run the transcription with confidence enabled in your Whisper settings.
-				</div>
-				<div style="font-size: 12px; color: #64748b; font-style: italic;">
-					💡 Switch to "Text" format to view the transcript content
-				</div>
-			</div>
-		`
-	}
-
-	if (!showParagraphs) {
-		// Combine all segments into single continuous confidence HTML block
-		const combinedHtml = uniqueSegments
-			.map(segment => ansiToHtml(segment.text).replace(/<\/?div[^>]*>/g, '')) // Remove div wrappers
-			.join(' ')
-		
-		return `
-			${getConfidenceLegend()}
-			<div class="confidence-transcript" style="
-				padding: 0;
-				margin: 0;
-			">
-				<div style="
-					line-height: 1.7;
-					font-size: 16px;
-					text-align: justify;
-				">
-					${combinedHtml}
-				</div>
-			</div>
-			<div style="
-				margin-top: 16px;
-				padding: 16px;
-				background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.08) 100%);
-				border: 1px solid rgba(59, 130, 246, 0.2);
-				border-radius: 12px;
-				font-size: 12px;
-				color: #94a3b8;
-				line-height: 1.5;
-				backdrop-filter: blur(8px);
-				box-shadow: 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
-			">
-				<strong style="color: #e2e8f0; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">Display-Only Format:</strong> Shows transcription confidence levels through colors.
-			</div>
-		`
-	}
-
-	const segmentHtml = uniqueSegments.map((segment, index) => {
-		// Convert ANSI codes to HTML (or display as plain text if no codes present)
-		const coloredHtml = ansiToHtml(segment.text)
-		
-		// Format speaker and timestamp in dark mode floating style
-		const speakerText = segment.speaker 
-			? `<span style="font-weight: 600; color: #60a5fa; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">${formatSpeaker(segment.speaker, speakerPrefix)}</span>` 
-			: ''
-		
-		const timestamp = showTimestamps 
-			? `<span style="color: #94a3b8; font-size: 11px; font-weight: 500; text-shadow: 0 1px 2px rgba(0,0,0,0.3);">${formatTimestamp(segment.start, false, '.', false)} --> ${formatTimestamp(segment.stop, false, '.', false)}</span>`
-			: ''
-		
-		const metaInfo = (timestamp || speakerText) ? `
-			<div style="
-				display: flex;
-				align-items: center;
-				gap: 8px;
-				margin-bottom: ${showParagraphs ? '8px' : '4px'};
-				padding-bottom: 4px;
-			">
-				${timestamp}
-				${speakerText}
-			</div>
-		` : ''
-		
-		// Add subtle divider except for last segment - adjust spacing based on paragraph setting
-		const dividerMargin = showParagraphs ? '20px 0' : '8px 0'
-		const divider = index < uniqueSegments.length - 1 ? `
-			<div style="
-				width: 100%;
-				height: 1px;
-				background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%);
-				margin: ${dividerMargin};
-				box-shadow: 0 1px 0 rgba(255,255,255,0.03);
-			"></div>
-		` : ''
-		
-		const marginBottom = showParagraphs ? '16px' : '8px'
-		return `
-			<div style="
-				margin-bottom: ${marginBottom};
-				transition: all 0.2s ease;
-			">
-				${metaInfo}
-				<div style="
-					padding-left: ${speakerText ? '12px' : '0'};
-					line-height: 1.7;
-					font-size: 16px;
-				">
-					${coloredHtml}
-				</div>
-				${divider}
-			</div>
-		`
-	}).join('')
-
-	const footerMarginTop = showParagraphs ? '32px' : '16px'
-	return `
-		${getConfidenceLegend()}
-		<div class="confidence-transcript" style="
-			padding: 0;
-			margin: 0;
-		">
-			${segmentHtml}
-		</div>
-		<div style="
-			margin-top: ${footerMarginTop};
-			padding: 16px;
-			background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.08) 100%);
-			border: 1px solid rgba(59, 130, 246, 0.2);
-			border-radius: 12px;
-			font-size: 12px;
-			color: #94a3b8;
-			line-height: 1.5;
-			backdrop-filter: blur(8px);
-			box-shadow: 0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1);
-		">
-			<strong style="color: #e2e8f0; text-shadow: 0 1px 2px rgba(0,0,0,0.5);">Display-Only Format:</strong> Shows transcription confidence levels through colors.
-		</div>
-	`
-}
 
 /**
  * Removes duplicate segments that can occur during real-time transcription
@@ -414,11 +209,3 @@ function deduplicateSegments(segments: Segment[]): Segment[] {
 	return uniqueSegments
 }
 
-/**
- * Checks if any segment in the array contains real ANSI confidence codes
- * @param segments - Array of segments to check
- * @returns true if real confidence data is present, false otherwise
- */
-function hasRealConfidenceData(segments: Segment[]): boolean {
-	return segments.some(segment => segment.text.includes('\x1b[38;5;'))
-}

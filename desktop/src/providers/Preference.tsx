@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core'
 import { ReactNode, createContext, useContext, useEffect, useRef } from 'react'
 import { useLocalStorage } from 'usehooks-ts'
-import { TextFormat, ExportFormat, TextViewMode } from '~/components/FormatSelect'
+import { TextFormat, ExportFormat, TextViewMode } from '~/lib/formats'
 import { ModifyState } from '~/lib/utils'
 import * as os from '@tauri-apps/plugin-os'
 import { supportedLanguages } from '~/lib/i18n'

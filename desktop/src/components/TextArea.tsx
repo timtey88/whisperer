@@ -7,15 +7,13 @@ import { ReactComponent as DownloadIcon } from '~/icons/download.svg'
 import { ReactComponent as PrintIcon } from '~/icons/print.svg'
 import { ReactComponent as ClockIcon } from '~/icons/clock.svg'
 import { ReactComponent as ListIcon } from '~/icons/list.svg'
-import { Segment, asJson, asSrt, asText, asVtt, asConfidenceHtml, asRawAnsi } from '~/lib/transcript'
+import { Segment, asJson, asSrt, asText, asVtt } from '~/lib/transcript'
 import { ModifyState, NamedPath, cx, openPath } from '~/lib/utils'
 import { TextFormat, ExportFormat, formatExtensions, exportExtensions, textViewExtensions } from './FormatSelect'
 import DocumentExportMenu from './DocumentExportMenu'
-import TextViewModeSelector from './TextViewModeSelector'
 import CustomSelect, { SelectOption } from './CustomSelect'
 import { usePreferenceProvider } from '~/providers/Preference'
 import HTMLView from './HtmlView'
-import ConfidenceView from './ConfidenceView'
 import toast from 'react-hot-toast'
 import { invoke } from '@tauri-apps/api/core'
 import * as clipboard from '@tauri-apps/plugin-clipboard-manager'
@@ -179,11 +177,7 @@ export default function TextArea({
 					: preference.textFormat === 'document'
 					? '' // Document format uses HTMLView component, not text
 					: preference.textFormat === 'text'
-					? (preference.textViewMode === 'confidence'
-						? asConfidenceHtml(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
-						: preference.textViewMode === 'raw-ansi'
-						? asRawAnsi(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
-						: asText(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs))
+					? asText(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
 					: asText(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
 			)
 		} else {
@@ -191,7 +185,6 @@ export default function TextArea({
 		}
 	}, [
 		preference.textFormat, 
-		preference.textViewMode,
 		segments,
 		// Only include toggle dependencies for formats that support them
 		...((['text', 'document'].includes(preference.textFormat)) 
@@ -397,20 +390,13 @@ export default function TextArea({
 						<>
 							<Copy 
 								text={text} 
-								disabled={preference.textFormat === 'text' && preference.textViewMode === 'confidence'} 
+								disabled={false} 
 							/>
-							<div className="tooltip tooltip-bottom" data-tip={
-								preference.textFormat === 'text' && preference.textViewMode === 'confidence'
-									? 'Download not available for this view'
-									: t('common.save-transcript')
-							}>
+							<div className="tooltip tooltip-bottom" data-tip={t('common.save-transcript')}>
 								<button 
 									onMouseDown={() => download(text, preference.textFormat, file)} 
-									className={cx(
-										"btn btn-square btn-md",
-										preference.textFormat === 'text' && preference.textViewMode === 'confidence' && "btn-disabled"
-									)}
-									disabled={preference.textFormat === 'text' && preference.textViewMode === 'confidence'}
+									className="btn btn-square btn-md"
+									disabled={false}
 								>
 									<DownloadIcon className="h-6 w-6" />
 								</button>
@@ -420,14 +406,6 @@ export default function TextArea({
 				</div>
 
 
-				{/* Text View Mode Selector - Only show for text format */}
-				{preference.textFormat === 'text' && (
-					<TextViewModeSelector 
-						viewMode={preference.textViewMode}
-						onViewModeChange={preference.setTextViewMode}
-						className="ml-2"
-					/>
-				)}
 
 				{/* Timestamp Toggle - Only show for formats that support it */}
 				{['text', 'document'].includes(preference.textFormat) && (
@@ -468,11 +446,7 @@ export default function TextArea({
 			</div>
 			{/* Content Area with proper flex growth */}
 			<div className="flex-1 overflow-hidden rounded-bl-lg rounded-br-lg">
-				{preference.textFormat === 'text' && preference.textViewMode === 'confidence' ? (
-					<div className="h-full overflow-auto">
-						<ConfidenceView confidenceHtml={text} file={file} preference={preference} />
-					</div>
-				) : preference.textFormat === 'document' ? (
+				{preference.textFormat === 'document' ? (
 					<div className="h-full overflow-auto">
 						<HTMLView 
 							preference={preference} 
@@ -493,10 +467,7 @@ export default function TextArea({
 						onChange={(e) => setText(e.target.value)}
 						value={text}
 						dir={preference.textAreaDirection}
-						className={cx(
-							"textarea textarea-bordered w-full h-full text-lg rounded-none border-0 focus:outline-none resize-none bg-base-100",
-							(preference.textFormat === 'text' && preference.textViewMode === 'raw-ansi') ? 'font-mono text-sm' : 'text-justify'
-						)}
+						className="textarea textarea-bordered w-full h-full text-lg rounded-none border-0 focus:outline-none resize-none bg-base-100 text-justify"
 						style={{ lineHeight: '1.6', padding: '20px' }}
 					/>
 				)}

@@ -1,7 +1,7 @@
 // Shared type definitions for text formats and export formats
 export type TextFormat = 'text' | 'srt' | 'vtt' | 'document' | 'json' | 'docx'
 export type ExportFormat = 'html' | 'pdf' | 'docx'
-export type TextViewMode = 'plain' | 'confidence' | 'raw-ansi'
+export type TextViewMode = 'plain'
 
 export type FormatExtensions = {
 	[name in TextFormat]: string
@@ -23,7 +23,5 @@ export const exportExtensions: Record<ExportFormat, string> = {
 }
 
 export const textViewExtensions: Record<TextViewMode, string> = {
-	plain: '.txt',
-	confidence: '.html',
-	'raw-ansi': '.txt'
+	plain: '.txt'
 }
