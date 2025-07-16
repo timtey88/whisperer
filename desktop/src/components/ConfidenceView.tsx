@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next'
 import { NamedPath } from '~/lib/utils'
 import { Preference } from '~/providers/Preference'
 
@@ -8,8 +7,7 @@ interface ConfidenceViewProps {
 	preference: Preference
 }
 
-export default function ConfidenceView({ confidenceHtml, file, preference }: ConfidenceViewProps) {
-	const { t } = useTranslation()
+export default function ConfidenceView({ confidenceHtml, preference }: ConfidenceViewProps) {
 	
 	return (
 		<div

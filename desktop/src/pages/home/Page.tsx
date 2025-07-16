@@ -10,7 +10,6 @@ import ModelOptions from '~/components/Params';
 import TextArea from '~/components/TextArea';
 import AudioInput from '~/pages/home/AudioInput';
 import AudioPlayer from './AudioPlayer';
-import ProgressPanel from './ProgressPanel';
 import EnhancedProgressPanel from '~/components/EnhancedProgressPanel';
 import TranscriptionSummaryPanel from '~/components/TranscriptionSummaryPanel';
 import AudioDeviceInput from '~/components/AudioDeviceInput';

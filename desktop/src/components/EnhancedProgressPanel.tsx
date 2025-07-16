@@ -44,7 +44,7 @@ export default function EnhancedProgressPanel({
 	const [progressHistory, setProgressHistory] = useState<Array<{time: number, progress: number}>>([])
 	const [displayProgress, setDisplayProgress] = useState(0)
 	const [isProgressAnimating, setIsProgressAnimating] = useState(false)
-	const progressAnimationRef = useRef<number | null>(null)
+	const progressAnimationRef = useRef<NodeJS.Timeout | null>(null)
 
 	const modelInfo = getModelInfo(modelPath ?? null)
 	const languageName = getLanguageDisplayName(modelOptions.lang)

@@ -22,7 +22,7 @@ import toast from 'react-hot-toast'
 export function viewModel() {
 	const { files, setFiles } = useFilesContext()
 
-	const [formats, setFormats] = useState<TextFormat[]>(['normal'])
+	const [formats, setFormats] = useState<TextFormat[]>(['text'])
 	const [currentIndex, setCurrentIndex] = useState(0)
 	const [progress, setProgress] = useState<number | null>(null)
 	const [inProgress, setInProgress] = useState(false)

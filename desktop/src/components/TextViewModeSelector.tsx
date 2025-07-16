@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
 import { ReactComponent as ChevronDownIcon } from '~/icons/chevron-down.svg'
 import { TextViewMode } from './FormatSelect'
 import { cx } from '~/lib/utils'
@@ -15,7 +14,6 @@ export default function TextViewModeSelector({
 	onViewModeChange,
 	className = ''
 }: TextViewModeSelectorProps) {
-	const { t } = useTranslation()
 	const [isOpen, setIsOpen] = useState(false)
 	const dropdownRef = useRef<HTMLDivElement>(null)
 

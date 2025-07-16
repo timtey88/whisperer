@@ -26,7 +26,7 @@ export default function AnimatedNumber({
 }: AnimatedNumberProps) {
   const [displayValue, setDisplayValue] = useState(value)
   const [isAnimating, setIsAnimating] = useState(false)
-  const animationRef = useRef<number | null>(null)
+  const animationRef = useRef<NodeJS.Timeout | null>(null)
   const previousValueRef = useRef(value)
   // Animation speed settings
   const getAnimationSettings = useCallback(() => {

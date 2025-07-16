@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
 import { ReactComponent as DownloadIcon } from '~/icons/download.svg'
 import { ReactComponent as ChevronDownIcon } from '~/icons/chevron-down.svg'
 import { ExportFormat } from './FormatSelect'
@@ -14,7 +13,6 @@ export default function DocumentExportMenu({
 	onExport, 
 	className = ''
 }: DocumentExportMenuProps) {
-	const { t } = useTranslation()
 	const [isOpen, setIsOpen] = useState(false)
 	const dropdownRef = useRef<HTMLDivElement>(null)
 

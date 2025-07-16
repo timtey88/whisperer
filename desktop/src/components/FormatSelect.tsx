@@ -1,31 +1,11 @@
 import { Dispatch, SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
 
-export type TextFormat = 'text' | 'srt' | 'vtt' | 'document' | 'json'
-export type ExportFormat = 'html' | 'pdf' | 'docx'
-export type TextViewMode = 'plain' | 'confidence' | 'raw-ansi'
-export type FormatExtensions = {
-	[name in TextFormat]: string
-}
-export const formatExtensions: FormatExtensions = {
-	text: '.txt', // Default text extension (can be changed via view mode)
-	srt: '.srt',
-	vtt: '.vtt',
-	document: '.html', // Default document extension (can be changed via export menu)
-	json: '.json',
-}
+import { TextFormat, ExportFormat, TextViewMode, formatExtensions, exportExtensions, textViewExtensions } from '~/lib/formats'
 
-export const textViewExtensions: Record<TextViewMode, string> = {
-	plain: '.txt',
-	confidence: '.html',
-	'raw-ansi': '.txt',
-}
-
-export const exportExtensions: Record<ExportFormat, string> = {
-	html: '.html',
-	pdf: '.pdf',
-	docx: '.docx',
-}
+// Re-export types for backward compatibility
+export type { TextFormat, ExportFormat, TextViewMode }
+export { formatExtensions, exportExtensions, textViewExtensions }
 
 interface FormatSelectProps {
 	format: TextFormat

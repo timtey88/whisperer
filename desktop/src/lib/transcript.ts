@@ -1,5 +1,5 @@
 import { formatSpeaker } from './utils'
-import { ansiToHtml, getConfidenceLegend, addAnsiCodes, escapeHtml } from './ansi'
+import { ansiToHtml, getConfidenceLegend, addAnsiCodes } from './ansi'
 
 /**
  * Helper functions for consistent formatting across all transcript formats
@@ -16,18 +16,6 @@ function getSegmentSeparator(showParagraphs: boolean, format: 'text' | 'srt' | '
 	return showParagraphs ? '\n\n' : '\n'
 }
 
-/**
- * Apply paragraph spacing to HTML content
- */
-function applyParagraphSpacing(content: string, showParagraphs: boolean): string {
-	if (!showParagraphs) {
-		// Reduce margins and spacing for compact mode
-		return content.replace(/margin: 20px 0/g, 'margin: 8px 0')
-			.replace(/margin-bottom: 16px/g, 'margin-bottom: 8px')
-			.replace(/margin-bottom: 24px/g, 'margin-bottom: 12px')
-	}
-	return content
-}
 
 export interface Duration {
 	secs: number

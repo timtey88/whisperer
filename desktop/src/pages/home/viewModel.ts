@@ -59,7 +59,7 @@ export function viewModel() {
 	const [progress, setProgress] = useState<number | null>(0)
 	const [currentPhase, setCurrentPhase] = useState<string>('Loading Model')
 	const [fileSize, setFileSize] = useState<number | null>(null)
-	const [audioDuration, setAudioDuration] = useState<number | null>(null)
+	const [audioDuration] = useState<number | null>(null)
 	const [transcriptionResult, setTranscriptionResult] = useState<TranscriptionResult | null>(null)
 	const [showTranscriptionResult, setShowTranscriptionResult] = useState(false)
 	const { t } = useTranslation()
@@ -378,16 +378,47 @@ export function viewModel() {
 		const transcriptionStartTime = Date.now()
 		const processStartTime = performance.now()
 		
+		// Basic audio file validation
 		try {
 			const fileInfo = await fs.stat(path)
 			setFileSize(fileInfo.size)
+			
+			// Check if file is too small (likely corrupted or empty)
+			if (fileInfo.size < 1024) { // Less than 1KB
+				throw new Error(`Audio file is too small (${fileInfo.size} bytes). The file may be corrupted or empty.`)
+			}
+			
+			// Check file extension for basic format validation
+			const lowerPath = path.toLowerCase()
+			const supportedExtensions = ['.mp3', '.wav', '.m4a', '.flac', '.ogg', '.aac', '.mp4', '.mov', '.avi', '.mkv', '.webm']
+			const hasValidExtension = supportedExtensions.some(ext => lowerPath.endsWith(ext))
+			
+			if (!hasValidExtension) {
+				console.warn('File extension may not be supported:', path)
+			}
 		} catch (error) {
-			console.warn('Could not get file size:', error)
+			// If file validation fails, show error immediately
+			const errorString = String(error)
+			setTranscriptionResult({
+				fileName,
+				status: 'failed',
+				duration: 0,
+				startTime: transcriptionStartTime,
+				endTime: Date.now(),
+				error: errorString,
+				modelPath: preferenceRef.current.modelPath || undefined,
+				useGpu: preferenceRef.current.useGpu || undefined
+			})
+			setShowTranscriptionResult(true)
+			stopKeepAwake()
+			setLoading(false)
+			setErrorModal?.({ log: errorString, open: true })
+			return // Exit early if validation fails
 		}
 
 		var newSegments: transcript.Segment[] = []
+		const modelPath = preferenceRef.current.modelPath
 		try {
-			const modelPath = preferenceRef.current.modelPath
 			setCurrentPhase('Loading Model')
 			await invoke('load_model', { modelPath, gpuDevice: preferenceRef.current.gpuDevice, useGpu: preferenceRef.current.useGpu })
 			
@@ -423,8 +454,8 @@ export function viewModel() {
 				duration: processingDuration,
 				startTime: transcriptionStartTime,
 				endTime: transcriptionEndTime,
-				modelPath,
-				useGpu: preferenceRef.current.useGpu
+				modelPath: modelPath || undefined,
+				useGpu: preferenceRef.current.useGpu || undefined
 			})
 			setShowTranscriptionResult(true)
 			
@@ -441,26 +472,52 @@ export function viewModel() {
 					duration: processingDuration,
 					startTime: transcriptionStartTime,
 					endTime: transcriptionEndTime,
-					modelPath,
-					useGpu: preferenceRef.current.useGpu
+					modelPath: modelPath || undefined,
+					useGpu: preferenceRef.current.useGpu || undefined
 				})
 				setShowTranscriptionResult(true)
 			} else {
-				// Transcription failed
+				// Transcription failed - provide better error messages
+				const errorString = String(error)
+				let userFriendlyError = errorString
+				
+				// Check for common whisper encoding errors
+				if (errorString.includes('failed to encode') || errorString.includes('whisper_full_with_state')) {
+					userFriendlyError = `Audio encoding failed. This might be due to:
+• Corrupted or invalid audio file
+• Unsupported audio format
+• File may be too short or empty
+• Try converting to a different audio format (WAV, MP3, etc.)
+
+Original error: ${errorString}`
+				} else if (errorString.includes('audio file doesn\'t exist')) {
+					userFriendlyError = `Audio file not found. Please check if the file exists and try again.`
+				} else if (errorString.includes('no segments found')) {
+					userFriendlyError = `No speech detected in the audio file. Please check if:
+• The audio file contains spoken content
+• The audio volume is sufficient
+• The file is not corrupted`
+				} else if (errorString.includes('failed to load model')) {
+					userFriendlyError = `Model loading failed. Please check if:
+• The model file exists and is not corrupted
+• You have sufficient memory available
+• Try restarting the application`
+				}
+				
 				setTranscriptionResult({
 					fileName,
 					status: 'failed',
 					duration: processingDuration,
 					startTime: transcriptionStartTime,
 					endTime: transcriptionEndTime,
-					error: String(error),
-					modelPath,
-					useGpu: preferenceRef.current.useGpu
+					error: userFriendlyError,
+					modelPath: modelPath || undefined,
+					useGpu: preferenceRef.current.useGpu || undefined
 				})
 				setShowTranscriptionResult(true)
 				stopKeepAwake()
-				console.error('error: ', error)
-				setErrorModal?.({ log: String(error), open: true })
+				console.error('Transcription error: ', error)
+				setErrorModal?.({ log: userFriendlyError, open: true })
 				setLoading(false)
 			}
 		} finally {

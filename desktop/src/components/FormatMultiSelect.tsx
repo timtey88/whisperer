@@ -1,17 +1,10 @@
 import { Dispatch, SetStateAction } from 'react'
 import { useTranslation } from 'react-i18next'
 
-export type TextFormat = 'normal' | 'srt' | 'vtt' | 'document' | 'json'
-export type FormatExtensions = {
-	[name in TextFormat]: string
-}
-export const formatExtensions: FormatExtensions = {
-	normal: '.txt',
-	srt: '.srt',
-	vtt: '.vtt',
-	document: '.html', // Default document extension
-	json: '.json',
-}
+import { TextFormat } from '~/lib/formats'
+
+// For multi-select, we need to map 'normal' to 'text' from the unified type
+const multiSelectFormats: TextFormat[] = ['text', 'srt', 'vtt', 'document', 'json']
 
 interface FormatMultiSelectProps {
 	formats: TextFormat[]
@@ -38,12 +31,12 @@ export default function FormatMultiSelect({ formats, setFormats }: FormatMultiSe
 			</div>
 
 			<div className="flex flex-wrap gap-2 justify-center">
-				{['normal', 'document', 'srt', 'vtt', 'json'].map((formatOption) => (
+				{multiSelectFormats.map((formatOption) => (
 					<button
 						key={formatOption}
-						className={`btn btn-xs ${formats.includes(formatOption as TextFormat) ? 'btn-primary' : ''}`}
-						onClick={() => handleFormatButtonClick(formatOption as TextFormat)}>
-						{formatOption}
+						className={`btn btn-xs ${formats.includes(formatOption) ? 'btn-primary' : ''}`}
+						onClick={() => handleFormatButtonClick(formatOption)}>
+						{formatOption === 'text' ? 'normal' : formatOption}
 					</button>
 				))}
 			</div>
