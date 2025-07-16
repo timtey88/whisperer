@@ -136,9 +136,18 @@ export default function Home() {
           {activeTab === 1 && (
             <div className="flex flex-col items-center w-full">
               <div className="w-[300px] flex flex-col m-auto">
-                <div className="join join-vertical">
+                <div className="flex flex-col gap-4">
                   <LanguageInput />
-                  {!vm.files.length && <AudioInput onClick={vm.selectFiles} />}
+                  
+                  {!vm.files.length && (
+                    <div>
+                      <div className="label mt-6">
+                        <span className="label-text">File Selection</span>
+                      </div>
+                      <AudioInput onClick={vm.selectFiles} />
+                    </div>
+                  )}
+                  
                   <AdvancedTranscribe />
                 </div>
                 
