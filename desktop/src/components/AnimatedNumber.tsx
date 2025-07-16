@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
+import { useMemo, useState, useEffect, useRef, useCallback, memo } from 'react'
 
 interface AnimatedNumberProps {
   value: number
@@ -16,7 +16,7 @@ interface NumberDigit {
   isStatic: boolean
 }
 
-export default function AnimatedNumber({ 
+function AnimatedNumber({ 
   value, 
   suffix = '', 
   className = '', 
@@ -113,11 +113,11 @@ export default function AnimatedNumber({
       const char = numberString[i]
       const isStatic = char === '.' || char === '%' || char === '/' || char === 's'
       
-      // Create stable keys based on position only for non-static characters
-      // This prevents blinking during rapid counting
+      // Create stable keys for static characters, character-based keys for digits
+      // This prevents unnecessary blinking of static characters while allowing smooth digit transitions
       const key = isStatic 
-        ? `static-${char}-${i}` 
-        : `digit-position-${i}`
+        ? `static-${i}` 
+        : `digit-${i}-${char}`
       
       digits.push({
         character: char,
@@ -131,9 +131,9 @@ export default function AnimatedNumber({
 
   const digitAnimation = {
     initial: { 
-      y: -8, 
+      y: -6, 
       opacity: 0,
-      scale: 0.95
+      scale: 0.98
     },
     animate: { 
       y: 0, 
@@ -141,17 +141,17 @@ export default function AnimatedNumber({
       scale: 1,
       transition: {
         type: "spring",
-        stiffness: 800,
-        damping: 35,
-        duration: 0.1
+        stiffness: 600,
+        damping: 40,
+        duration: 0.15
       }
     },
     exit: { 
-      y: 8, 
+      y: 6, 
       opacity: 0,
-      scale: 0.95,
+      scale: 0.98,
       transition: {
-        duration: 0.05,
+        duration: 0.08,
         ease: "easeOut"
       }
     }
@@ -194,3 +194,5 @@ export default function AnimatedNumber({
     </div>
   )
 }
+
+export default memo(AnimatedNumber)

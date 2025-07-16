@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { useMemo } from 'react'
+import { useMemo, memo } from 'react'
 
 interface AnimatedTimerProps {
   elapsedTime: number
@@ -12,7 +12,7 @@ interface TimerDigit {
   isStatic: boolean
 }
 
-export default function AnimatedTimer({ elapsedTime, className = "" }: AnimatedTimerProps) {
+function AnimatedTimer({ elapsedTime, className = "" }: AnimatedTimerProps) {
   // Format elapsed time into display string
   const formatElapsedTime = (ms: number) => {
     const seconds = Math.floor(ms / 1000)
@@ -32,9 +32,9 @@ export default function AnimatedTimer({ elapsedTime, className = "" }: AnimatedT
       const char = timeString[i]
       const isStatic = char === ':' || char === 's'
       
-      // Create unique keys for each position and character
-      // This ensures proper animation when digits change
-      const key = isStatic ? `static-${char}-${i}` : `digit-${char}-${i}-${Math.floor(elapsedTime / 1000)}`
+      // Create stable keys for static characters, position-based keys for digits
+      // This prevents unnecessary blinking of static characters
+      const key = isStatic ? `static-${i}` : `digit-${i}-${char}`
       
       digits.push({
         character: char,
@@ -48,10 +48,10 @@ export default function AnimatedTimer({ elapsedTime, className = "" }: AnimatedT
 
   const digitAnimation = {
     initial: { 
-      y: -20, 
+      y: -12, 
       opacity: 0,
-      rotateX: -90,
-      scale: 0.8
+      rotateX: -30,
+      scale: 0.9
     },
     animate: { 
       y: 0, 
@@ -60,18 +60,18 @@ export default function AnimatedTimer({ elapsedTime, className = "" }: AnimatedT
       scale: 1,
       transition: {
         type: "spring",
-        stiffness: 400,
-        damping: 25,
-        duration: 0.4
+        stiffness: 500,
+        damping: 35,
+        duration: 0.25
       }
     },
     exit: { 
-      y: 20, 
+      y: 12, 
       opacity: 0,
-      rotateX: 90,
-      scale: 0.8,
+      rotateX: 30,
+      scale: 0.9,
       transition: {
-        duration: 0.2,
+        duration: 0.12,
         ease: "easeInOut"
       }
     }
@@ -111,3 +111,5 @@ export default function AnimatedTimer({ elapsedTime, className = "" }: AnimatedT
     </div>
   )
 }
+
+export default memo(AnimatedTimer)
