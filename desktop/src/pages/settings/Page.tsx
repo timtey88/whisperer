@@ -1,12 +1,8 @@
-import * as shell from '@tauri-apps/plugin-shell'
 import { useTranslation } from 'react-i18next'
 import { InfoTooltip } from '~/components/InfoTooltip'
 import { ReactComponent as FolderIcon } from '~/icons/folder.svg'
-import { ReactComponent as GithubIcon } from '~/icons/github.svg'
-import { ReactComponent as HeartIcon } from '~/icons/heart.svg'
 import { ReactComponent as LinkIcon } from '~/icons/link.svg'
 import { ReactComponent as ResetIcon } from '~/icons/reset.svg'
-import { ReactComponent as DiscordIcon } from '~/icons/discord.svg'
 import { ReactComponent as WrenchIcon } from '~/icons/wrench.svg'
 import { ReactComponent as CopyIcon } from '~/icons/copy.svg'
 import { ReactComponent as ListIcon } from '~/icons/list.svg'
@@ -176,28 +172,6 @@ export default function SettingsPage({ setVisible }: SettingsPageProps = {}) {
 				</label>
 			</div>
 
-			<div className="label mt-10">
-				<span className="label-text">{t('common.general')}</span>
-			</div>
-
-			<div className="flex flex-col gap-1">
-				<button onMouseDown={() => shell.open(config.aboutURL)} className="btn bg-base-300 text-base-content">
-					{t('common.project-link')}
-					<LinkIcon className="w-4 h-4" />
-				</button>
-				<button onMouseDown={vm.reportIssue} className="btn bg-base-300 text-base-content">
-					{t('common.report-issue')}
-					<GithubIcon className="w-4 h-4" />
-				</button>
-				<button onMouseDown={() => shell.open(config.supportVibeURL)} className="btn bg-base-300 text-base-content">
-					{t('common.support-the-project')}
-					<HeartIcon fill="#db61a2" className="w-4 h-4 stroke-2" />
-				</button>
-				<button onMouseDown={() => shell.open(config.discordURL)} className="btn bg-base-300 text-base-content">
-					{t('common.discord-community')}
-					<DiscordIcon className="w-4 h-4" />
-				</button>
-			</div>
 
 			<div className="label mt-10">
 				<span className="label-text">{t('common.advanced')}</span>
