@@ -65,10 +65,34 @@ export default function ModelOptions({ options, setOptions }: ParamsProps) {
 		if ((await exists(embedModelPath)) && (await exists(segmentModelPath))) {
 			preference.setRecognizeSpeakers(true)
 		} else {
-			const should_redirect = await ask('Speaker recognition requires additional AI models. Would you like to go to the Models page to download them?')
-			if (should_redirect) {
-				// Navigate to models management page
-				window.location.href = '/models'
+			// Try to copy bundled models
+			try {
+				toast.setMessage('Installing speaker recognition models...')
+				toast.setOpen(true)
+				
+				// Copy bundled models to user models folder
+				await invoke('copy_bundled_models')
+				
+				// Check if models are now available
+				if ((await exists(embedModelPath)) && (await exists(segmentModelPath))) {
+					preference.setRecognizeSpeakers(true)
+					toast.setOpen(false)
+				} else {
+					toast.setOpen(false)
+					const should_redirect = await ask('Speaker recognition requires additional AI models. Would you like to go to the Models page to download them?')
+					if (should_redirect) {
+						// Navigate to models management page
+						window.location.href = '/models'
+					}
+				}
+			} catch (error) {
+				console.error('Failed to install bundled models:', error)
+				toast.setOpen(false)
+				const should_redirect = await ask('Speaker recognition requires additional AI models. Would you like to go to the Models page to download them?')
+				if (should_redirect) {
+					// Navigate to models management page
+					window.location.href = '/models'
+				}
 			}
 		}
 	}

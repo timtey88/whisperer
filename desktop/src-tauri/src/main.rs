@@ -86,6 +86,8 @@ fn main() -> Result<()> {
             cmd::audio::get_audio_devices,
             cmd::audio::start_record,
             cmd::get_models_folder,
+            cmd::get_bundled_models_folder,
+            cmd::copy_bundled_models,
             cmd::is_portable,
             cmd::check_vulkan,
             cmd::get_logs_folder,

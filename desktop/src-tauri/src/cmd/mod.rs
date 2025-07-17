@@ -799,6 +799,41 @@ pub fn get_models_folder(app_handle: tauri::AppHandle) -> Result<PathBuf> {
 }
 
 #[tauri::command]
+pub fn get_bundled_models_folder(app_handle: tauri::AppHandle) -> Result<PathBuf> {
+    let resource_path = app_handle.path().resource_dir().context("Can't get resource directory")?;
+    let bundled_models_path = resource_path.join("models");
+    Ok(bundled_models_path)
+}
+
+#[tauri::command]
+pub async fn copy_bundled_models(app_handle: tauri::AppHandle) -> Result<()> {
+    let bundled_folder = get_bundled_models_folder(app_handle.clone())?;
+    let models_folder = get_models_folder(app_handle)?;
+    
+    // Ensure models folder exists
+    std::fs::create_dir_all(&models_folder)?;
+    
+    let embedding_src = bundled_folder.join(crate::config::EMBEDDING_MODEL_FILENAME);
+    let segment_src = bundled_folder.join(crate::config::SEGMENT_MODEL_FILENAME);
+    
+    let embedding_dst = models_folder.join(crate::config::EMBEDDING_MODEL_FILENAME);
+    let segment_dst = models_folder.join(crate::config::SEGMENT_MODEL_FILENAME);
+    
+    // Copy files if they exist in bundled resources and don't exist in user folder
+    if embedding_src.exists() && !embedding_dst.exists() {
+        std::fs::copy(&embedding_src, &embedding_dst)?;
+        tracing::debug!("Copied bundled embedding model to {}", embedding_dst.display());
+    }
+    
+    if segment_src.exists() && !segment_dst.exists() {
+        std::fs::copy(&segment_src, &segment_dst)?;
+        tracing::debug!("Copied bundled segment model to {}", segment_dst.display());
+    }
+    
+    Ok(())
+}
+
+#[tauri::command]
 pub fn get_logs(app_handle: tauri::AppHandle) -> Result<String> {
     let path = crate::logging::get_log_path(&app_handle)?;
     let content = std::fs::read_to_string(path)?;
