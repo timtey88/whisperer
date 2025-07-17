@@ -195,11 +195,13 @@ pub fn transcribe(
 
     let st = std::time::Instant::now();
     if let Some(diarize_options) = diarize_options {
-        tracing::debug!("Diarize enabled {:?}", diarize_options);
-        params.set_single_segment(true);
+        #[cfg(feature = "diarization")]
+        {
+            tracing::debug!("Diarize enabled {:?}", diarize_options);
+            params.set_single_segment(true);
 
-        let diarize_segments =
-            pyannote_rs::segment(&original_samples, 16000, diarize_options.segment_model_path).map_err(|e| eyre!("{:?}", e))?;
+            let diarize_segments =
+                pyannote_rs::segment(&original_samples, 16000, diarize_options.segment_model_path).map_err(|e| eyre!("{:?}", e))?;
         let mut embedding_manager = pyannote_rs::EmbeddingManager::new(diarize_options.max_speakers);
         let mut extractor =
             pyannote_rs::EmbeddingExtractor::new(diarize_options.embedding_model_path).map_err(|e| eyre!("{:?}", e))?;
@@ -271,6 +273,11 @@ pub fn transcribe(
                     progress_callback(progress);
                 }
             }
+        }
+        }
+        #[cfg(not(feature = "diarization"))]
+        {
+            return Err(eyre!("Diarization requested but diarization feature not enabled. Enable with --features diarization"));
         }
     } else {
         if let Some(callback) = progress_callback {
