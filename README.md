@@ -1,5 +1,5 @@
 <p align="center">
-  <a target="blank" href="https://github.com/thewh1teagle/whisperer">
+  <a target="blank" href="https://github.com/timtey88/whisperer">
     <img
         width="96px"
         alt="Whisperer logo"
@@ -16,11 +16,11 @@
 </p>
 
 <p align="center">
-  <a target="_blank" href="https://thewh1teagle.github.io/whisperer/">
+  <a target="_blank" href="https://timtey88.github.io/whisperer/">
     🔗 Download Whisperer
   </a>
     &nbsp; | &nbsp; Give it a Star ⭐ | &nbsp;
-    <a target="_blank" href="https://thewh1teagle.github.io/whisperer/?action=support-whisperer">Support the project 🤝</a>
+    <a target="_blank" href="https://timtey88.github.io/whisperer/?action=support-whisperer">Support the project 🤝</a>
 </p>
 
 <hr />
@@ -28,8 +28,8 @@
 ## Screenshots
 
 <p align="center">
-	<a target="_blank" href="https://thewh1teagle.github.io/whisperer/">
-    	<img width=600 src="https://github.com/thewh1teagle/whisperer/assets/61390950/22779ac6-9e49-4c21-b528-29647f039da2">
+	<a target="_blank" href="https://timtey88.github.io/whisperer/">
+    	<img width=600 src="https://github.com/timtey88/whisperer/assets/61390950/22779ac6-9e49-4c21-b528-29647f039da2">
 	</a>
 </p>
 
@@ -74,8 +74,8 @@ In addition, you're welcome to add translations.
 
 We would like to express our sincere gratitude to all the contributors.
 
-<a href="https://github.com/thewh1teagle/whisperer/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=thewh1teagle/whisperer" />
+<a href="https://github.com/timtey88/whisperer/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=timtey88/whisperer" />
 </a>
 
 # Community
@@ -84,7 +84,7 @@ We would like to express our sincere gratitude to all the contributors.
 
 # Roadmap 🛣️
 
-You can see the roadmap in [Whisperer-Roadmap](https://github.com/users/thewh1teagle/projects/5/views/1)
+You can see the roadmap in [Whisperer-Roadmap](https://github.com/users/timtey88/projects/5/views/1)
 
 # Add translation 🌐
 
@@ -92,11 +92,11 @@ You can see the roadmap in [Whisperer-Roadmap](https://github.com/users/thewh1te
 2. Change every value in the files there, to the new language and keep the keys as is
 3. create PR / issue in Github
 
-In addition you can add translation to [Whisperer website](https://thewh1teagle.github.io/whisperer/) by creating new files in the `landing/static/locales`.
+In addition you can add translation to [Whisperer website](https://timtey88.github.io/whisperer/) by creating new files in the `landing/static/locales`.
 
 # Docs 📄
 
-see [Whisperer Docs](https://github.com/thewh1teagle/whisperer/tree/main/docs)
+see [Whisperer Docs](https://github.com/timtey88/whisperer/tree/main/docs)
 
 # I want to know more!
 
@@ -104,11 +104,11 @@ Medium [post](https://medium.com/@thewh1teagle/creating-whisperer-multilingual-a
 
 # Issue report
 
-You can open [new issue](https://github.com/thewh1teagle/whisperer/issues/new?assignees=octocat&labels=bug&projects=&template=bug_report.yaml&title=[Short+title]) and it's recommend to check [debug.md](docs/debug.md) first.
+You can open [new issue](https://github.com/timtey88/whisperer/issues/new?assignees=octocat&labels=bug&projects=&template=bug_report.yaml&title=[Short+title]) and it's recommend to check [debug.md](docs/debug.md) first.
 
 # Privacy Policy 🔒
 
-Your privacy is important to us. Please review our [Privacy Policy](http://thewh1teagle.github.io/whisperer/?action=open-privacy-policy) to understand how we handle your data.
+Your privacy is important to us. Please review our [Privacy Policy](http://timtey88.github.io/whisperer/?action=open-privacy-policy) to understand how we handle your data.
 
 # Credits
 
