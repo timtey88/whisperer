@@ -1,6 +1,5 @@
-use crate::utils::LogError;
 use crate::{cmd::get_logs_folder, config, logging::get_log_path};
-use eyre::{eyre, ContextCompat, Result};
+use eyre::{ContextCompat, Result};
 use whisperer_core::get_whisperer_temp_folder;
 
 pub fn clean_old_logs(app: &tauri::AppHandle) -> Result<()> {
