@@ -57,7 +57,7 @@
 -   🖥️ CLI support: Use Whisperer directly from the command line interface! (see `--help`)
 -   👥 Speaker diarization
 -   📱 ~iOS & Android support~ (coming soon)
--   📥 Integrate custom models from your own site: Use `whisperer://download/?url=<model url>`
+-   📥 Manual model management: Download and manage AI models through the built-in Models Management interface
 -   📹 Choose caption length optimized for videos / reels
 -   ⚡ HTTP API with Swagger docs! (use `--server` and open `http://<host>:3022/docs` for docs)
 
