@@ -159,7 +159,7 @@ cargo test -- --nocapture
 ## Test core in release mode
 
 ```console
-cargo test -p vibe_core --release -- --nocapture
+cargo test -p whisperer_core --release -- --nocapture
 ```
 
 # Lint

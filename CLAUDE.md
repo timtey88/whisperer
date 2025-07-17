@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Vibe is a desktop application for transcribing audio and video files offline using OpenAI's Whisper model. It's built with:
+Whisperer is a desktop application for transcribing audio and video files offline using OpenAI's Whisper model. It's built with:
 - **Backend**: Rust with Tauri framework
 - **Frontend**: React with TypeScript, Vite, and Tailwind CSS
 - **Core**: Rust library for audio processing and transcription
@@ -32,7 +32,7 @@ bun run tauri build
 ### Testing
 ```bash
 # Test core library
-cargo test -p vibe_core --release -- --nocapture
+cargo test -p whisperer_core --release -- --nocapture
 
 # Test with environment variables
 export RUST_LOG=trace

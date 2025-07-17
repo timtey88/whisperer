@@ -1,6 +1,6 @@
 use crate::config::TranscribeOptions;
 use crate::transcript::{Segment, Transcript};
-use crate::{audio, get_vibe_temp_folder};
+use crate::{audio, get_whisperer_temp_folder};
 use eyre::{bail, eyre, Context, OptionExt, Result};
 use hound::WavReader;
 use std::collections::hash_map::DefaultHasher;
@@ -80,7 +80,7 @@ pub fn create_normalized_audio(source: PathBuf, additional_ffmpeg_args: Option<V
     tracing::debug!("normalize {:?}", source.display());
 
     let cache_key = generate_cache_key(&source, &additional_ffmpeg_args);
-    let out_path = get_vibe_temp_folder().join(format!("{:x}.wav", cache_key));
+    let out_path = get_whisperer_temp_folder().join(format!("{:x}.wav", cache_key));
     //if out_path.exists() {
     //    tracing::info!("Using cached normalized audio: {}", out_path.display());
     //   return Ok(out_path);
