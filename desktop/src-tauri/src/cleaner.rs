@@ -4,7 +4,6 @@ use eyre::{eyre, ContextCompat, Result};
 use whisperer_core::get_whisperer_temp_folder;
 
 pub fn clean_old_logs(app: &tauri::AppHandle) -> Result<()> {
-    tracing::debug!("clean old logs");
     let current_log_path = get_log_path(&app.clone())?;
 
     // Get logs folder
@@ -20,15 +19,19 @@ pub fn clean_old_logs(app: &tauri::AppHandle) -> Result<()> {
         config::LOG_FILENAME_PREFIX,
         config::LOG_FILENAME_SUFFIX
     );
-    tracing::debug!("searching old logs in {}", pattern);
+
+    let mut cleaned_count = 0;
     for path in glob::glob(&pattern)? {
         let path = path?;
         if path == current_log_path {
-            tracing::debug!("Skip clean of current log path {}", path.display());
             continue;
         }
-        tracing::debug!("clean old log {}", path.display());
         std::fs::remove_file(path)?;
+        cleaned_count += 1;
+    }
+
+    if cleaned_count > 0 {
+        tracing::debug!("Cleaned {} old log files", cleaned_count);
     }
     Ok(())
 }
@@ -41,17 +44,20 @@ pub fn clean_old_files() -> Result<()> {
     let temp_dir = temp_dir.strip_suffix('/').unwrap_or(temp_dir);
     let temp_dir = temp_dir.strip_suffix('\\').unwrap_or(temp_dir);
     let pattern = format!("{}/whisperer_temp*", temp_dir);
-    tracing::debug!("searching old files in {}", pattern);
+
+    let mut cleaned_count = 0;
     for path in glob::glob(&pattern)? {
         let path = path?;
         if path == current_temp_dir {
-            tracing::debug!("Skip deletion of {}", current_temp_dir.display());
             continue;
         }
-        tracing::debug!("Clean old folder {}", path.clone().display());
-        std::fs::remove_dir_all(path.clone())
-            .map_err(|e| eyre!("failed to delete {}: {:?}", path.display(), e))
-            .log_error();
+        if std::fs::remove_dir_all(&path).is_ok() {
+            cleaned_count += 1;
+        }
+    }
+
+    if cleaned_count > 0 {
+        tracing::debug!("Cleaned {} old temp directories", cleaned_count);
     }
     Ok(())
 }
@@ -64,21 +70,20 @@ pub fn clean_updater_files() -> Result<()> {
     let temp_dir = temp_dir.strip_suffix('/').unwrap_or(temp_dir);
     let temp_dir = temp_dir.strip_suffix('\\').unwrap_or(temp_dir);
     let pattern = format!("{}/whisperer*-updater*", temp_dir);
-    tracing::debug!("searching old files in {}", pattern);
+
+    let mut cleaned_count = 0;
     for path in glob::glob(&pattern)? {
         let path = path?;
         if path == current_temp_dir {
-            tracing::debug!("Skip deletion of {}", current_temp_dir.display());
             continue;
         }
-        if path.is_dir() {
-            tracing::debug!("Clean old folder {}", path.display());
-            std::fs::remove_dir_all(&path)
-                .map_err(|e| eyre!("failed to delete {}: {:?}", path.display(), e))
-                .log_error();
-        } else {
-            tracing::debug!("Skipping non-directory path {}", path.display());
+        if path.is_dir() && std::fs::remove_dir_all(&path).is_ok() {
+            cleaned_count += 1;
         }
+    }
+
+    if cleaned_count > 0 {
+        tracing::debug!("Cleaned {} old updater directories", cleaned_count);
     }
     Ok(())
 }

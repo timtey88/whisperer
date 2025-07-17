@@ -49,8 +49,6 @@ pub fn setup(app: &App) -> Result<(), Box<dyn std::error::Error>> {
     crate::cleaner::clean_old_logs(app.handle()).log_error();
     crate::cleaner::clean_old_files().log_error();
     crate::cleaner::clean_updater_files().log_error();
-    tracing::debug!("Whisperer App Running");
-
     // Crash handler
 
     let _handler = crash_handler::CrashHandler::attach(unsafe {
@@ -85,10 +83,13 @@ pub fn setup(app: &App) -> Result<(), Box<dyn std::error::Error>> {
         })
     });
 
-    // Log some useful data
-    if let Ok(version) = tauri::webview_version() {
-        tracing::debug!("webview version: {}", version);
-    }
+    // Log essential app info
+    tracing::debug!("Whisperer v{} ({})", app.package_info().version, env!("COMMIT_HASH"));
+    tracing::debug!(
+        "Features: {} | Arch: {}",
+        crate::cmd::get_cargo_features().join(", "),
+        std::env::consts::ARCH
+    );
 
     #[cfg(windows)]
     {
@@ -97,23 +98,10 @@ pub fn setup(app: &App) -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    tracing::debug!("Cargo features: {}", crate::cmd::get_cargo_features().join(", "));
-
     #[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), target_os = "windows"))]
-    tracing::debug!(
-        "CPU Features\n{}",
-        crate::cmd::get_x86_features()
-            .map(|v| serde_json::to_string(&v).unwrap_or_default())
-            .unwrap_or_default()
-    );
-
-    #[cfg(not(all(any(target_arch = "x86", target_arch = "x86_64"), target_os = "windows")))]
-    tracing::debug!("CPU feature detection is not supported on this architecture.");
-    tracing::debug!("Executable Architecture: {}", std::env::consts::ARCH);
-
-    tracing::debug!("APP VERSION: {}", app.package_info().version.to_string());
-    tracing::debug!("COMMIT HASH: {}", env!("COMMIT_HASH"));
-    tracing::debug!("App Info: {}", crate::utils::get_app_info());
+    if let Some(features) = crate::cmd::get_x86_features() {
+        tracing::trace!("CPU Features: {}", serde_json::to_string(&features).unwrap_or_default());
+    }
 
     let app_handle = app.app_handle().clone();
     if is_cli_detected() {

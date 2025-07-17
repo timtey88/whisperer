@@ -33,11 +33,9 @@ pub fn get_audio_devices() -> Result<Vec<AudioDevice>> {
 
     let default_in = host.default_input_device().map(|e| e.name()).context("name")?;
     let default_out = host.default_output_device().map(|e| e.name()).context("name")?;
-    tracing::debug!("Default Input Device:\n{:?}", default_in);
-    tracing::debug!("Default Output Device:\n{:?}", default_out);
+    tracing::trace!("Default Input: {:?}, Output: {:?}", default_in, default_out);
 
     let devices = host.devices()?;
-    tracing::debug!("Devices: ");
     for (device_index, device) in devices.enumerate() {
         let name = device.name()?;
         let is_default_in = default_in.as_ref().is_ok_and(|d| d == &name);
@@ -87,8 +85,7 @@ pub async fn start_record(app_handle: AppHandle, devices: Vec<AudioDevice>, stor
     let mut screencapture_stream: Option<_> = None;
 
     for device in devices {
-        tracing::debug!("Recording from device: {}", device.name);
-        tracing::debug!("Device ID: {}", device.id);
+        tracing::debug!("Recording: {} (ID: {})", device.name, device.id);
 
         let is_input = device.is_input;
         if device.id == "screencapturekit" {
@@ -110,7 +107,6 @@ pub async fn start_record(app_handle: AppHandle, devices: Vec<AudioDevice>, stor
             let spec = wav_spec_from_config(&config);
 
             let path = get_whisperer_temp_folder().join(format!("{}.wav", random_string(10)));
-            tracing::debug!("WAV file path: {:?}", path);
             wav_paths.push((path.clone(), 0));
 
             let writer = hound::WavWriter::create(path.clone(), spec)?;
@@ -125,37 +121,25 @@ pub async fn start_record(app_handle: AppHandle, devices: Vec<AudioDevice>, stor
             let stream = match config.sample_format() {
                 cpal::SampleFormat::I8 => device.build_input_stream(
                     &config.into(),
-                    move |data, _: &_| {
-                        tracing::trace!("Writing input data (I8)");
-                        write_input_data::<i8, i8>(data, &writer_2)
-                    },
+                    move |data, _: &_| write_input_data::<i8, i8>(data, &writer_2),
                     err_fn,
                     None,
                 )?,
                 cpal::SampleFormat::I16 => device.build_input_stream(
                     &config.into(),
-                    move |data, _: &_| {
-                        tracing::trace!("Writing input data (I16)");
-                        write_input_data::<i16, i16>(data, &writer_2)
-                    },
+                    move |data, _: &_| write_input_data::<i16, i16>(data, &writer_2),
                     err_fn,
                     None,
                 )?,
                 cpal::SampleFormat::I32 => device.build_input_stream(
                     &config.into(),
-                    move |data, _: &_| {
-                        tracing::trace!("Writing input data (I32)");
-                        write_input_data::<i32, i32>(data, &writer_2)
-                    },
+                    move |data, _: &_| write_input_data::<i32, i32>(data, &writer_2),
                     err_fn,
                     None,
                 )?,
                 cpal::SampleFormat::F32 => device.build_input_stream(
                     &config.into(),
-                    move |data, _: &_| {
-                        tracing::trace!("Writing input data (F32)");
-                        write_input_data::<f32, f32>(data, &writer_2)
-                    },
+                    move |data, _: &_| write_input_data::<f32, f32>(data, &writer_2),
                     err_fn,
                     None,
                 )?,
@@ -164,11 +148,9 @@ pub async fn start_record(app_handle: AppHandle, devices: Vec<AudioDevice>, stor
                 }
             };
             stream.play()?;
-            tracing::debug!("Stream started playing");
 
             let stream_handle = Arc::new(Mutex::new(Some(StreamHandle(stream))));
             stream_handles.push(stream_handle.clone());
-            tracing::debug!("Stream handle created");
         }
     }
 
