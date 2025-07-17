@@ -65,17 +65,10 @@ export default function ModelOptions({ options, setOptions }: ParamsProps) {
 		if ((await exists(embedModelPath)) && (await exists(segmentModelPath))) {
 			preference.setRecognizeSpeakers(true)
 		} else {
-			const should_download = await ask(t('common.ask-for-download-model'))
-			if (should_download) {
-				toast.setProgress(0)
-				toast.setMessage(t('common.downloading-ai-models'))
-				toast.setOpen(true)
-				await invoke('download_file', { url: config.embeddingModelUrl, path: embedModelPath })
-
-				toast.setProgress(0)
-				await invoke('download_file', { url: config.segmentModelUrl, path: segmentModelPath })
-				preference.setRecognizeSpeakers(true)
-				toast.setOpen(false)
+			const should_redirect = await ask('Speaker recognition requires additional AI models. Would you like to go to the Models page to download them?')
+			if (should_redirect) {
+				// Navigate to models management page
+				window.location.href = '/models'
 			}
 		}
 	}
