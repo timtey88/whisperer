@@ -130,9 +130,9 @@ jobs:
             - name: Build
               if: matrix.action == 'build'
               run: |
-                cargo build ${{ matrix.args }} -p vibe_core --release 
+                cargo build ${{ matrix.args }} -p whisperer_core --release 
 
             - name: Test
               if: matrix.action == 'test'
               run: |
-                cargo test ${{ matrix.args }} -p vibe_core --release -- --nocapture
+                cargo test ${{ matrix.args }} -p whisperer_core --release -- --nocapture
