@@ -1,7 +1,7 @@
 use eyre::Result;
 use std::{fs, panic, sync::Arc};
 use tauri::AppHandle;
-use vibe_core::get_vibe_temp_folder;
+use whisperer_core::get_whisperer_temp_folder;
 
 pub fn set_panic_hook(app: &AppHandle) -> Result<()> {
     let log_path = crate::logging::get_log_path(app)?;
@@ -23,7 +23,7 @@ pub fn set_panic_hook(app: &AppHandle) -> Result<()> {
         tracing::error!(message);
 
         // Write to panic.txt
-        let _ = fs::write(get_vibe_temp_folder().join("crash.txt"), message);
+        let _ = fs::write(get_whisperer_temp_folder().join("crash.txt"), message);
 
         // Open the log path in release mode
         if !cfg!(debug_assertions) && !crate::cli::is_cli_detected() {

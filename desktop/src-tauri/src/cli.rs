@@ -5,8 +5,8 @@ use std::path::{Path, PathBuf};
 use std::process;
 use std::time::Instant;
 use tauri::AppHandle;
-use vibe_core::config::TranscribeOptions;
-use vibe_core::transcribe;
+use whisperer_core::config::TranscribeOptions;
+use whisperer_core::transcribe;
 
 use crate::cmd::get_models_folder;
 

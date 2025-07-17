@@ -1,7 +1,7 @@
 use crate::utils::LogError;
 use crate::{cmd::get_logs_folder, config, logging::get_log_path};
 use eyre::{eyre, ContextCompat, Result};
-use vibe_core::get_vibe_temp_folder;
+use whisperer_core::get_whisperer_temp_folder;
 
 pub fn clean_old_logs(app: &tauri::AppHandle) -> Result<()> {
     tracing::debug!("clean old logs");
@@ -34,13 +34,13 @@ pub fn clean_old_logs(app: &tauri::AppHandle) -> Result<()> {
 }
 
 pub fn clean_old_files() -> Result<()> {
-    let current_temp_dir = get_vibe_temp_folder();
+    let current_temp_dir = get_whisperer_temp_folder();
     let temp_dir = std::env::temp_dir();
     let temp_dir = temp_dir.to_str().unwrap_or_default();
     // Remove suffix
     let temp_dir = temp_dir.strip_suffix('/').unwrap_or(temp_dir);
     let temp_dir = temp_dir.strip_suffix('\\').unwrap_or(temp_dir);
-    let pattern = format!("{}/vibe_temp*", temp_dir);
+    let pattern = format!("{}/whisperer_temp*", temp_dir);
     tracing::debug!("searching old files in {}", pattern);
     for path in glob::glob(&pattern)? {
         let path = path?;
@@ -57,13 +57,13 @@ pub fn clean_old_files() -> Result<()> {
 }
 
 pub fn clean_updater_files() -> Result<()> {
-    let current_temp_dir = get_vibe_temp_folder();
+    let current_temp_dir = get_whisperer_temp_folder();
     let temp_dir = std::env::temp_dir();
     let temp_dir = temp_dir.to_str().unwrap_or_default();
     // Remove suffix
     let temp_dir = temp_dir.strip_suffix('/').unwrap_or(temp_dir);
     let temp_dir = temp_dir.strip_suffix('\\').unwrap_or(temp_dir);
-    let pattern = format!("{}/vibe*-updater*", temp_dir);
+    let pattern = format!("{}/whisperer*-updater*", temp_dir);
     tracing::debug!("searching old files in {}", pattern);
     for path in glob::glob(&pattern)? {
         let path = path?;

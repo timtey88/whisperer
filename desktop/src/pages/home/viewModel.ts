@@ -297,7 +297,7 @@ export function viewModel() {
 		} catch (error) {
 			console.error(error)
 			await dialog.message(
-				`Your GPU is unsupported in this version of Vibe. Please download vibe_2.4.0_x64-setup.exe. Click OK to open the download page.`,
+				`Your GPU is unsupported in this version of Whisperer. Please download whisperer_2.4.0_x64-setup.exe. Click OK to open the download page.`,
 				{
 					kind: 'error',
 				}

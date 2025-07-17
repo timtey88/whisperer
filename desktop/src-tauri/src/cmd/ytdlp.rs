@@ -5,7 +5,7 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 use tauri::{AppHandle, Emitter, Listener, Manager};
-use vibe_core::get_vibe_temp_folder;
+use whisperer_core::get_whisperer_temp_folder;
 
 use crate::utils::LogError;
 
@@ -31,9 +31,9 @@ fn get_binary_name() -> &'static str {
 #[tauri::command]
 pub fn get_temp_path(app_handle: AppHandle, ext: String, in_documents: Option<bool>) -> String {
     let mut base_path = if in_documents.unwrap_or_default() {
-        app_handle.path().document_dir().unwrap_or(get_vibe_temp_folder())
+        app_handle.path().document_dir().unwrap_or(get_whisperer_temp_folder())
     } else {
-        get_vibe_temp_folder()
+        get_whisperer_temp_folder()
     };
 
     base_path.push(format!("{}.{}", crate::utils::get_local_time(), ext));

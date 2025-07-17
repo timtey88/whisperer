@@ -1,8 +1,8 @@
 {
 	"$schema": "./gen/schemas/desktop-schema.json",
-	"productName": "vibe",
+	"productName": "Whisperer",
 	"version": "3.0.5",
-	"identifier": "github.com.thewh1teagle.vibe",
+	"identifier": "github.com.thewh1teagle.whisperer",
 	"app": {
 		"windows": [],
 		"withGlobalTauri": true,

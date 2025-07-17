@@ -12,8 +12,8 @@ use std::io::Write;
 use std::ops::Deref;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
-use vibe_core::audio::find_ffmpeg_path;
-use vibe_core::get_vibe_temp_folder;
+use whisperer_core::audio::find_ffmpeg_path;
+use whisperer_core::get_whisperer_temp_folder;
 
 use crate::utils::LogError;
 
@@ -32,7 +32,7 @@ impl UnsafeSCStreamOutput for StoreAudioHandler {
     fn did_output_sample_buffer(&self, sample: Id<CMSampleBufferRef>, _of_type: u8) {
         let audio_buffers = sample.get_av_audio_buffer_list();
 
-        let base_path = get_vibe_temp_folder();
+        let base_path = get_whisperer_temp_folder();
 
         for (i, buffer) in audio_buffers.into_iter().enumerate() {
             if i > MAX_CHANNELS {
@@ -60,7 +60,7 @@ pub fn reset_screen_permissions() -> Result<()> {
     std::process::Command::new("tccutil")
         .arg("reset")
         .arg("ScreenCapture")
-        .arg("github.com.thewh1teagle.vibe")
+        .arg("github.com.thewh1teagle.whisperer")
         .spawn()
         .context("failed to reset screen permissions")?
         .wait()?;
@@ -100,7 +100,7 @@ pub fn init() -> Result<Id<UnsafeSCStream>> {
 }
 
 pub fn start_capture(stream: &Id<UnsafeSCStream>) -> Result<()> {
-    let base_path = get_vibe_temp_folder();
+    let base_path = get_whisperer_temp_folder();
     for i in 0..MAX_CHANNELS {
         let output_path = base_path.join(format!("output{}.raw", i));
         if output_path.exists() {
@@ -131,7 +131,7 @@ pub fn resume_capture(stream: &Id<UnsafeSCStream>) -> Result<()> {
 pub fn screencapturekit_to_wav(output_path: PathBuf) -> Result<()> {
     // TODO: convert to wav
     // ffmpeg -f f32le -ar 48000 -ac 1 -i output0.raw -f f32le -ar 48000 -ac 1 -i output1.raw -filter_complex "[0:a][1:a]amerge=inputs=2" -ac 2 output.wav
-    let base_path = get_vibe_temp_folder();
+    let base_path = get_whisperer_temp_folder();
     let output_0 = base_path.join(format!("output{}.raw", 0));
     let output_1 = base_path.join(format!("output{}.raw", 1));
     let mut pid = Command::new(find_ffmpeg_path().context("no ffmpeg")?)

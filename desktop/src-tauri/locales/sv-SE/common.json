@@ -1,13 +1,13 @@
 {
 	"aborting": "Aborting",
 	"advanced": "Advanced",
-	"app-title": "Vibe",
+	"app-title": "Whisperer",
 	"ask-for-download-model": "Vill du ladda ner modellen från hemsidan",
 	"ask-for-install-ytdlp-message": "Vill du installera ytdlp som används för att ladda ner ljud från populära webbplatser?",
 	"ask-for-install-ytdlp-title": "Installera ytdlp",
 	"ask-for-relaunch-body": "Vill du starta om programmet nu?",
 	"ask-for-relaunch-title": "Updatering klar",
-	"ask-for-update-body": "Vill du uppdatera Vibe till version {{version}}?",
+	"ask-for-update-body": "Vill du uppdatera Whisperer till version {{version}}?",
 	"ask-for-update-title": "Bekräfta uppdatering",
 	"ask-for-update-ytdlp-message": "Ny YTDLP -version hittades. \nVill du uppdatera YTDLP?",
 	"ask-for-update-ytdlp-title": "Uppdatera YTDLP",
@@ -48,7 +48,7 @@
 	"ffmpeg-options": "FFMPEG-alternativ",
 	"files": "Filer",
 	"find-here": "Hitta här",
-	"focus-window-on-finish": "Fokusera Vibe när transkibering är klar",
+	"focus-window-on-finish": "Fokusera Whisperer när transkibering är klar",
 	"format": "Formatera",
 	"formats": "Format",
 	"gpu-device": "GPU-enhetsnummer",
@@ -59,10 +59,10 @@
 	"info-diarize-threshold": "Tröskel för talarigenkänning eller betraktas som inte upptäckt",
 	"info-enable-logs": "Skriv loggar till filen. \nVänligen starta om efter att ha aktiverat det.",
 	"info-gpu-device": "Välj GPU-enheten för transkription. \nAnge GPU-enhetsnumret, med början från 0. Om du har 2 GPU:er väljer du antingen 0 eller 1.",
-	"info-high-gpu-performance": "Förbättrar grafikprestandan för Vibe, men kommer att förbruka mer systemresurser.",
+	"info-high-gpu-performance": "Förbättrar grafikprestandan för Whisperer, men kommer att förbruka mer systemresurser.",
 	"info-llm-api-key": "API-nyckeln från webbplatsen för AI-modellen",
 	"info-llm-prompt": "Fråga efter AI-modellen. \nmåste inkludera mönstret %s som kommer att ersättas med transkriptionen.",
-	"info-llm-summarize": "Sammanfatta med AI. \nKräver API-nyckel. \nNär transkriptionen är klar kommer den att skickas till Claude API tillsammans med den valda prompten och sedan på några sekunder kommer svaret från AI:n att visas i Vibe istället för transkriptionen. \nFungerar även vid transkribering av flera filer!",
+	"info-llm-summarize": "Sammanfatta med AI. \nKräver API-nyckel. \nNär transkriptionen är klar kommer den att skickas till Claude API tillsammans med den valda prompten och sedan på några sekunder kommer svaret från AI:n att visas i Whisperer istället för transkriptionen. \nFungerar även vid transkribering av flera filer!",
 	"info-manual-download": "Internet connection is required to downlod the AI modal",
 	"info-max-sentence-len": "Hur många bokstäver blir det i en mening. \nfungerar bara när ord tidsstämplar är på.",
 	"info-max-speakers": "Hur många högtalare ska finnas i filen. \nanvänds för mer exakt igenkänning",
@@ -116,7 +116,7 @@
 	"recognize-speakers": "Upptäck högtalare",
 	"record": "Spela in",
 	"replace-all": "Ersätt alla",
-	"reset-app": "Återställ Vibe",
+	"reset-app": "Återställ Whisperer"
 	"reset-ask-dialog": "Are you sure you want to reset vibe? app data will be cleared including models files.",
 	"reset-options": "Återställ standardalternativ",
 	"right-alignment": "Högerjustering",
@@ -156,12 +156,12 @@
 	"translate-to-english": "Översätt till engelska",
 	"try-again": "Try Again",
 	"update-now": "uppdatera nu",
-	"update-version": "Uppdatera Vibe",
-	"updating-modal-body": "Updaterar Vibe till version {{version}}",
+	"update-version": "Uppdatera Whisperer"
+	"updating-modal-body": "Updaterar Whisperer till version {{version}}"
 	"updating-modal-title": "Uppdaterar...",
 	"use-gpu": "Använd GPU",
 	"use-word-timestamps": "Tidsstämplar per ord",
 	"when-completing-transcription": "När du slutför transkriptionen",
 	"ytdlp-options": "URL -transkriptionsalternativ",
-	"ytdlp-options-info": "Vibe använder ytdlp för URL-transkription."
+	"ytdlp-options-info": "Whisperer använder ytdlp för URL-transkription."
 }

@@ -12,7 +12,7 @@ use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 use tauri_plugin_shell::ShellExt;
 use tauri_plugin_store::StoreExt;
 use tokio::sync::Mutex;
-use vibe_core::transcribe::WhisperContext;
+use whisperer_core::transcribe::WhisperContext;
 
 pub static STATIC_APP: Lazy<std::sync::Mutex<Option<tauri::AppHandle>>> = Lazy::new(|| std::sync::Mutex::new(None));
 
@@ -49,7 +49,7 @@ pub fn setup(app: &App) -> Result<(), Box<dyn std::error::Error>> {
     crate::cleaner::clean_old_logs(app.handle()).log_error();
     crate::cleaner::clean_old_files().log_error();
     crate::cleaner::clean_updater_files().log_error();
-    tracing::debug!("Vibe App Running");
+    tracing::debug!("Whisperer App Running");
 
     // Crash handler
 
@@ -75,7 +75,7 @@ pub fn setup(app: &App) -> Result<(), Box<dyn std::error::Error>> {
                     .dialog()
                     .message("App crashed with error. Please register to Github and then click report.")
                     .kind(tauri_plugin_dialog::MessageDialogKind::Error)
-                    .title("Vibe Crashed")
+                    .title("Whisperer Crashed")
                     .buttons(MessageDialogButtons::OkCustom("Report".into()))
                     .show(|_| {});
                 let _ = app_handle.shell().open(get_issue_url(format!("{:?}", info)), None);
@@ -128,7 +128,7 @@ pub fn setup(app: &App) -> Result<(), Box<dyn std::error::Error>> {
             .inner_size(800.0, 700.0)
             .min_inner_size(800.0, 700.0)
             .center()
-            .title("Vibe")
+            .title("Whisperer")
             .resizable(true)
             .focused(true)
             .shadow(true)

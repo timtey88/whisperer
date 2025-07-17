@@ -13,8 +13,8 @@ use tauri::Manager;
 use tokio::sync::Mutex;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
-use vibe_core::config::TranscribeOptions;
-use vibe_core::transcript::{Segment, Transcript};
+use whisperer_core::config::TranscribeOptions;
+use whisperer_core::transcript::{Segment, Transcript};
 
 #[derive(OpenApi)]
 #[openapi(

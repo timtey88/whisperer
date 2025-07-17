@@ -17,9 +17,9 @@ use tauri::{
 use tauri::{Emitter, Listener, State};
 use tauri_plugin_store::StoreExt;
 use tokio::sync::Mutex;
-use vibe_core::get_vibe_temp_folder;
-use vibe_core::transcript::Segment;
-use vibe_core::transcript::Transcript;
+use whisperer_core::get_whisperer_temp_folder;
+use whisperer_core::transcript::Segment;
+use whisperer_core::transcript::Transcript;
 pub mod audio;
 pub mod ytdlp;
 
@@ -132,7 +132,7 @@ fn extract_zip(zip_path: &Path, extract_to: &Path) -> Result<()> {
 
 #[tauri::command]
 pub async fn download_model(app_handle: tauri::AppHandle, url: String, path: String) -> Result<String> {
-    let mut downloader = vibe_core::downloader::Downloader::new();
+    let mut downloader = whisperer_core::downloader::Downloader::new();
     tracing::debug!("Download model invoked! with path {}", path);
 
     let abort_atomic = Arc::new(AtomicBool::new(false));
@@ -367,14 +367,14 @@ pub async fn download_model(app_handle: tauri::AppHandle, url: String, path: Str
 
 #[tauri::command]
 pub fn get_ffmpeg_path() -> String {
-    vibe_core::audio::find_ffmpeg_path()
+    whisperer_core::audio::find_ffmpeg_path()
         .map(|p| p.to_str().unwrap().to_string())
         .unwrap_or_default()
 }
 
 #[tauri::command]
 pub async fn download_file(app_handle: tauri::AppHandle, url: String, path: String) -> Result<()> {
-    let mut downloader = vibe_core::downloader::Downloader::new();
+    let mut downloader = whisperer_core::downloader::Downloader::new();
     tracing::debug!("Download model invoked! with path {}", path);
 
     let abort_atomic = Arc::new(AtomicBool::new(false));
@@ -495,7 +495,7 @@ pub async fn glob_files(folder: String, patterns: Vec<String>, recursive: bool) 
 #[tauri::command]
 pub async fn transcribe(
     app_handle: tauri::AppHandle,
-    options: vibe_core::config::TranscribeOptions,
+    options: whisperer_core::config::TranscribeOptions,
     model_context_state: State<'_, Mutex<Option<ModelContext>>>,
     diarize_options: DiarizeOptions,
     ffmpeg_options: FfmpegOptions,
@@ -547,7 +547,7 @@ pub async fn transcribe(
             .to_str()
             .ok_or_eyre("tostr")?
             .to_string();
-        core_diarize_options = Some(vibe_core::transcribe::DiarizeOptions {
+        core_diarize_options = Some(whisperer_core::transcribe::DiarizeOptions {
             embedding_model_path,
             segment_model_path,
             max_speakers: diarize_options.max_speakers,
@@ -557,7 +557,7 @@ pub async fn transcribe(
     let ffmpeg_options = ffmpeg_options.to_vec();
     tracing::debug!("ffmpeg additiona options: {:?}", ffmpeg_options);
     let unwind_result = catch_unwind(AssertUnwindSafe(|| {
-        vibe_core::transcribe::transcribe(
+        whisperer_core::transcribe::transcribe(
             &ctx.handle,
             &options,
             Some(Box::new(progress_callback)),
@@ -674,7 +674,7 @@ pub async fn load_model(
         if model_path != state.path || gpu_device != state.gpu_device || use_gpu != state.use_gpu {
             tracing::debug!("model path or gpu device changed. reloading");
             // reload
-            let context = vibe_core::transcribe::create_context(Path::new(&model_path), gpu_device, use_gpu)?;
+            let context = whisperer_core::transcribe::create_context(Path::new(&model_path), gpu_device, use_gpu)?;
             *state_guard = Some(ModelContext {
                 path: model_path.clone(),
                 handle: context,
@@ -684,7 +684,7 @@ pub async fn load_model(
         }
     } else {
         tracing::debug!("loading model first time");
-        let context = vibe_core::transcribe::create_context(Path::new(&model_path), gpu_device, use_gpu)?;
+        let context = whisperer_core::transcribe::create_context(Path::new(&model_path), gpu_device, use_gpu)?;
         *state_guard = Some(ModelContext {
             path: model_path.clone(),
             handle: context,
@@ -761,7 +761,7 @@ pub async fn show_log_path(app_handle: tauri::AppHandle) -> Result<()> {
 
 #[tauri::command]
 pub async fn show_temp_path() -> Result<()> {
-    let temp_path = vibe_core::get_vibe_temp_folder();
+    let temp_path = whisperer_core::get_whisperer_temp_folder();
     showfile::show_path_in_file_manager(temp_path);
     Ok(())
 }
@@ -791,16 +791,16 @@ pub fn get_logs(app_handle: tauri::AppHandle) -> Result<String> {
 
 #[tauri::command]
 pub fn is_crashed_recently() -> bool {
-    tracing::debug!("checking path {}", get_vibe_temp_folder().join("crash.txt").display());
-    get_vibe_temp_folder().join("crash.txt").exists()
+    tracing::debug!("checking path {}", get_whisperer_temp_folder().join("crash.txt").display());
+    get_whisperer_temp_folder().join("crash.txt").exists()
 }
 
 #[tauri::command]
 pub fn rename_crash_file() -> Result<()> {
     std::fs::rename(
-        get_vibe_temp_folder().join("crash.txt"),
+        get_whisperer_temp_folder().join("crash.txt"),
         // TODO: save all crashed?
-        get_vibe_temp_folder().join("crash.1.txt"),
+        get_whisperer_temp_folder().join("crash.1.txt"),
     )
     .context("Can't delete file")
 }

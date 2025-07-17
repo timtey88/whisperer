@@ -1,13 +1,13 @@
 {
 	"aborting": "Прерывание процесса",
 	"advanced": "Расширенные",
-	"app-title": "Vibe",
+	"app-title": "Whisperer",
 	"ask-for-download-model": "Хотите скачать модель с сайта?",
 	"ask-for-install-ytdlp-message": "Хотите установить расширение ytdlp, которое используется для загрузки аудио с популярных сайтов, например, Youtube?",
 	"ask-for-install-ytdlp-title": "Установить ytdlp",
 	"ask-for-relaunch-body": "Осуществить перезапуск сейчас?",
 	"ask-for-relaunch-title": "Обновление завершено",
-	"ask-for-update-body": "Вы хотите обновить Vibe до версии {{version}}?",
+	"ask-for-update-body": "Вы хотите обновить Whisperer до версии {{version}}?",
 	"ask-for-update-title": "Подтвердить обновление",
 	"ask-for-update-ytdlp-message": "Найдена новая версия ytdlp. Вы хотите обновить ytdlp??",
 	"ask-for-update-ytdlp-title": "Обновить ytdlp",
@@ -116,8 +116,8 @@
 	"recognize-speakers": "Распознать говорящих",
 	"record": "Записать",
 	"replace-all": "Заменить все",
-	"reset-app": "Сбросить Vibe",
-	"reset-ask-dialog": "Вы уверены, что хотите сбросить Vibe? Данные приложения будут удалены, включая файлы моделей.",
+	"reset-app": "Сбросить Whisperer"
+	"reset-ask-dialog": "Вы уверены, что хотите сбросить Whisperer? Данные приложения будут удалены, включая файлы моделей."
 	"reset-options": "Восстановить параметры по умолчанию",
 	"right-alignment": "Выравнивание вправо",
 	"run-llm-check": "Запустить проверку",
@@ -156,12 +156,12 @@
 	"translate-to-english": "Перевести на английский",
 	"try-again": "Попробуйте снова",
 	"update-now": "обновить сейчас",
-	"update-version": "Обновить Vibe",
-	"updating-modal-body": "Обновление Vibe до версии {{version}}",
+	"update-version": "Обновить Whisperer"
+	"updating-modal-body": "Обновление Whisperer до версии {{version}}"
 	"updating-modal-title": "Обновление...",
 	"use-gpu": "Использовать GPU",
 	"use-word-timestamps": "Временные метки для каждого слова",
 	"when-completing-transcription": "При завершении транскрипции",
 	"ytdlp-options": "Опции транскрипции URL",
-	"ytdlp-options-info": "Vibe использует ytdlp для транскрипции URL."
+	"ytdlp-options-info": "Whisperer использует ytdlp для транскрипции URL."
 }
