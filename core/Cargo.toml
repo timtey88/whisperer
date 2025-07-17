@@ -9,7 +9,7 @@ path = "src/lib.rs"
 
 [dependencies]
 # Fixed incorrect timestamps, better logs
-whisper-rs = { git = "https://github.com/timtey88/whisper-rs.git", features = [
+whisper-rs = { git = "https://github.com/thewh1teagle/whisper-rs.git", features = [
 	"whisper-cpp-tracing",
 ], default-features = false, branch = "dev" }
 serde = { version = "1.0.195", features = ["derive"] }
