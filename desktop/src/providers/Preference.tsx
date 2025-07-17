@@ -203,7 +203,7 @@ export function PreferenceProvider({ children }: { children: ReactNode }) {
 	const [useGpu, setUseGpu] = useLocalStorage<boolean | null>('prefs_use_gpu', true)
 
 	const [modelPath, setModelPath] = useLocalStorage<string | null>('prefs_model_path', null)
-	const [skippedSetup, setSkippedSetup] = useLocalStorage<boolean>('prefs_skipped_setup', false)
+	const [skippedSetup, setSkippedSetup] = useLocalStorage<boolean>('prefs_skipped_setup', true)
 	const [textAreaDirection, setTextAreaDirection] = useLocalStorage<Direction>('prefs_textarea_direction', 'ltr')
 	const [textFormat, setTextFormat] = useLocalStorage<TextFormat>('prefs_text_format', 'document')
 	const [exportFormat, setExportFormat] = useLocalStorage<ExportFormat>('prefs_export_format', 'html')

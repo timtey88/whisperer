@@ -4,7 +4,6 @@ import { Route, Routes } from 'react-router-dom'
 import UpdateProgress from '~/components/UpdaterProgress'
 import '~/globals.css'
 import '~/lib/i18n'
-import SetupPage from '~/pages/setup/Page'
 import HomePage from '~/pages/home/Page'
 import BatchPage from './pages/batch/Page'
 import ModelsPage from './pages/models/Page'
@@ -39,7 +38,6 @@ export default function App() {
 							<FilesProvider>
 								<Routes>
 									<Route path="/" element={<HomePage />} />
-									<Route path="/setup" element={<SetupPage />} />
 									<Route path="/batch" element={<BatchPage />} />
 									<Route path="/models" element={<ModelsPage />} />
 									<Route path="/model-options" element={<ModelOptionsPage />} />

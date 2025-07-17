@@ -7046,88 +7046,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
-name = "vibe"
-version = "0.0.6"
-dependencies = [
- "ash",
- "axum",
- "chrono",
- "clap",
- "cocoa",
- "core-graphics-helmer-fork",
- "cpal",
- "crash-handler",
- "eyre 1.0.0",
- "futures",
- "glob",
- "hound",
- "libc",
- "libc-stdhandle",
- "objc_id",
- "once_cell",
- "open",
- "openssl",
- "rand 0.8.5",
- "screencapturekit",
- "screencapturekit-sys",
- "serde",
- "serde_json",
- "showfile",
- "tauri",
- "tauri-build",
- "tauri-plugin-clipboard-manager",
- "tauri-plugin-deep-link",
- "tauri-plugin-dialog",
- "tauri-plugin-fs",
- "tauri-plugin-http",
- "tauri-plugin-keepawake",
- "tauri-plugin-os",
- "tauri-plugin-process",
- "tauri-plugin-shell",
- "tauri-plugin-single-instance",
- "tauri-plugin-store",
- "tauri-plugin-updater",
- "tauri-plugin-window-state",
- "tokio",
- "tracing",
- "tracing-log",
- "tracing-subscriber",
- "url",
- "urlencoding",
- "utoipa",
- "utoipa-swagger-ui",
- "vibe_core",
- "windows 0.58.0",
- "winreg 0.52.0",
- "zip 0.6.6",
-]
-
-[[package]]
-name = "vibe_core"
-version = "0.0.6"
-dependencies = [
- "chrono",
- "eyre 1.0.0",
- "futures-util",
- "glob",
- "hound",
- "num",
- "once_cell",
- "pyannote-rs",
- "reqwest 0.11.27",
- "serde",
- "serde_json",
- "serial_test",
- "tempfile",
- "tokio",
- "tracing",
- "tracing-test",
- "utoipa",
- "which 6.0.3",
- "whisper-rs",
-]
-
-[[package]]
 name = "vswhom"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7471,6 +7389,88 @@ dependencies = [
  "cfg-if",
  "cmake",
  "fs_extra",
+]
+
+[[package]]
+name = "whisperer"
+version = "0.0.6"
+dependencies = [
+ "ash",
+ "axum",
+ "chrono",
+ "clap",
+ "cocoa",
+ "core-graphics-helmer-fork",
+ "cpal",
+ "crash-handler",
+ "eyre 1.0.0",
+ "futures",
+ "glob",
+ "hound",
+ "libc",
+ "libc-stdhandle",
+ "objc_id",
+ "once_cell",
+ "open",
+ "openssl",
+ "rand 0.8.5",
+ "screencapturekit",
+ "screencapturekit-sys",
+ "serde",
+ "serde_json",
+ "showfile",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-clipboard-manager",
+ "tauri-plugin-deep-link",
+ "tauri-plugin-dialog",
+ "tauri-plugin-fs",
+ "tauri-plugin-http",
+ "tauri-plugin-keepawake",
+ "tauri-plugin-os",
+ "tauri-plugin-process",
+ "tauri-plugin-shell",
+ "tauri-plugin-single-instance",
+ "tauri-plugin-store",
+ "tauri-plugin-updater",
+ "tauri-plugin-window-state",
+ "tokio",
+ "tracing",
+ "tracing-log",
+ "tracing-subscriber",
+ "url",
+ "urlencoding",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "whisperer_core",
+ "windows 0.58.0",
+ "winreg 0.52.0",
+ "zip 0.6.6",
+]
+
+[[package]]
+name = "whisperer_core"
+version = "0.0.6"
+dependencies = [
+ "chrono",
+ "eyre 1.0.0",
+ "futures-util",
+ "glob",
+ "hound",
+ "num",
+ "once_cell",
+ "pyannote-rs",
+ "reqwest 0.11.27",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "tracing-test",
+ "utoipa",
+ "which 6.0.3",
+ "whisper-rs",
 ]
 
 [[package]]

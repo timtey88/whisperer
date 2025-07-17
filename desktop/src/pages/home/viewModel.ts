@@ -260,10 +260,8 @@ export function viewModel() {
 			const entries = await ls(configPath)
 			const filtered = entries.filter((e) => e.name?.endsWith('.bin'))
 			if (filtered.length === 0) {
-				// Download new model if no models and it's not manual installation
-				if (!preference.skippedSetup) {
-					navigate('/setup')
-				}
+				// No models found - user needs to manually download models
+				console.log('No models found. Please download a model manually from settings.')
 			} else {
 				if (!preference.modelPath || !(await fs.exists(preference.modelPath))) {
 					// if model path not found set another one as default
@@ -272,8 +270,8 @@ export function viewModel() {
 				}
 			}
 		} catch (e) {
-			console.error(e)
-			navigate('/setup')
+			console.error('Error checking models folder:', e)
+			// Model folder might not exist yet, this is OK for manual setup
 		}
 	}
 
