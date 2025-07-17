@@ -1,4 +1,4 @@
-const assetsURL = 'https://api.github.com/repos/thewh1teagle/vibe/releases'
+const assetsURL = 'https://api.github.com/repos/timtey88/whisperer/releases'
 const patterns = ['.exe', '.dmg', '.deb', '.rpm']
 const patternsNames = {
 	'.exe': 'Windows',

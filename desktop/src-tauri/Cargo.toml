@@ -4,7 +4,7 @@ version = "0.0.6"
 description = "Whisperer"
 authors = ["Whisperer Team"]
 license = "MIT"
-repository = "https://github.com/YOUR_USERNAME/whisperer"
+repository = "https://github.com/timtey88/whisperer"
 edition = "2021"
 
 [build-dependencies]
