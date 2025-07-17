@@ -62,7 +62,7 @@ pub fn get_app_info() -> String {
 
 pub fn get_issue_url(logs: String) -> String {
     let extra_info = get_app_info();
-    format!("https://github.com/YOUR_USERNAME/whisperer/issues/new?assignees=octocat&labels=bug&projects=&template=bug_report.yaml&title=App+reports+bug&logs={}", urlencoding::encode(&format!("{}\n\n{}", extra_info, &logs)))
+    format!("https://github.com/whisperer-dev/whisperer/issues/new?assignees=&labels=bug&projects=&template=bug_report.yaml&title=App+reports+bug&logs={}", urlencoding::encode(&format!("{}\n\n{}", extra_info, &logs)))
 }
 
 pub trait LogError<T> {

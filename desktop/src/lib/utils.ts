@@ -71,7 +71,7 @@ export async function resetApp() {
 }
 
 export async function getIssueUrl(logs: string) {
-	return `https://github.com/YOUR_USERNAME/whisperer/issues/new?assignees=octocat&labels=bug&projects=&template=bug_report.yaml&title=App+reports+bug+&logs=${encodeURIComponent(
+	return `https://github.com/whisperer-dev/whisperer/issues/new?assignees=&labels=bug&projects=&template=bug_report.yaml&title=App+reports+bug+&logs=${encodeURIComponent(
 		logs
 	)}`
 }
@@ -80,7 +80,6 @@ export async function openPath(path: NamedPath) {
 	await invoke('open_path', { path: path.path })
 }
 
-export async function getModelsFolder() {}
 
 export function formatSpeaker(speaker?: string, prefix = 'Speaker') {
 	return `${prefix} ${speaker ?? '?'}: `
