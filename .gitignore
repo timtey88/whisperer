@@ -29,3 +29,7 @@ venv/
 *.pfx
 *trace*.log
 samples/**/*.txt
+
+# Temporary repository clones
+whisper-rs/
+eyre/
