@@ -6,7 +6,6 @@ import { basename } from '@tauri-apps/api/path'
 import * as webview from '@tauri-apps/api/webviewWindow'
 import * as dialog from '@tauri-apps/plugin-dialog'
 import * as fs from '@tauri-apps/plugin-fs'
-import { open } from '@tauri-apps/plugin-shell'
 import { useContext, useEffect, useRef, useState } from 'react'
 import { toast as hotToast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
@@ -295,12 +294,11 @@ export function viewModel() {
 		} catch (error) {
 			console.error(error)
 			await dialog.message(
-				`Your GPU is unsupported in this version of Whisperer. Please download whisperer_2.4.0_x64-setup.exe. Click OK to open the download page.`,
+				`Your GPU is unsupported in this version of Whisperer. Please download a compatible version from the releases page.`,
 				{
 					kind: 'error',
 				}
 			)
-			open(config.latestVersionWithoutVulkan)
 		}
 	}
 
@@ -313,14 +311,13 @@ export function viewModel() {
 			if (unsupported.length > 0) {
 				// Found unsupported features
 				await dialog.message(
-					`Your CPU is old and doesn't support some features (${unsupported.join(
+					`Your CPU doesn't support some required features (${unsupported.join(
 						','
-					)}). Please click OK and read the readme that will open for more information.`,
+					)}). The application may not work properly on this system.`,
 					{
 						kind: 'error',
 					}
 				)
-				open(config.unsupportedCpuReadmeURL)
 				return // Don't run anything
 			}
 		}

@@ -2,7 +2,6 @@ import { ModifyState, NamedPath, pathToNamedPath } from './utils'
 import { useEffect } from 'react'
 import { listen } from '@tauri-apps/api/event'
 import * as config from '~/lib/config'
-import * as os from '@tauri-apps/plugin-os'
 
 interface UseSingleInstanceProps {
 	setFiles: ModifyState<NamedPath[]>

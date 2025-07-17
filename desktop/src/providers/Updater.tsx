@@ -6,8 +6,6 @@ import { useTranslation } from 'react-i18next'
 import { ErrorModalContext } from './ErrorModal'
 import { ModifyState } from '~/lib/utils'
 import { invoke } from '@tauri-apps/api/core'
-import { open } from '@tauri-apps/plugin-shell'
-import { latestReleaseURL } from '~/lib/config'
 // Define the context type
 
 type UpdaterContextType = {
@@ -109,9 +107,12 @@ export function UpdaterProvider({ children }: { children: React.ReactNode }) {
 		const avx2Enabled = await invoke('is_avx2_enabled')
 		const isPortable = await invoke<string>('is_portable')
 
-		// Nvidia / Older CPU / Portabl - No updates available
+		// Nvidia / Older CPU / Portable - No updates available
 		if (cudaVersion || !avx2Enabled || isPortable || rocmVersion) {
-			await open(latestReleaseURL)
+			await dialog.message('Auto-updates are not available for your configuration. Please check manually for updates.', {
+				title: 'Manual Update Required',
+				kind: 'info'
+			})
 			return
 		}
 

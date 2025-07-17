@@ -1,10 +1,5 @@
-export const updateVersionURL = 'https://github.com/YOUR_USERNAME/whisperer/releases/latest'
 export const modelsDocURL = 'https://huggingface.co/ggerganov/whisper.cpp/tree/main'
-export const unsupportedCpuReadmeURL = 'https://YOUR_USERNAME.github.io/whisperer/docs#install'
 export const storeFilename = 'app_config.json'
-export const latestReleaseURL = 'https://github.com/YOUR_USERNAME/whisperer/releases/latest'
-export const latestVersionWithoutVulkan = 'https://github.com/YOUR_USERNAME/whisperer/releases/download/v2.4.0/whisperer_2.4.0_x64-setup.exe'
-
 
 export const embeddingModelFilename = 'wespeaker_en_voxceleb_CAM++.onnx'
 export const segmentModelFilename = 'segmentation-3.0.onnx'
