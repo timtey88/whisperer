@@ -12,7 +12,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 			<div className="flex flex-col m-auto w-full mt-10">
 				<div className="relative text-center">
 					<div className="text-center mb-2">
-						<img src="/icon.png" alt="Whisperer" className="h-12 w-12 mx-auto" />
+						<img src="/icon.png" alt="Whisperer" className="h-20 w-20 mx-auto" />
 					</div>
 				</div>
 				{children}
