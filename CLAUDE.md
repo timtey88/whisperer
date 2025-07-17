@@ -63,6 +63,54 @@ bun run scripts/pre_build.js --openblas --build  # CUDA support
 bun run scripts/pre_build.js --amd  # AMD support
 ```
 
+## Development Workflow
+
+### Code Change Process
+**IMPORTANT**: Always follow this workflow for any changes made in this repository:
+
+1. **Make Changes**: Implement the requested modifications
+2. **Clean Up Code**: Run linting and formatting after changes
+3. **Always Commit**: Commit ALL changes regardless of errors or incomplete state
+4. **Maintain History**: Every attempt should be committed for complete traceability
+
+### Commit Requirements
+All commits must include:
+- **Summary**: Brief description of what was changed
+- **Description**: Detailed explanation including:
+  - What was changed and why
+  - Any issues encountered
+  - Next steps if incomplete
+  - Reference to related issues or requirements
+
+### Commit Message Format
+```
+Brief summary of changes
+
+Detailed description explaining:
+- What was changed and why
+- Any issues encountered
+- Next steps if incomplete
+
+🤖 Generated with Claude Code
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+### Code Quality Steps
+After making changes, always run:
+- `bun run lint` - Fix TypeScript/JavaScript linting issues (from desktop/ directory)
+- `cargo fmt` - Format Rust code
+- `cargo clippy` - Fix Rust linting issues
+- Apply consistent code formatting
+- Clean up unused imports, variables, or code
+- Ensure code follows project conventions
+
+### Why This Workflow
+- Creates complete audit trail of all development efforts
+- Allows tracking of failed attempts and partial implementations
+- Maintains code quality while preserving development history
+- Enables easy rollback and understanding of what was tried
+
 ## Architecture Overview
 
 ### Project Structure
