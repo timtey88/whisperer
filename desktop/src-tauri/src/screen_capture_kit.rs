@@ -60,7 +60,7 @@ pub fn reset_screen_permissions() -> Result<()> {
     std::process::Command::new("tccutil")
         .arg("reset")
         .arg("ScreenCapture")
-        .arg("github.com.thewh1teagle.whisperer")
+        .arg("com.yourorganization.whisperer")
         .spawn()
         .context("failed to reset screen permissions")?
         .wait()?;

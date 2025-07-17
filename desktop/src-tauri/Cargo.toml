@@ -2,9 +2,9 @@
 name = "whisperer"
 version = "0.0.6"
 description = "Whisperer"
-authors = ["@thewh1teagle"]
+authors = ["Whisperer Team"]
 license = "MIT"
-repository = "https://github.com/thewh1teagle/whisperer"
+repository = "https://github.com/YOUR_USERNAME/whisperer"
 edition = "2021"
 
 [build-dependencies]
