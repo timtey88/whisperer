@@ -5,6 +5,8 @@ import '~/globals.css'
 import '~/lib/i18n'
 import HomePage from '~/pages/home/Page'
 import SettingsPage from './pages/settings/Page'
+import ModelsPage from './pages/models/Page'
+import ModelOptionsPage from './pages/model-options/Page'
 import { ErrorModalProvider } from './providers/ErrorModal'
 import { PreferenceProvider } from './providers/Preference'
 import { FilesProvider } from './providers/FilesProvider'
@@ -32,6 +34,8 @@ export default function App() {
 							<Routes>
 								<Route path="/" element={<HomePage />} />
 								<Route path="/settings" element={<SettingsPage />} />
+								<Route path="/models" element={<ModelsPage />} />
+								<Route path="/model-options" element={<ModelOptionsPage />} />
 							</Routes>
 						</ToastProvider>
 					</FilesProvider>

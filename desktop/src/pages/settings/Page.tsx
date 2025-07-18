@@ -53,7 +53,7 @@ export default function SettingsPage() {
 	return (
 		<Layout>
 			<NavigationBar />
-			<div className="flex flex-col m-auto w-[400px] pb-4 dark:font-normal">
+			<div className="flex flex-col m-auto max-w-md pb-4 dark:font-normal">
 
 				<label className="form-control w-full">
 					<div className="label">
