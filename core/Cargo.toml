@@ -30,9 +30,6 @@ tokio = { version = "1.35.1", features = [
 ] }
 serde_json = { workspace = true }
 futures-util = "0.3.30"
-pyannote-rs = { git = "https://github.com/thewh1teagle/pyannote-rs.git", optional = true }
-# Pin ort to version compatible with pyannote-rs (v2.0.0-rc.9)
-ort = { version = "=2.0.0-rc.9", optional = true }
 
 # Server
 utoipa = { version = "4.2.3", features = ["axum_extras"], optional = true }
@@ -47,10 +44,10 @@ glob = "0.3.1"
 
 [features]
 default = []
-diarization = ["dep:pyannote-rs", "dep:ort"]
-coreml = ["whisper-rs/coreml", "diarization", "pyannote-rs?/coreml"]
-directml = ["diarization", "pyannote-rs?/directml"]
-cuda = ["whisper-rs/cuda", "diarization", "pyannote-rs?/load-dynamic"]
+diarization = []
+coreml = ["whisper-rs/coreml"]
+directml = []
+cuda = ["whisper-rs/cuda"]
 openblas = ["whisper-rs/openblas"]
 metal = ["whisper-rs/metal"]
 rocm = ["whisper-rs/hipblas"]

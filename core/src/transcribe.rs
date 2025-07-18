@@ -194,90 +194,15 @@ pub fn transcribe(
     let mut segments = Vec::new();
 
     let st = std::time::Instant::now();
-    if let Some(diarize_options) = diarize_options {
+    if let Some(_diarize_options) = diarize_options {
         #[cfg(feature = "diarization")]
         {
-            tracing::debug!("Diarize enabled {:?}", diarize_options);
-            params.set_single_segment(true);
-
-            let diarize_segments =
-                pyannote_rs::segment(&original_samples, 16000, diarize_options.segment_model_path).map_err(|e| eyre!("{:?}", e))?;
-        let mut embedding_manager = pyannote_rs::EmbeddingManager::new(diarize_options.max_speakers);
-        let mut extractor =
-            pyannote_rs::EmbeddingExtractor::new(diarize_options.embedding_model_path).map_err(|e| eyre!("{:?}", e))?;
-        for (i, diarize_segment) in diarize_segments.iter().enumerate() {
-            if let Some(ref abort_callback) = abort_callback {
-                if abort_callback() {
-                    break;
-                }
-            }
-
-            // whisper compatible. segment indices
-            tracing::trace!("diarize segment: {} - {}", diarize_segment.start, diarize_segment.end);
-
-            let mut samples = vec![0.0f32; diarize_segment.samples.len()];
-
-            whisper_rs::convert_integer_to_float_audio(&diarize_segment.samples, &mut samples)?;
-            state.full(params.clone(), &samples).context("failed to transcribe")?;
-
-            let num_segments = state.full_n_segments().context("failed to get number of segments")?;
-            tracing::debug!("found {} sentence segments", num_segments);
-
-            tracing::debug!("looping segments...");
-
-            if num_segments > 0 {
-                let embedding_result: Vec<f32> = match extractor.compute(&diarize_segment.samples) {
-                    Ok(result) => result.collect(),
-                    Err(error) => {
-                        tracing::error!("error: {:?}", error);
-                        tracing::trace!(
-                            "start = {:.2}, end = {:.2}, speaker = ?",
-                            diarize_segment.start,
-                            diarize_segment.end
-                        );
-                        continue; // Skip to the next segment
-                    }
-                };
-                // Find the speaker
-                let speaker = if embedding_manager.get_all_speakers().len() == diarize_options.max_speakers {
-                    embedding_manager
-                        .get_best_speaker_match(embedding_result)
-                        .map(|r| r.to_string())
-                        .unwrap_or("?".into())
-                } else {
-                    embedding_manager
-                        .search_speaker(embedding_result, diarize_options.threshold)
-                        .map(|r| r.to_string())
-                        .unwrap_or("?".into())
-                };
-
-                // convert to whisper comptible timestamps
-                let start = 100 * (diarize_segment.start as i64);
-                let stop = 100 * (diarize_segment.end as i64);
-                let text = state.full_get_segment_text_lossy(0).context("failed to get segment")?;
-                let segment = Segment {
-                    speaker: Some(speaker),
-                    start,
-                    stop,
-                    text,
-                };
-                segments.push(segment.clone());
-
-                if let Some(ref new_segment_callback) = new_segment_callback {
-                    new_segment_callback(segment);
-                }
-                if let Some(ref progress_callback) = progress_callback {
-                    tracing::trace!("progress: {} * {} / 100", i, diarize_segments.len());
-                    let progress = ((i + 1) as f64 / diarize_segments.len() as f64 * 100.0) as i32;
-                    tracing::trace!("progress diarize: {}", progress);
-                    progress_callback(progress);
-                }
-            }
-        }
+            // TODO: Implement Python bridge for pyannote/speaker-diarization-3.1
+            return Err(eyre!("Diarization feature is being migrated to Python bridge approach. Implementation coming soon."));
         }
         #[cfg(not(feature = "diarization"))]
         {
-            return Err(eyre!("Diarization requested but not enabled. thewh1teagle's pyannote-rs fork is available but needs ort compatibility fix. Enable with --features diarization when compatibility is restored."));
+            return Err(eyre!("Diarization requested but not enabled. Enable with --features diarization"));
         }
     } else {
         if let Some(callback) = progress_callback {
