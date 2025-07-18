@@ -17,10 +17,14 @@ import TranscriptionSummaryPanel from '~/components/TranscriptionSummaryPanel';
 
 // Utils
 import { viewModel } from './viewModel';
+import { validateFileAndGetError } from '~/lib/utils';
 
 export default function Home() {
   const { t } = useTranslation();
   const vm = viewModel();
+
+  // Check if the current file is valid for transcription
+  const isValidFile = vm.files.length > 0 ? validateFileAndGetError(vm.files[0].name).isValid : false;
 
   async function showWindow() {
     const currentWindow = webviewWindow.getCurrentWebviewWindow();
@@ -81,12 +85,28 @@ export default function Home() {
 
         {vm.audio && !vm.loading && (
           <div className="mt-4">
-            <button 
-              onClick={() => vm.transcribe(vm.files[0].path)} 
-              className="btn btn-primary w-full"
-            >
-              {t('common.transcribe')}
-            </button>
+            {isValidFile ? (
+              <button 
+                onClick={() => vm.transcribe(vm.files[0].path)} 
+                className="btn btn-primary w-full"
+              >
+                {t('common.transcribe')}
+              </button>
+            ) : (
+              <div className="space-y-2">
+                <button 
+                  disabled
+                  className="btn btn-primary w-full opacity-50 cursor-not-allowed"
+                >
+                  {t('common.transcribe')}
+                </button>
+                <div className="alert alert-error">
+                  <span className="text-sm">
+                    {vm.files.length > 0 ? validateFileAndGetError(vm.files[0].name).error : 'No file selected'}
+                  </span>
+                </div>
+              </div>
+            )}
             <TranscribeOptions />
           </div>
         )}

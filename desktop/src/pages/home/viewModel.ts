@@ -7,7 +7,7 @@ import * as webview from '@tauri-apps/api/webviewWindow'
 import * as dialog from '@tauri-apps/plugin-dialog'
 import * as fs from '@tauri-apps/plugin-fs'
 import { useContext, useEffect, useRef, useState } from 'react'
-import { toast as hotToast } from 'react-hot-toast'
+import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useLocalStorage } from 'usehooks-ts'
@@ -17,7 +17,7 @@ import { AudioDevice } from '~/lib/audio'
 import * as config from '~/lib/config'
 import * as transcript from '~/lib/transcript'
 import { useConfirmExit } from '~/lib/useConfirmExit'
-import { NamedPath, ls, openPath, pathToNamedPath, startKeepAwake, stopKeepAwake } from '~/lib/utils'
+import { NamedPath, ls, openPath, pathToNamedPath, startKeepAwake, stopKeepAwake, validateFileAndGetError, getSupportedFormatsString } from '~/lib/utils'
 import { getX86Features } from '~/lib/x86Features'
 import { ErrorModalContext } from '~/providers/ErrorModal'
 import { useFilesContext } from '~/providers/FilesProvider'
@@ -206,13 +206,43 @@ export function viewModel() {
 	async function handleDrop() {
 		listen<{ paths: string[] }>('tauri://drag-drop', async (event) => {
 			const newFiles: NamedPath[] = []
+			const invalidFiles: string[] = []
+			
 			for (const path of event.payload.paths) {
 				const file = await pathToNamedPath(path)
-				newFiles.push({ name: file.name, path: file.path })
+				const validation = validateFileAndGetError(file.name)
+				
+				if (validation.isValid) {
+					newFiles.push({ name: file.name, path: file.path })
+				} else {
+					invalidFiles.push(file.name)
+				}
 			}
-			setFiles(newFiles)
-			if (newFiles.length > 1) {
-				navigate('/batch', { state: { files: newFiles } })
+			
+			// Show error for invalid files
+			if (invalidFiles.length > 0) {
+				const fileList = invalidFiles.join(', ')
+				const errorMessage = invalidFiles.length === 1 
+					? `Invalid file: ${fileList}. ${getSupportedFormatsString()}`
+					: `Invalid files: ${fileList}. ${getSupportedFormatsString()}`
+				
+				toast.error(errorMessage, {
+					duration: 5000,
+					style: {
+						maxWidth: '500px',
+					},
+				})
+			}
+			
+			// Only set files if we have valid ones
+			if (newFiles.length > 0) {
+				setFiles(newFiles)
+				if (newFiles.length > 1) {
+					navigate('/batch', { state: { files: newFiles } })
+				}
+			} else if (invalidFiles.length > 0) {
+				// Clear any existing files if all dropped files were invalid
+				setFiles([])
 			}
 		})
 	}
@@ -381,7 +411,7 @@ export function viewModel() {
 			})
 			setShowTranscriptionResult(true)
 			
-			hotToast.success(t('common.transcribe-took', { total: String(processingDuration) }), { position: 'bottom-center' })
+			toast.success(t('common.transcribe-took', { total: String(processingDuration) }), { position: 'bottom-center' })
 		} catch (error) {
 			const processingDuration = Math.round((performance.now() - processStartTime) / 1000)
 			const transcriptionEndTime = Date.now()

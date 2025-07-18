@@ -50,6 +50,40 @@ export function validPath(path: string) {
 	return false
 }
 
+export function isValidAudioVideoFile(fileName: string): boolean {
+	const lowerFileName = fileName.toLowerCase()
+	const allExtensions = [...config.audioExtensions, ...config.videoExtensions]
+	return allExtensions.some((ext) => lowerFileName.endsWith(`.${ext}`))
+}
+
+export function getFileExtension(fileName: string): string {
+	const parts = fileName.split('.')
+	return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : ''
+}
+
+export function getSupportedFormatsString(): string {
+	const audioFormats = config.audioExtensions.map(ext => ext.toUpperCase()).join(', ')
+	const videoFormats = config.videoExtensions.map(ext => ext.toUpperCase()).join(', ')
+	return `Audio: ${audioFormats} | Video: ${videoFormats}`
+}
+
+export function validateFileAndGetError(fileName: string): { isValid: boolean; error?: string } {
+	if (!fileName) {
+		return { isValid: false, error: 'No file selected' }
+	}
+	
+	const isValid = isValidAudioVideoFile(fileName)
+	if (!isValid) {
+		const ext = getFileExtension(fileName)
+		return { 
+			isValid: false, 
+			error: `Unsupported file type: ${ext ? ext.toUpperCase() : 'unknown'}. Supported formats: ${getSupportedFormatsString()}` 
+		}
+	}
+	
+	return { isValid: true }
+}
+
 export async function resetApp() {
 	const modelPath = localStorage.getItem('model_path')
 	try {

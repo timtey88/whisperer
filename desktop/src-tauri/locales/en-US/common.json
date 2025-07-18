@@ -231,5 +231,10 @@
   "release-to-upload": "Release to upload",
   "processing-file": "Processing your file...",
   "supported-formats": "Supported: MP3, MP4, WAV, M4A, AAC, FLAC, OGG, WebM, MKV, AVI, MOV",
-  "supported-audio-video": "Supports audio and video files"
+  "supported-audio-video": "Supports audio and video files",
+  "invalid-file-type": "Invalid file type",
+  "file-validation-error": "File validation failed",
+  "supported-audio-formats": "Supported audio formats",
+  "supported-video-formats": "Supported video formats",
+  "no-file-selected": "No file selected"
 }
