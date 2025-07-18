@@ -40,7 +40,7 @@ export default function ModelsPage() {
 
 	return (
 		<Layout>
-			<div className="flex flex-col max-w-6xl mx-auto px-4">
+			<div className="flex flex-col max-w-4xl mx-auto px-6">
 				{/* Header with back button and refresh */}
 				<div className="flex items-center gap-4 mb-6">
 					<button

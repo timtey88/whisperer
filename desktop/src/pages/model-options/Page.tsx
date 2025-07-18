@@ -160,7 +160,7 @@ export default function ModelOptionsPage() {
 
 	return (
 		<Layout>
-			<div className="flex flex-col m-auto w-full max-w-4xl mt-10 px-4">
+			<div className="flex flex-col max-w-4xl mx-auto px-6">
 				{/* Header */}
 				<div className="flex items-center gap-4 mb-6">
 					<button
