@@ -7,8 +7,6 @@ import Layout from '~/components/Layout';
 import NavigationBar from '~/components/NavigationBar';
 import MainContent from '~/components/MainContent';
 import LanguageInput from '~/components/LanguageInput';
-import DragDropZone from '~/components/DragDropZone';
-import TranscribeOptions from '~/components/Params';
 import TextArea from '~/components/TextArea';
 import AudioInput from '~/pages/home/AudioInput';
 import AudioPlayer from './AudioPlayer';
@@ -46,11 +44,6 @@ export default function Home() {
         <div className="flex flex-col gap-4">
           <LanguageInput />
           
-          {/* Drag & Drop Zone - shows when no files selected */}
-          <DragDropZone 
-            onFileSelect={vm.selectFiles}
-            hasFiles={vm.files.length > 0}
-          />
           
           {!vm.files.length && (
             <div className="mt-2">
@@ -107,7 +100,6 @@ export default function Home() {
                 </div>
               </div>
             )}
-            <TranscribeOptions />
           </div>
         )}
       </MainContent>
