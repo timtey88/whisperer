@@ -46,7 +46,7 @@ impl Downloader {
         let res = self.client.get(url).send().await?.error_for_status()?;
         let total_size = res
             .content_length()
-            .ok_or_eyre(format!("Failed to get content length from '{}'", url))?;
+            .ok_or_eyre(format!("Failed to get content length from '{url}'"))?;
         let mut file = std::fs::File::create(path.clone()).context(format!("Failed to create file {}", path.display()))?;
         let mut downloaded: u64 = 0;
         let callback_limit = 1024 * 1024 * 2; // 1MB limit

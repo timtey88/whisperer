@@ -34,6 +34,9 @@ bun run tauri build
 # Test core library
 cargo test -p whisperer_core --release -- --nocapture
 
+# Test with diarization features
+cargo test -p whisperer_core --features diarization --release -- --nocapture
+
 # Test with environment variables
 export RUST_LOG=trace
 cargo test -- --nocapture
@@ -62,6 +65,33 @@ bun run scripts/pre_build.js --vulkan  # Vulkan support
 bun run scripts/pre_build.js --openblas --build  # CUDA support
 bun run scripts/pre_build.js --amd  # AMD support
 ```
+
+### Speaker Diarization Setup (Optional)
+Speaker diarization is available through a Python bridge using pyannote/speaker-diarization-3.1:
+
+```bash
+# Install Python dependencies
+pip install pyannote.audio torch torchaudio
+
+# Set up HuggingFace access token
+export HUGGINGFACE_TOKEN="your_token_here"
+
+# Accept user conditions on HuggingFace:
+# - https://huggingface.co/pyannote/segmentation-3.0
+# - https://huggingface.co/pyannote/speaker-diarization-3.1
+
+# Test diarization dependencies
+python3 scripts/diarize.py --check-deps
+
+# Build with diarization features
+cargo build --features diarization
+```
+
+**Requirements for Diarization**:
+- Python 3.8+ with pyannote.audio 3.1+
+- HuggingFace account with accepted model user conditions
+- Valid HuggingFace access token
+- GPU support optional but recommended (CUDA/Metal/MPS)
 
 ## Development Workflow
 
@@ -125,6 +155,7 @@ After making changes, always run:
 
 **Core Library (`core/src/`)**:
 - `transcribe.rs` - Main transcription logic using whisper.cpp
+- `diarization.rs` - Speaker diarization using Python bridge (feature-gated)
 - `audio.rs` - Audio processing and device management
 - `config.rs` - Configuration management
 - `downloader.rs` - Model downloading functionality
@@ -133,6 +164,7 @@ After making changes, always run:
 **Tauri Backend (`desktop/src-tauri/src/`)**:
 - `main.rs` - Application entry point with command handlers
 - `cmd/` - Tauri command implementations
+  - `cmd/diarization.rs` - Speaker diarization commands (feature-gated)
 - `setup.rs` - Application initialization
 - `server.rs` - HTTP API server (when enabled)
 - `cli.rs` - Command line interface
@@ -146,6 +178,7 @@ After making changes, always run:
 
 ### Key Features
 - Offline transcription using Whisper models
+- Speaker diarization using pyannote/speaker-diarization-3.1 (optional)
 - Multiple export formats (SRT, VTT, TXT, HTML, PDF, JSON, DOCX)
 - GPU acceleration (CUDA, Vulkan, CoreML)
 - Batch processing
@@ -156,6 +189,7 @@ After making changes, always run:
 
 ### Development Notes
 - Uses Tauri's IPC system for frontend-backend communication
+- Speaker diarization implemented via Python subprocess bridge for compatibility
 - Implements custom protocol handling for deep links
 - Supports CLI usage with `--help` flag
 - Has HTTP API mode with Swagger docs at `/docs`

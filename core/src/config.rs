@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 #[cfg_attr(feature = "server", derive(utoipa::ToSchema))]
-
 pub struct TranscribeOptions {
     pub path: String,
     pub lang: Option<String>,
@@ -23,6 +22,6 @@ pub struct TranscribeOptions {
 impl fmt::Debug for TranscribeOptions {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let json_string = serde_json::to_string_pretty(self).map_err(|_| fmt::Error)?;
-        write!(f, "{}", json_string)
+        write!(f, "{json_string}")
     }
 }

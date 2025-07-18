@@ -36,7 +36,7 @@ fn macos_link_search_path() -> Option<String> {
     for line in stdout.lines() {
         if line.contains("libraries: =") {
             let path = line.split('=').nth(1)?;
-            return Some(format!("{}/lib/darwin", path));
+            return Some(format!("{path}/lib/darwin"));
         }
     }
 
@@ -114,7 +114,7 @@ fn main() {
         // More details at https://github.com/alexcrichton/curl-rust/issues/279.
         if let Some(path) = macos_link_search_path() {
             println!("cargo:rustc-link-lib=clang_rt.osx");
-            println!("cargo:rustc-link-search={}", path);
+            println!("cargo:rustc-link-search={path}");
         }
     }
 

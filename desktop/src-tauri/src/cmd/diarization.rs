@@ -1,7 +1,9 @@
 use eyre::{bail, Result};
 use serde::{Deserialize, Serialize};
 use tauri::{command, State};
-use whisperer_core::diarization::{check_dependencies, run_diarization, DependencyCheck, DiarizeOptions as CoreDiarizeOptions, DiarizeSegment};
+use whisperer_core::diarization::{
+    check_dependencies, run_diarization, DependencyCheck, DiarizeOptions as CoreDiarizeOptions, DiarizeSegment,
+};
 
 /// Frontend-compatible diarization options
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,12 +43,12 @@ impl From<DiarizeOptions> for CoreDiarizeOptions {
 #[command]
 pub async fn check_diarization_dependencies() -> Result<DependencyCheck> {
     tracing::debug!("Checking diarization dependencies");
-    
+
     #[cfg(feature = "diarization")]
     {
         check_dependencies()
     }
-    
+
     #[cfg(not(feature = "diarization"))]
     {
         bail!("Diarization feature not enabled")
@@ -55,25 +57,20 @@ pub async fn check_diarization_dependencies() -> Result<DependencyCheck> {
 
 /// Run speaker diarization on an audio file
 #[command]
-pub async fn run_speaker_diarization(
-    audio_path: String,
-    options: DiarizeOptions,
-) -> Result<Vec<DiarizeSegment>> {
+pub async fn run_speaker_diarization(audio_path: String, options: DiarizeOptions) -> Result<Vec<DiarizeSegment>> {
     tracing::info!("Running speaker diarization on: {}", audio_path);
-    
+
     #[cfg(feature = "diarization")]
     {
         let core_options = CoreDiarizeOptions::from(options);
-        
+
         // Run diarization in a blocking task to avoid blocking the async runtime
         let audio_path_clone = audio_path.clone();
-        tokio::task::spawn_blocking(move || {
-            run_diarization(audio_path_clone, core_options)
-        })
-        .await
-        .map_err(|e| eyre::eyre!("Task join error: {}", e))?
+        tokio::task::spawn_blocking(move || run_diarization(audio_path_clone, core_options))
+            .await
+            .map_err(|e| eyre::eyre!("Task join error: {}", e))?
     }
-    
+
     #[cfg(not(feature = "diarization"))]
     {
         bail!("Diarization feature not enabled")
@@ -84,12 +81,10 @@ pub async fn run_speaker_diarization(
 #[command]
 pub async fn test_python_bridge() -> Result<String> {
     tracing::debug!("Testing Python bridge");
-    
+
     // Try to run a simple Python command
-    let output = std::process::Command::new("python3")
-        .arg("--version")
-        .output();
-    
+    let output = std::process::Command::new("python3").arg("--version").output();
+
     match output {
         Ok(output) => {
             if output.status.success() {
