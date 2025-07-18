@@ -223,5 +223,10 @@
   "reset-to-defaults": "Reset to Defaults",
   "reset": "Reset",
   "confirm-reset-model-options": "Are you sure you want to reset all model options to their default values?",
-  "settings-auto-saved": "Settings are automatically saved"
+  "settings-auto-saved": "Settings are automatically saved",
+  "invalid-file-type": "Invalid file type",
+  "file-validation-error": "File validation failed",
+  "supported-audio-formats": "Supported audio formats",
+  "supported-video-formats": "Supported video formats",
+  "no-file-selected": "No file selected"
 }
