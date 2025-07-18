@@ -59,7 +59,7 @@ export default function Home() {
             {!vm.files.length && (
               <div className="mt-6">
                 <div className="label">
-                  <span className="label-text text-lg font-medium">{t('common.file-selection')}</span>
+                  <span className="label-text text-lg font-medium">{t('common.select-file')}</span>
                 </div>
                 <AudioInput onClick={vm.selectFiles} />
               </div>
