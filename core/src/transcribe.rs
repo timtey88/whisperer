@@ -197,8 +197,83 @@ pub fn transcribe(
     if let Some(_diarize_options) = diarize_options {
         #[cfg(feature = "diarization")]
         {
-            // TODO: Implement Python bridge for pyannote/speaker-diarization-3.1
-            return Err(eyre!("Diarization feature is being migrated to Python bridge approach. Implementation coming soon."));
+            tracing::debug!("Diarize enabled with Python bridge: {:?}", _diarize_options);
+            
+            // Convert options to bridge-compatible format
+            let bridge_options = crate::diarization::DiarizeOptions {
+                min_speakers: Some(_diarize_options.max_speakers as u32).filter(|&x| x > 0),
+                max_speakers: Some(_diarize_options.max_speakers as u32).filter(|&x| x > 0),
+                num_speakers: None, // Let the model decide based on min/max
+                use_gpu: true, // Enable GPU by default
+                hf_token: None, // Will need to be provided by environment or UI
+            };
+            
+            // Run diarization on the normalized audio file
+            let diarize_segments = crate::diarization::run_diarization(&out_path, bridge_options)?;
+            
+            // Process each diarization segment for transcription
+            for diarize_segment in diarize_segments.iter() {
+                if let Some(ref abort_callback) = abort_callback {
+                    if abort_callback() {
+                        break;
+                    }
+                }
+                
+                // Calculate sample range for this diarization segment
+                let sample_rate = 16000.0;
+                let start_sample = (diarize_segment.start_time * sample_rate) as usize;
+                let end_sample = (diarize_segment.end_time() * sample_rate) as usize;
+                
+                // Extract audio samples for this segment
+                let segment_samples: Vec<i16> = if end_sample <= original_samples.len() {
+                    original_samples[start_sample..end_sample].to_vec()
+                } else {
+                    tracing::warn!("Diarization segment extends beyond audio length, truncating");
+                    original_samples[start_sample..].to_vec()
+                };
+                
+                if segment_samples.is_empty() {
+                    continue;
+                }
+                
+                // Convert to float samples for whisper
+                let mut float_samples = vec![0.0f32; segment_samples.len()];
+                whisper_rs::convert_integer_to_float_audio(&segment_samples, &mut float_samples)?;
+                
+                // Transcribe this segment
+                let mut segment_params = setup_params(options);
+                segment_params.set_single_segment(true);
+                
+                state.full(segment_params, &float_samples).context("failed to transcribe diarized segment")?;
+                
+                let num_segments = state.full_n_segments().context("failed to get number of segments")?;
+                
+                if num_segments > 0 {
+                    let text = state.full_get_segment_text_lossy(0).context("failed to get segment")?;
+                    
+                    // Convert diarization timestamps to whisper format (centiseconds)
+                    let (start_cs, end_cs) = diarize_segment.to_whisper_timestamps();
+                    
+                    let segment = Segment {
+                        speaker: Some(diarize_segment.speaker.clone()),
+                        start: start_cs,
+                        stop: end_cs,
+                        text,
+                    };
+                    
+                    segments.push(segment.clone());
+                    
+                    if let Some(ref new_segment_callback) = new_segment_callback {
+                        new_segment_callback(segment);
+                    }
+                }
+                
+                // Report progress
+                if let Some(ref progress_callback) = progress_callback {
+                    let progress = (segments.len() as f64 / diarize_segments.len() as f64 * 100.0) as i32;
+                    progress_callback(progress);
+                }
+            }
         }
         #[cfg(not(feature = "diarization"))]
         {

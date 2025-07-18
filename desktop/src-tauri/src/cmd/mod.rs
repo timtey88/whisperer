@@ -21,6 +21,8 @@ use whisperer_core::get_whisperer_temp_folder;
 use whisperer_core::transcript::Segment;
 use whisperer_core::transcript::Transcript;
 pub mod audio;
+#[cfg(feature = "diarization")]
+pub mod diarization;
 pub mod ytdlp;
 
 /// Return true if there's internet connection

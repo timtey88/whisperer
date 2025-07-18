@@ -109,6 +109,39 @@
             }
           ],
           "sidecar": false
+        },
+        {
+          "name": "python_diarize",
+          "cmd": "python3",
+          "args": [
+            "$RESOURCE/../../scripts/diarize.py",
+            {
+              "validator": ".*\\.(wav|mp3|mp4|m4a|flac|ogg|aac|webm|mkv|avi|mov)$"
+            },
+            "--token",
+            {
+              "validator": ".*"
+            },
+            "--output-format",
+            {
+              "validator": "(rttm|json)"
+            },
+            "--min-speakers",
+            {
+              "validator": "\\d+"
+            },
+            "--max-speakers", 
+            {
+              "validator": "\\d+"
+            },
+            "--num-speakers",
+            {
+              "validator": "\\d+"
+            },
+            "--no-gpu",
+            "--check-deps"
+          ],
+          "sidecar": false
         }
       ]
     },

@@ -100,6 +100,12 @@ fn main() -> Result<()> {
             cmd::rename_crash_file,
             cmd::check_model_exists,
             cmd::delete_model,
+            #[cfg(feature = "diarization")]
+            cmd::diarization::check_diarization_dependencies,
+            #[cfg(feature = "diarization")]
+            cmd::diarization::run_speaker_diarization,
+            #[cfg(feature = "diarization")]
+            cmd::diarization::test_python_bridge,
             #[cfg(windows)]
             cmd::set_high_gpu_preference
         ])

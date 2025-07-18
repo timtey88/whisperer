@@ -1,5 +1,7 @@
 pub mod audio;
 pub mod config;
+#[cfg(feature = "diarization")]
+pub mod diarization;
 pub mod downloader;
 pub mod transcribe;
 pub mod transcript;
