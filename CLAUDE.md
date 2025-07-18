@@ -175,6 +175,89 @@ After making changes, always run:
 - Maintains code quality while preserving development history
 - Enables easy rollback and understanding of what was tried
 
+## Git Branching Strategy
+
+### Branch Structure
+- **`production`** - Production-ready releases only (v1.0.0, v1.1.0, v2.0.0)
+- **`development`** - Integration branch for features and testing
+- **`release/vX.Y.x`** - Release preparation branches for version X.Y patches
+- **`feature/feature-name`** - Individual feature development branches
+- **`hotfix/issue-name`** - Critical bug fixes for production
+- **`thewh1eagle-main`** - Preserved original upstream branch
+
+### Development Workflow
+
+#### For New Features (Minor Version)
+```bash
+# Create feature branch from development
+git checkout development
+git checkout -b feature/feature-name
+
+# Develop feature with regular commits
+git add .
+git commit -m "Add feature functionality"
+
+# When feature complete, merge to development
+git checkout development
+git merge feature/feature-name
+git branch -d feature/feature-name
+
+# Create release branch when ready for new version
+git checkout -b release/v1.Y.x
+# Update version numbers, test, build
+
+# When release ready, merge to production
+git checkout production
+git merge release/v1.Y.x
+git tag v1.Y.0
+git push origin production --tags
+```
+
+#### For Bug Fixes (Patch Version)
+```bash
+# Create hotfix from appropriate release branch
+git checkout release/v1.0.x
+git checkout -b hotfix/critical-bug
+
+# Fix bug, test, build
+git add .
+git commit -m "Fix critical bug"
+
+# When ready, merge back to release branch
+git checkout release/v1.0.x
+git merge hotfix/critical-bug
+
+# Merge to production and tag
+git checkout production
+git merge release/v1.0.x
+git tag v1.0.1
+git push origin production --tags
+
+# Also merge fix back to development
+git checkout development
+git merge hotfix/critical-bug
+```
+
+### Version Management
+- **v1.0.x** - Patch releases (bug fixes, small improvements)
+- **v1.Y.0** - Minor releases (new features, enhancements)
+- **v2.0.0** - Major releases (breaking changes, major redesigns)
+
+### Branch Naming Conventions
+- `feature/drag-drop-ui` - New feature development
+- `feature/multi-upload` - Multi-file upload system
+- `feature/queue-system` - Transcription queue management
+- `hotfix/memory-leak` - Critical bug fixes
+- `release/v1.1.x` - Release preparation
+
+### Git Workflow Rules
+1. **Never commit directly to `production`** - Always use release branches
+2. **All features start from `development`** - Keep development as integration point
+3. **Use descriptive branch names** - Include feature/issue description
+4. **Clean commit history** - Squash commits when merging if needed
+5. **Tag all releases** - Use semantic versioning (v1.0.0, v1.1.0, etc.)
+6. **Delete merged branches** - Keep repository clean after merging features
+
 ## Architecture Overview
 
 ### Project Structure
