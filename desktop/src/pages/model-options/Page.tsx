@@ -4,6 +4,7 @@ import { ReactComponent as ChevronLeftIcon } from '~/icons/chevron-left.svg'
 import { ReactComponent as SettingsIcon } from '~/icons/settings.svg'
 import { ReactComponent as ResetIcon } from '~/icons/reset.svg'
 import Layout from '~/components/Layout'
+import MainContent from '~/components/MainContent'
 import { InfoTooltip } from '~/components/InfoTooltip'
 import CustomSelect, { SelectOption } from '~/components/CustomSelect'
 import { cx } from '~/lib/utils'
@@ -160,7 +161,7 @@ export default function ModelOptionsPage() {
 
 	return (
 		<Layout>
-			<div className="flex flex-col max-w-4xl mx-auto px-6">
+			<MainContent maxWidth="4xl">
 				{/* Header */}
 				<div className="flex items-center gap-4 mb-6">
 					<button
@@ -535,7 +536,7 @@ export default function ModelOptionsPage() {
 						{t('common.settings-auto-saved')}
 					</p>
 				</div>
-			</div>
+			</MainContent>
 		</Layout>
 	)
 }

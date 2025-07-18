@@ -16,6 +16,7 @@ import { useEffect, useState } from 'react'
 import CustomSelect, { SelectOption } from '~/components/CustomSelect'
 import Layout from '~/components/Layout'
 import NavigationBar from '~/components/NavigationBar'
+import MainContent from '~/components/MainContent'
 
 export default function SettingsPage() {
 	const { t, i18n } = useTranslation()
@@ -53,7 +54,7 @@ export default function SettingsPage() {
 	return (
 		<Layout>
 			<NavigationBar />
-			<div className="w-full max-w-md flex flex-col pb-4 dark:font-normal">
+			<MainContent maxWidth="md" className="pb-4 dark:font-normal">
 
 				<label className="form-control w-full">
 					<div className="label">
@@ -298,7 +299,7 @@ export default function SettingsPage() {
 					</button>
 					<p className="text-center font-light mt-2">{vm.appVersion}</p>
 				</div>
-			</div>
+			</MainContent>
 		</Layout>
 	)
 }

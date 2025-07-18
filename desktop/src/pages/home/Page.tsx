@@ -5,6 +5,7 @@ import { webviewWindow } from '@tauri-apps/api';
 // Components
 import Layout from '~/components/Layout';
 import NavigationBar from '~/components/NavigationBar';
+import MainContent from '~/components/MainContent';
 import LanguageInput from '~/components/LanguageInput';
 import ModelOptions from '~/components/Params';
 import TextArea from '~/components/TextArea';
@@ -36,60 +37,59 @@ export default function Home() {
     <Layout>
       <NavigationBar />
 
-      {/* Main Content */}
-      <div className="flex flex-col items-center w-full px-6">
-        <div className="w-full max-w-md flex flex-col">
-          <div className="flex flex-col gap-4">
-            <LanguageInput />
-            
-            {!vm.files.length && (
-              <div className="mt-6">
-                <div className="label">
-                  <span className="label-text text-lg font-medium">{t('common.select-file')}</span>
-                </div>
-                <AudioInput onClick={vm.selectFiles} />
+      <MainContent maxWidth="md">
+        <div className="flex flex-col gap-4">
+          <LanguageInput />
+          
+          {!vm.files.length && (
+            <div className="mt-6">
+              <div className="label">
+                <span className="label-text text-lg font-medium">{t('common.select-file')}</span>
               </div>
-            )}
-          </div>
-        
-          {vm.audio && (
-            <div>
-              {vm.files.length > 0 && (
-                <AudioPlayer 
-                  label={vm.files[0].name} 
-                  onLabelClick={() => vm.openPath(vm.files[0])} 
-                  audio={vm.audio} 
-                />
-              )}
-
-              {!vm.loading && (
-                <div 
-                  onClick={vm.selectFiles} 
-                  className="text-xs text-base-content font-medium cursor-pointer mb-3 mt-1"
-                >
-                  {t('common.change-file')}
-                </div>
-              )}
-            </div>
-          )}
-
-          {vm.audio && !vm.loading && (
-            <div className="mt-4">
-              <button 
-                onClick={() => vm.transcribe(vm.files[0].path)} 
-                className="btn btn-primary w-full"
-              >
-                {t('common.transcribe')}
-              </button>
-              <ModelOptions 
-                options={vm.preference.modelOptions} 
-                setOptions={vm.preference.setModelOptions} 
-              />
+              <AudioInput onClick={vm.selectFiles} />
             </div>
           )}
         </div>
+      
+        {vm.audio && (
+          <div>
+            {vm.files.length > 0 && (
+              <AudioPlayer 
+                label={vm.files[0].name} 
+                onLabelClick={() => vm.openPath(vm.files[0])} 
+                audio={vm.audio} 
+              />
+            )}
 
-        <div className="w-full max-w-4xl mt-8 px-6">
+            {!vm.loading && (
+              <div 
+                onClick={vm.selectFiles} 
+                className="text-xs text-base-content font-medium cursor-pointer mb-3 mt-1"
+              >
+                {t('common.change-file')}
+              </div>
+            )}
+          </div>
+        )}
+
+        {vm.audio && !vm.loading && (
+          <div className="mt-4">
+            <button 
+              onClick={() => vm.transcribe(vm.files[0].path)} 
+              className="btn btn-primary w-full"
+            >
+              {t('common.transcribe')}
+            </button>
+            <ModelOptions 
+              options={vm.preference.modelOptions} 
+              setOptions={vm.preference.setModelOptions} 
+            />
+          </div>
+        )}
+      </MainContent>
+
+      <div className="flex flex-col items-center w-full px-6">
+        <div className="w-full max-w-4xl mt-8">
           {vm.loading && (
             <EnhancedProgressPanel 
               isAborting={vm.isAborting} 

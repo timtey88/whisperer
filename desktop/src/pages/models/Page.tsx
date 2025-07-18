@@ -5,6 +5,7 @@ import { ReactComponent as DownloadIcon } from '~/icons/download.svg'
 import { ReactComponent as CheckIcon } from '~/icons/check.svg'
 import { ReactComponent as CancelIcon } from '~/icons/cancel.svg'
 import Layout from '~/components/Layout'
+import MainContent from '~/components/MainContent'
 import { cx } from '~/lib/utils'
 import { viewModel } from './viewModel'
 import AnimatedLoader from '~/components/AnimatedLoader'
@@ -40,7 +41,7 @@ export default function ModelsPage() {
 
 	return (
 		<Layout>
-			<div className="flex flex-col max-w-4xl mx-auto px-6">
+			<MainContent maxWidth="4xl">
 				{/* Header with back button and refresh */}
 				<div className="flex items-center gap-4 mb-6">
 					<button
@@ -206,7 +207,7 @@ export default function ModelsPage() {
 					</div>
 				)}
 
-			</div>
+			</MainContent>
 		</Layout>
 	)
 }
