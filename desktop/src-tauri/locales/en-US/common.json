@@ -223,5 +223,13 @@
   "reset-to-defaults": "Reset to Defaults",
   "reset": "Reset",
   "confirm-reset-model-options": "Are you sure you want to reset all model options to their default values?",
-  "settings-auto-saved": "Settings are automatically saved"
+  "settings-auto-saved": "Settings are automatically saved",
+  "drop-files-here": "Drop your files here",
+  "file-received": "File received!",
+  "unsupported-file-type": "Unsupported file type",
+  "drag-drop-or-click": "Drag & drop audio/video files here or click to select",
+  "release-to-upload": "Release to upload",
+  "processing-file": "Processing your file...",
+  "supported-formats": "Supported: MP3, MP4, WAV, M4A, AAC, FLAC, OGG, WebM, MKV, AVI, MOV",
+  "supported-audio-video": "Supports audio and video files"
 }

@@ -201,7 +201,7 @@ export default function TextArea({
 		}
 
 		let text = ''
-		let ext = exportExtensions[exportFormat].slice(1)
+		const ext = exportExtensions[exportFormat].slice(1)
 
 		if (exportFormat === 'html') {
 			text = document.querySelector('.html')!.outerHTML.replace(`contenteditable="true"`, `contenteditable="false"`)

@@ -140,7 +140,7 @@ export function viewModel() {
 	}
 
 	async function loadAudioDevices() {
-		let newDevices = await invoke<AudioDevice[]>('get_audio_devices')
+		const newDevices = await invoke<AudioDevice[]>('get_audio_devices')
 		const defaultInput = newDevices.find((d) => d.isDefault && d.isInput)
 		const defaultOutput = newDevices.find((d) => d.isDefault && !d.isInput)
 		if (defaultInput) {
@@ -270,7 +270,7 @@ export function viewModel() {
 		setTranscriptTab('transcript')
 
 		setIsRecording(true)
-		let devices: AudioDevice[] = []
+		const devices: AudioDevice[] = []
 		if (inputDevice) {
 			devices.push(inputDevice)
 		}

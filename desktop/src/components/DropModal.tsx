@@ -14,7 +14,7 @@ interface Position {
 function Document({ position, path }: { position: Position; path: string }) {
 	return (
 		<div
-			className="absolute z-[100000] bg-base-300 p-4 -translate-x-[50%] -translate-y-[50%] rounded-2xl flex flex-col items-center justify-center gap-4"
+			className="absolute z-[100000] bg-base-300 p-4 -translate-x-[50%] -translate-y-[50%] rounded-2xl flex flex-col items-center justify-center gap-4 shadow-lg border border-base-300"
 			style={{ left: position.x, top: position.y, cursor: 'grabbing' }}>
 			<DocumentIcon />
 			<p className="text-md font-light font-mono">{formatLongString(path, 10)}</p>
@@ -82,7 +82,10 @@ export default function DropModal() {
 	return (
 		<div>
 			{open && platform === 'windows' && <Document path={path} position={position} />}
-			<div className={cx('modal backdrop-blur-sm bg-base-100', open && 'modal-open')}></div>
+			<div className={cx(
+				'modal backdrop-blur-sm transition-all duration-300 ease-in-out',
+				open ? 'modal-open bg-base-100/30' : 'bg-transparent'
+			)}></div>
 		</div>
 	)
 }

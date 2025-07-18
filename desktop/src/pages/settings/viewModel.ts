@@ -13,7 +13,7 @@ import * as clipboard from '@tauri-apps/plugin-clipboard-manager'
 import { getPrettyVersion } from '~/lib/logs'
 
 async function openModelPath() {
-	let dst = await invoke<string>('get_models_folder')
+	const dst = await invoke<string>('get_models_folder')
 	invoke('open_path', { path: dst })
 }
 
