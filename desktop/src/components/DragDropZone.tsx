@@ -130,23 +130,19 @@ export default function DragDropZone({ onFileSelect, hasFiles = false }: DragDro
         className={cx(
           'border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-300 ease-in-out',
           'hover:border-primary hover:bg-primary/5',
-          {
-            'border-base-300 bg-base-100': dragState === 'idle',
-            'border-primary bg-primary/10 scale-[1.02]': dragState === 'dragover',
-            'border-success bg-success/10': dragState === 'accepted',
-            'border-error bg-error/10': dragState === 'rejected',
-          }
+          dragState === 'idle' && 'border-base-300 bg-base-100',
+          dragState === 'dragover' && 'border-primary bg-primary/10 scale-[1.02]',
+          dragState === 'accepted' && 'border-success bg-success/10',
+          dragState === 'rejected' && 'border-error bg-error/10'
         )}
       >
         <div className="flex flex-col items-center gap-3">
           <div className={cx(
             'transition-all duration-300',
-            {
-              'text-base-content/70': dragState === 'idle',
-              'text-primary animate-pulse': dragState === 'dragover',
-              'text-success': dragState === 'accepted',
-              'text-error': dragState === 'rejected',
-            }
+            dragState === 'idle' && 'text-base-content/70',
+            dragState === 'dragover' && 'text-primary animate-pulse',
+            dragState === 'accepted' && 'text-success',
+            dragState === 'rejected' && 'text-error'
           )}>
             {getIcon()}
           </div>
@@ -154,24 +150,20 @@ export default function DragDropZone({ onFileSelect, hasFiles = false }: DragDro
           <div>
             <p className={cx(
               'font-medium transition-colors duration-300',
-              {
-                'text-base-content': dragState === 'idle',
-                'text-primary': dragState === 'dragover',
-                'text-success': dragState === 'accepted',
-                'text-error': dragState === 'rejected',
-              }
+              dragState === 'idle' && 'text-base-content',
+              dragState === 'dragover' && 'text-primary',
+              dragState === 'accepted' && 'text-success',
+              dragState === 'rejected' && 'text-error'
             )}>
               {getText()}
             </p>
             
             <p className={cx(
               'text-sm mt-1 transition-colors duration-300',
-              {
-                'text-base-content/60': dragState === 'idle',
-                'text-primary/80': dragState === 'dragover',
-                'text-success/80': dragState === 'accepted',
-                'text-error/80': dragState === 'rejected',
-              }
+              dragState === 'idle' && 'text-base-content/60',
+              dragState === 'dragover' && 'text-primary/80',
+              dragState === 'accepted' && 'text-success/80',
+              dragState === 'rejected' && 'text-error/80'
             )}>
               {getSubtext()}
             </p>
