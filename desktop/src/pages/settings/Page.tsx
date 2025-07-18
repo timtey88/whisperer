@@ -12,6 +12,8 @@ import { viewModel } from './viewModel'
 import * as os from '@tauri-apps/plugin-os'
 import { useEffect, useState } from 'react'
 import CustomSelect, { SelectOption } from '~/components/CustomSelect'
+import Layout from '~/components/Layout'
+import NavigationBar from '~/components/NavigationBar'
 
 export default function SettingsPage() {
 	const { t, i18n } = useTranslation()
@@ -47,7 +49,9 @@ export default function SettingsPage() {
 	}, [])
 
 	return (
-		<div className="flex flex-col m-auto w-[300px] pb-4 dark:font-normal">
+		<Layout>
+			<NavigationBar />
+			<div className="flex flex-col m-auto w-[300px] pb-4 dark:font-normal">
 
 			<label className="form-control w-full">
 				<div className="label">
@@ -218,5 +222,6 @@ export default function SettingsPage() {
 				<p className="text-center font-light mt-2">{vm.appVersion}</p>
 			</div>
 		</div>
+		</Layout>
 	)
 }

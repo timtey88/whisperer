@@ -1,4 +1,4 @@
-import { ChangeEvent, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ReactComponent as ChevronDown } from '~/icons/chevron-down.svg'
 import { ReactComponent as ChevronUp } from '~/icons/chevron-up.svg'
@@ -6,13 +6,6 @@ import { ModifyState, cx } from '~/lib/utils'
 import { InfoTooltip } from './InfoTooltip'
 import CustomSelect from './CustomSelect'
 import { ModelOptions as IModelOptions, usePreferenceProvider } from '~/providers/Preference'
-import { useToastProvider } from '~/providers/Toast'
-import { listen } from '@tauri-apps/api/event'
-import { ask } from '@tauri-apps/plugin-dialog'
-import { invoke } from '@tauri-apps/api/core'
-import * as config from '~/lib/config'
-import { path } from '@tauri-apps/api'
-import { exists } from '@tauri-apps/plugin-fs'
 
 interface ParamsProps {
 	options: IModelOptions
@@ -23,77 +16,7 @@ export default function ModelOptions({ options, setOptions }: ParamsProps) {
 	const [open, setOpen] = useState(false)
 	const preference = usePreferenceProvider()
 	const { t } = useTranslation()
-	const toast = useToastProvider()
 
-	useEffect(() => {
-		if (preference.recognizeSpeakers) {
-			setOptions({ ...options, word_timestamps: false })
-		}
-	}, [preference.recognizeSpeakers, options.word_timestamps])
-
-	async function handleProgressEvents() {
-		listen<[number, number]>('download_progress', (event) => {
-			// event.event is the event name (useful if you want to use a single callback fn for multiple event types)
-			// event.payload is the payload object
-			const [current, total] = event.payload
-			const newDownloadProgress = Number(current / total) * 100
-			toast.setProgress(newDownloadProgress)
-		})
-	}
-
-	async function askOrEnableSpeakerRecognition() {
-		const modelsFolder = await invoke<string>('get_models_folder')
-		const embedModelPath = await path.join(modelsFolder, config.embeddingModelFilename)
-		const segmentModelPath = await path.join(modelsFolder, config.segmentModelFilename)
-
-		if ((await exists(embedModelPath)) && (await exists(segmentModelPath))) {
-			preference.setRecognizeSpeakers(true)
-		} else {
-			// Try to copy bundled models
-			try {
-				toast.setMessage('Installing speaker recognition models...')
-				toast.setOpen(true)
-				
-				// Copy bundled models to user models folder
-				await invoke('copy_bundled_models')
-				
-				// Check if models are now available
-				if ((await exists(embedModelPath)) && (await exists(segmentModelPath))) {
-					preference.setRecognizeSpeakers(true)
-					toast.setOpen(false)
-				} else {
-					toast.setOpen(false)
-					const should_redirect = await ask('Speaker recognition requires additional AI models. Would you like to go to the Models page to download them?')
-					if (should_redirect) {
-						// Navigate to models management page
-						window.location.href = '/models'
-					}
-				}
-			} catch (error) {
-				console.error('Failed to install bundled models:', error)
-				toast.setOpen(false)
-				const should_redirect = await ask('Speaker recognition requires additional AI models. Would you like to go to the Models page to download them?')
-				if (should_redirect) {
-					// Navigate to models management page
-					window.location.href = '/models'
-				}
-			}
-		}
-	}
-
-	//@ts-ignore
-	async function onRecognizeSpeakerChange(event: ChangeEvent<HTMLInputElement>) {
-		const enabled = event.target.checked
-		if (enabled) {
-			askOrEnableSpeakerRecognition()
-		} else {
-			preference.setRecognizeSpeakers(false)
-		}
-	}
-
-	useEffect(() => {
-		handleProgressEvents()
-	}, [])
 
 
 	return (
@@ -105,57 +28,6 @@ export default function ModelOptions({ options, setOptions }: ParamsProps) {
 			{open && (
 				<div className={cx(`collapse-content w-full`)}>
 					<div className="label mt-5">
-						<span className="label-text text-2xl font-bold">{t('common.speaker-recognition')}</span>
-					</div>
-					<div className="form-control w-full mt-3">
-						<label className="label cursor-pointer">
-							<span className="label-text flex items-center gap-1 cursor-default">
-								<InfoTooltip text={t('common.info-recognize-speakers')} />
-								{t('common.recognize-speakers')}
-							</span>
-							<input
-								type="checkbox"
-								className="toggle toggle-primary"
-								checked={preference.recognizeSpeakers}
-								onChange={onRecognizeSpeakerChange}
-							/>
-						</label>
-					</div>
-					<label className="form-control w-full">
-						<div className="label">
-							<span className="label-text flex items-center gap-1">
-								<InfoTooltip text={t('common.info-max-speakers')} />
-								{t('common.max-speakers')}
-							</span>
-						</div>
-						<input
-							onChange={(e) => preference.setMaxSpeakers(parseInt(e.target.value) || 5)}
-							value={preference.maxSpeakers}
-							className="input input-bordered"
-							type="number"
-						/>
-					</label>
-
-					<label className="form-control w-full">
-						<div className="label">
-							<span className="label-text flex items-center gap-1">
-								<InfoTooltip text={t('common.info-diarize-threshold')} />
-								{t('common.diarize-threshold')}
-							</span>
-						</div>
-						<input
-							onChange={(e) => preference.setDiarizeThreshold(parseFloat(e.target.value))}
-							value={preference.diarizeThreshold}
-							className="input input-bordered"
-							type="number"
-							step={0.1}
-							min={0.0}
-							max={1.0}
-						/>
-					</label>
-
-
-					<div className="label mt-10">
 						<span className="label-text text-2xl font-bold">{t('common.model-options')}</span>
 					</div>
 					<div className="form-control w-full mt-3">

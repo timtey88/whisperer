@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
 import { webviewWindow } from '@tauri-apps/api';
-import { useNavigate } from 'react-router-dom';
 
 // Components
 import Layout from '~/components/Layout';
+import NavigationBar from '~/components/NavigationBar';
 import LanguageInput from '~/components/LanguageInput';
 import ModelOptions from '~/components/Params';
 import TextArea from '~/components/TextArea';
@@ -13,16 +13,12 @@ import AudioPlayer from './AudioPlayer';
 import EnhancedProgressPanel from '~/components/EnhancedProgressPanel';
 import TranscriptionSummaryPanel from '~/components/TranscriptionSummaryPanel';
 
-// Icons
-import { ReactComponent as SettingsIcon } from '~/icons/settings.svg';
-
 // Utils
 import { viewModel } from './viewModel';
 
 export default function Home() {
   const { t } = useTranslation();
   const vm = viewModel();
-  const navigate = useNavigate();
 
   async function showWindow() {
     const currentWindow = webviewWindow.getCurrentWebviewWindow();
@@ -38,17 +34,7 @@ export default function Home() {
 
   return (
     <Layout>
-      {/* Header with Settings Button */}
-      <div className="flex justify-between items-center w-full max-w-4xl mx-auto px-6 mt-8 mb-8">
-        <h1 className="text-3xl font-bold">{t('common.transcribe')}</h1>
-        <button 
-          onClick={() => navigate('/settings')}
-          className="btn btn-ghost btn-sm gap-2"
-        >
-          <SettingsIcon className="w-5 h-5" />
-          {t('common.settings')}
-        </button>
-      </div>
+      <NavigationBar />
 
       {/* Main Content */}
       <div className="flex flex-col items-center w-full px-6">
