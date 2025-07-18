@@ -1,6 +1,6 @@
 use eyre::{bail, Result};
 use serde::{Deserialize, Serialize};
-use tauri::{command, State};
+use tauri::command;
 use whisperer_core::diarization::{
     check_dependencies, run_diarization, DependencyCheck, DiarizeOptions as CoreDiarizeOptions, DiarizeSegment,
 };

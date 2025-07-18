@@ -93,6 +93,7 @@ core-graphics-helmer-fork = "0.24.0"
 
 [features]
 default = []
+diarization = ["whisperer_core/diarization"]
 cuda = ["whisperer_core/cuda"]
 coreml = ["whisperer_core/coreml"]
 metal = ["whisperer_core/metal"]
