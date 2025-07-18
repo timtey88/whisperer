@@ -73,13 +73,6 @@ Speaker diarization is available through a Python bridge using pyannote/speaker-
 # Install Python dependencies
 pip install pyannote.audio torch torchaudio
 
-# Set up HuggingFace access token
-export HUGGINGFACE_TOKEN="your_token_here"
-
-# Accept user conditions on HuggingFace:
-# - https://huggingface.co/pyannote/segmentation-3.0
-# - https://huggingface.co/pyannote/speaker-diarization-3.1
-
 # Test diarization dependencies
 python3 scripts/diarize.py --check-deps
 
@@ -87,10 +80,51 @@ python3 scripts/diarize.py --check-deps
 cargo build --features diarization
 ```
 
+**HuggingFace Token Setup**:
+1. **Create HuggingFace account** and go to https://huggingface.co/settings/tokens
+2. **Create new token** with **READ access** (write access not needed)
+3. **Accept user conditions** for required models:
+   - https://huggingface.co/pyannote/segmentation-3.0
+   - https://huggingface.co/pyannote/speaker-diarization-3.1
+
+**Token Configuration (choose one method)**:
+
+**Option A: .env file (recommended)**:
+```bash
+# Copy the example file
+cp .env.example .env
+
+# Edit .env and add your token:
+HUGGINGFACE_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+**Option B: Environment variable**:
+```bash
+# macOS/Linux
+export HUGGINGFACE_TOKEN="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Windows PowerShell
+$env:HUGGINGFACE_TOKEN="hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+```
+
+**Option C: Pass token directly**:
+```bash
+python3 scripts/diarize.py audio.wav --token hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+**Test Speaker Diarization**:
+```bash
+# Test with sample file
+python3 scripts/diarize.py samples/multi.wav --no-gpu
+
+# Test through Tauri (with dev server running)
+# Available commands: test_python_bridge, check_diarization_dependencies, run_speaker_diarization
+```
+
 **Requirements for Diarization**:
 - Python 3.8+ with pyannote.audio 3.1+
-- HuggingFace account with accepted model user conditions
-- Valid HuggingFace access token
+- HuggingFace account with READ access token
+- Accepted user conditions for pyannote models
 - GPU support optional but recommended (CUDA/Metal/MPS)
 
 ## Development Workflow

@@ -38,6 +38,31 @@ except ImportError as e:
     sys.exit(1)
 
 
+def load_env_file(env_path: str = ".env") -> None:
+    """
+    Load environment variables from .env file if it exists.
+    
+    Args:
+        env_path: Path to .env file
+    """
+    if not os.path.exists(env_path):
+        return
+    
+    try:
+        with open(env_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    key = key.strip()
+                    value = value.strip().strip('"').strip("'")
+                    if key and not os.getenv(key):  # Don't override existing env vars
+                        os.environ[key] = value
+    except Exception as e:
+        # Silently ignore .env file errors
+        pass
+
+
 def check_dependencies():
     """Check if all required dependencies are available."""
     try:
@@ -179,6 +204,9 @@ def main():
                        help="Check dependencies and exit")
     
     args = parser.parse_args()
+    
+    # Load .env file if it exists
+    load_env_file()
     
     # Check dependencies if requested
     if args.check_deps:
