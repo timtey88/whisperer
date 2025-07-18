@@ -7,7 +7,7 @@ import Layout from '~/components/Layout';
 import NavigationBar from '~/components/NavigationBar';
 import MainContent from '~/components/MainContent';
 import LanguageInput from '~/components/LanguageInput';
-import ModelOptions from '~/components/Params';
+import TranscribeOptions from '~/components/Params';
 import TextArea from '~/components/TextArea';
 import AudioInput from '~/pages/home/AudioInput';
 import AudioPlayer from './AudioPlayer';
@@ -80,10 +80,7 @@ export default function Home() {
             >
               {t('common.transcribe')}
             </button>
-            <ModelOptions 
-              options={vm.preference.modelOptions} 
-              setOptions={vm.preference.setModelOptions} 
-            />
+            <TranscribeOptions />
           </div>
         )}
       </MainContent>
