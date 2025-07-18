@@ -25,6 +25,7 @@
     "@tauri-apps/plugin-store": "~2.1.0",
     "@tauri-apps/plugin-updater": "~2.0.0",
     "@tauri-apps/plugin-window-state": "~2.0.0",
+    "caniuse-lite": "^1.0.30001727",
     "docx": "^9.0.3",
     "format-duration": "^3.0.2",
     "framer-motion": "^12.23.1",

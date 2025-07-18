@@ -985,35 +985,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cocoa"
-version = "0.26.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad36507aeb7e16159dfe68db81ccc27571c3ccd4b76fb2fb72fc59e7a4b1b64c"
-dependencies = [
- "bitflags 2.9.1",
- "block",
- "cocoa-foundation",
- "core-foundation 0.10.1",
- "core-graphics",
- "foreign-types 0.5.0",
- "libc",
- "objc",
-]
-
-[[package]]
-name = "cocoa-foundation"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81411967c50ee9a1fc11365f8c585f863a22a9697c89239c452292c40ba79b0d"
-dependencies = [
- "bitflags 2.9.1",
- "block",
- "core-foundation 0.10.1",
- "core-graphics-types 0.2.0",
- "objc",
-]
-
-[[package]]
 name = "colorchoice"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6175,6 +6146,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "tauri-plugin-opener"
+version = "2.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ecee219f11cdac713ab32959db5d0cceec4810ba4f4458da992292ecf9660321"
+dependencies = [
+ "dunce",
+ "glob",
+ "objc2-app-kit",
+ "objc2-foundation 0.3.1",
+ "open",
+ "schemars 0.8.22",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.12",
+ "url",
+ "windows 0.61.3",
+ "zbus 5.9.0",
+]
+
+[[package]]
 name = "tauri-plugin-os"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7536,7 +7529,6 @@ dependencies = [
  "axum",
  "chrono",
  "clap",
- "cocoa",
  "core-graphics-helmer-fork",
  "cpal",
  "crash-handler",
@@ -7546,6 +7538,8 @@ dependencies = [
  "hound",
  "libc",
  "libc-stdhandle",
+ "objc2 0.6.1",
+ "objc2-app-kit",
  "objc_id",
  "once_cell",
  "open",
@@ -7564,6 +7558,7 @@ dependencies = [
  "tauri-plugin-fs",
  "tauri-plugin-http",
  "tauri-plugin-keepawake",
+ "tauri-plugin-opener",
  "tauri-plugin-os",
  "tauri-plugin-process",
  "tauri-plugin-shell",

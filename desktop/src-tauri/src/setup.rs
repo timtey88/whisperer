@@ -9,7 +9,7 @@ use once_cell::sync::Lazy;
 use std::fs;
 use tauri::{App, Manager};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
-use tauri_plugin_shell::ShellExt;
+use tauri_plugin_opener::OpenerExt;
 use tauri_plugin_store::StoreExt;
 use tokio::sync::Mutex;
 use whisperer_core::transcribe::WhisperContext;
@@ -76,7 +76,7 @@ pub fn setup(app: &App) -> Result<(), Box<dyn std::error::Error>> {
                     .title("Whisperer Crashed")
                     .buttons(MessageDialogButtons::OkCustom("Report".into()))
                     .show(|_| {});
-                let _ = app_handle.shell().open(get_issue_url(format!("{:?}", info)), None);
+                let _ = app_handle.opener().open_url(get_issue_url(format!("{:?}", info)), None::<String>);
             }
 
             crash_handler::CrashEventResult::Handled(true)

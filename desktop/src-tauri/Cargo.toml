@@ -21,6 +21,7 @@ tauri-plugin-dialog = "2"
 tauri-plugin-process = "2"
 tauri-plugin-os = "2"
 tauri-plugin-shell = "2"
+tauri-plugin-opener = "2"
 tauri-plugin-deep-link = "2"
 tauri-plugin-store = "2"
 tauri-plugin-single-instance = "2"
@@ -85,7 +86,8 @@ libc-stdhandle = "=0.1.0"
 # macOS
 [target.'cfg(target_os = "macos")'.dependencies]
 whisperer_core = { path = "../../core", features = ["coreml", "metal"] }
-cocoa = "0.26.0"
+objc2-app-kit = "0.3"
+objc2 = "0.6"
 screencapturekit = { version = "0.2.8", features = ["ci"] }
 screencapturekit-sys = "0.2.8"
 objc_id = "0.1"
