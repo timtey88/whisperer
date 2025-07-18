@@ -76,7 +76,9 @@ pub fn setup(app: &App) -> Result<(), Box<dyn std::error::Error>> {
                     .title("Whisperer Crashed")
                     .buttons(MessageDialogButtons::OkCustom("Report".into()))
                     .show(|_| {});
-                let _ = app_handle.opener().open_url(get_issue_url(format!("{:?}", info)), None::<String>);
+                let _ = app_handle
+                    .opener()
+                    .open_url(get_issue_url(format!("{:?}", info)), None::<String>);
             }
 
             crash_handler::CrashEventResult::Handled(true)

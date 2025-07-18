@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Diarization Commands</title>
+    <script type="module">
+        import { invoke } from 'http://localhost:1420/@tauri-apps/api/core';
+        
+        async function testPythonBridge() {
+            try {
+                console.log('Testing Python bridge...');
+                const result = await invoke('test_python_bridge');
+                console.log('✅ Python bridge test result:', result);
+                document.getElementById('result1').innerHTML = `✅ Python bridge: ${JSON.stringify(result)}`;
+                return true;
+            } catch (error) {
+                console.error('❌ Python bridge test failed:', error);
+                document.getElementById('result1').innerHTML = `❌ Python bridge failed: ${error}`;
+                return false;
+            }
+        }
+        
+        async function testDependencies() {
+            try {
+                console.log('Testing dependencies check...');
+                const result = await invoke('check_diarization_dependencies');
+                console.log('✅ Dependencies check result:', result);
+                document.getElementById('result2').innerHTML = `✅ Dependencies: ${JSON.stringify(result)}`;
+                return true;
+            } catch (error) {
+                console.error('❌ Dependencies check failed:', error);
+                document.getElementById('result2').innerHTML = `❌ Dependencies failed: ${error}`;
+                return false;
+            }
+        }
+        
+        async function testDiarization() {
+            try {
+                console.log('Testing diarization...');
+                const options = {
+                    min_speakers: null,
+                    max_speakers: null,
+                    num_speakers: null,
+                    use_gpu: false,
+                    hf_token: null
+                };
+                
+                const result = await invoke('run_speaker_diarization', {
+                    audioPath: '/Users/tt/Workspace/Personal/whisperer/samples/multi.wav',
+                    options: options
+                });
+                
+                console.log('✅ Diarization result:', result);
+                document.getElementById('result3').innerHTML = `✅ Diarization: ${JSON.stringify(result, null, 2)}`;
+                return true;
+            } catch (error) {
+                console.error('❌ Diarization failed:', error);
+                document.getElementById('result3').innerHTML = `❌ Diarization failed: ${error}`;
+                return false;
+            }
+        }
+        
+        window.runTests = async function() {
+            document.getElementById('status').innerHTML = 'Running tests...';
+            
+            const test1 = await testPythonBridge();
+            if (!test1) return;
+            
+            const test2 = await testDependencies();
+            if (!test2) return;
+            
+            // Test diarization (expected to fail due to missing HF token, but should show proper error)
+            await testDiarization();
+            
+            document.getElementById('status').innerHTML = 'Tests completed!';
+        }
+    </script>
+</head>
+<body>
+    <h1>Diarization Command Test</h1>
+    <button onclick="runTests()">Run Tests</button>
+    <div id="status"></div>
+    <div id="result1"></div>
+    <div id="result2"></div>
+    <div id="result3"></div>
+</body>
+</html>

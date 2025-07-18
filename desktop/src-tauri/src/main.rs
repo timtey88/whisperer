@@ -80,6 +80,8 @@ fn main() -> Result<()> {
             cmd::is_online,
             cmd::get_path_dst,
             cmd::get_logs,
+            cmd::load_locale_files,
+            cmd::is_diarization_available,
             cmd::open_path,
             cmd::get_x86_features,
             cmd::get_save_path,
@@ -107,6 +109,8 @@ fn main() -> Result<()> {
             cmd::diarization::run_speaker_diarization,
             #[cfg(feature = "diarization")]
             cmd::diarization::test_python_bridge,
+            #[cfg(feature = "diarization")]
+            cmd::diarization::test_diarization_dependencies,
             #[cfg(windows)]
             cmd::set_high_gpu_preference
         ])

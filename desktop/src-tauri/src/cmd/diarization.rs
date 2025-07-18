@@ -100,3 +100,27 @@ pub async fn test_python_bridge() -> Result<String> {
         }
     }
 }
+
+/// Test diarization dependencies with HuggingFace token
+#[command]
+pub async fn test_diarization_dependencies(token: String) -> Result<bool> {
+    tracing::info!("Testing diarization dependencies with HuggingFace token");
+
+    #[cfg(feature = "diarization")]
+    {
+        // Create temporary environment with the token
+        let mut options = CoreDiarizeOptions::default();
+        options.hf_token = Some(token);
+
+        // Use the check_dependencies function from the core
+        tokio::task::spawn_blocking(move || check_dependencies(Some(options)))
+            .await
+            .map_err(|e| eyre::eyre!("Task join error: {}", e))?
+            .map(|result| matches!(result, DependencyCheck::Available))
+    }
+
+    #[cfg(not(feature = "diarization"))]
+    {
+        bail!("Diarization feature not enabled. Please build with --features diarization")
+    }
+}

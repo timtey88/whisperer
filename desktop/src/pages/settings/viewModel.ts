@@ -48,6 +48,7 @@ export function viewModel() {
 
 	const [models, setModels] = useState<NamedPath[]>([])
 	const [appVersion, setAppVersion] = useState('')
+	const [isDiarizationAvailable, setIsDiarizationAvailable] = useState(false)
 	const preference = usePreferenceProvider()
 	const { t } = useTranslation()
 	const listenersRef = useRef<UnlistenFn[]>([])
@@ -108,10 +109,45 @@ export function viewModel() {
 		loadModels()
 		getDefaultModel()
 		onWindowFocus()
+		
+		// Check if diarization feature is available
+		invoke('is_diarization_available').then((available: unknown) => {
+			setIsDiarizationAvailable(Boolean(available))
+		}).catch(() => {
+			setIsDiarizationAvailable(false)
+		})
+		
 		return () => {
 			listenersRef.current.forEach((unlisten) => unlisten())
 		}
 	}, [])
+
+	async function testDiarization() {
+		if (!preference.huggingFaceToken) {
+			await ask('Please enter your HuggingFace token first.', { title: 'Token Required' })
+			return
+		}
+
+		try {
+			// Test the Python bridge with the token
+			const result = await invoke('test_diarization_dependencies', { 
+				token: preference.huggingFaceToken 
+			})
+			
+			if (result) {
+				await ask('✅ Token and dependencies test successful! Diarization is ready to use.', { 
+					title: 'Test Successful' 
+				})
+			} else {
+				await ask('❌ Test failed. Please check your token and ensure dependencies are installed.', { 
+					title: 'Test Failed' 
+				})
+			}
+		} catch (error) {
+			console.error('Diarization test error:', error)
+			await ask(`❌ Test failed: ${error}`, { title: 'Test Failed' })
+		}
+	}
 
 	return {
 		copyLogs,
@@ -127,5 +163,7 @@ export function viewModel() {
 		appVersion,
 		loadModels,
 		changeModelsFolder,
+		testDiarization,
+		isDiarizationAvailable,
 	}
 }

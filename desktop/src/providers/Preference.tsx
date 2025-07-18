@@ -79,6 +79,9 @@ export interface Preference {
 
 	advancedTranscribeOptions: AdvancedTranscribeOptions
 	setAdvancedTranscribeOptions: ModifyState<AdvancedTranscribeOptions>
+	
+	huggingFaceToken: string | null
+	setHuggingFaceToken: ModifyState<string | null>
 }
 
 // Create the context
@@ -190,6 +193,7 @@ const defaultOptions = {
 	llmConfig: defaultOllamaConfig(),
 	ytDlpVersion: null,
 	shouldCheckYtDlpVersion: true,
+	huggingFaceToken: null,
 }
 
 // Preference provider component
@@ -231,9 +235,18 @@ export function PreferenceProvider({ children }: { children: ReactNode }) {
 		saveNextToAudioFile: true,
 		skipIfExists: true,
 	})
+	const [huggingFaceToken, setHuggingFaceToken] = useLocalStorage<string | null>('prefs_huggingface_token', defaultOptions.huggingFaceToken)
 
 	useEffect(() => {
 		setIsFirstRun(false)
+		
+		// Check if diarization feature is available and disable if not
+		invoke('is_diarization_available').then((isAvailable: unknown) => {
+			if (!isAvailable && recognizeSpeakers) {
+				console.warn('Diarization feature not available, disabling speaker recognition')
+				setRecognizeSpeakers(false)
+			}
+		}).catch(console.error)
 	}, [])
 
 	useEffect(() => {
@@ -345,6 +358,8 @@ export function PreferenceProvider({ children }: { children: ReactNode }) {
 		setShouldCheckYtDlpVersion,
 		advancedTranscribeOptions,
 		setAdvancedTranscribeOptions,
+		huggingFaceToken,
+		setHuggingFaceToken,
 	}
 
 	return <PreferenceContext.Provider value={preference}>{children}</PreferenceContext.Provider>

@@ -49,14 +49,14 @@ i18n.use(LanguageDetector)
 	.use(initReactI18next)
 	.use(
 		resourcesToBackend(async (language: string) => {
-			if (!supportedLanguageKeys.includes(language)) {
-				return
-			}
+			// Simple resource loading approach like vibe
 			const resourcePath = `./locales/${language}`
 			const languageDirectory = await resolveResource(resourcePath)
 			const files = await fs.readDir(languageDirectory)
+			
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const translations: any = {}
+			
 			await Promise.all(
 				files.map(async (file) => {
 					const filePath = `${languageDirectory}/${file.name}`
@@ -65,11 +65,12 @@ i18n.use(LanguageDetector)
 					translations[namespace] = JSON.parse(content)
 				})
 			)
+			
 			return translations
 		})
 	)
 	.init({
-		debug: false,
+		debug: true, // Enable debug logging
 		fallbackLng: 'en-US',
 		interpolation: {
 			escapeValue: false, // not needed for react as it escapes by default
