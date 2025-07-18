@@ -11,18 +11,11 @@ import { supportedLanguages } from '~/lib/i18n'
 import { viewModel } from './viewModel'
 import * as os from '@tauri-apps/plugin-os'
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ModifyState } from '~/lib/utils'
 import CustomSelect, { SelectOption } from '~/components/CustomSelect'
 
-interface SettingsPageProps {
-	setVisible?: ModifyState<boolean>
-}
-
-export default function SettingsPage({ setVisible }: SettingsPageProps = {}) {
+export default function SettingsPage() {
 	const { t, i18n } = useTranslation()
 	const vm = viewModel()
-	const navigate = useNavigate()
 
 	const [platform, setPlatform] = useState<os.Platform | null>(null)
 
@@ -44,15 +37,6 @@ export default function SettingsPage({ setVisible }: SettingsPageProps = {}) {
 		label: model.name
 	}))
 
-	// Redirect to home page with settings tab active if accessed directly
-	useEffect(() => {
-		if (!setVisible) { // Only redirect if not embedded in Home component
-			// Set the home tab index to settings (3) first
-			vm.preference.setHomeTabIndex(3)
-			// Then navigate to home page
-			navigate('/', { replace: true })
-		}
-	}, [])
 
 	async function getPlatform() {
 		setPlatform(os.platform())

@@ -39,11 +39,11 @@ export default function Home() {
   return (
     <Layout>
       {/* Header with Settings Button */}
-      <div className="flex justify-between items-center w-full max-w-6xl mx-auto px-4 mt-5">
-        <h1 className="text-2xl font-bold">{t('common.transcribe')}</h1>
+      <div className="flex justify-between items-center w-full max-w-4xl mx-auto px-6 mt-8 mb-8">
+        <h1 className="text-3xl font-bold">{t('common.transcribe')}</h1>
         <button 
           onClick={() => navigate('/settings')}
-          className="btn btn-ghost btn-sm"
+          className="btn btn-ghost btn-sm gap-2"
         >
           <SettingsIcon className="w-5 h-5" />
           {t('common.settings')}
@@ -51,15 +51,15 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <div className="flex flex-col items-center w-full">
-        <div className="w-[300px] flex flex-col m-auto">
+      <div className="flex flex-col items-center w-full px-6">
+        <div className="w-full max-w-md flex flex-col">
           <div className="flex flex-col gap-4">
             <LanguageInput />
             
             {!vm.files.length && (
-              <div>
-                <div className="label mt-6">
-                  <span className="label-text">{t('common.file-selection')}</span>
+              <div className="mt-6">
+                <div className="label">
+                  <span className="label-text text-lg font-medium">{t('common.file-selection')}</span>
                 </div>
                 <AudioInput onClick={vm.selectFiles} />
               </div>
@@ -103,7 +103,7 @@ export default function Home() {
           )}
         </div>
 
-        <div className="w-full max-w-6xl mt-6 px-4">
+        <div className="w-full max-w-4xl mt-8 px-6">
           {vm.loading && (
             <EnhancedProgressPanel 
               isAborting={vm.isAborting} 
