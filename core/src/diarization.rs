@@ -34,8 +34,7 @@ pub fn check_dependencies() -> Result<DependencyCheck> {
     tracing::debug!("Checking Python diarization dependencies");
 
     let output = Command::new("python3")
-        .arg("-c")
-        .arg("import sys; sys.path.insert(0, '.'); import scripts.diarize as d; d.main()")
+        .arg("scripts/diarize.py")
         .arg("--check-deps")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

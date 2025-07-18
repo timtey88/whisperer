@@ -167,7 +167,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Speaker diarization using pyannote/speaker-diarization-3.1"
     )
-    parser.add_argument("audio_file", help="Path to audio file")
+    parser.add_argument("audio_file", nargs="?", help="Path to audio file")
     parser.add_argument("--token", help="HuggingFace access token")
     parser.add_argument("--no-gpu", action="store_true", help="Disable GPU usage")
     parser.add_argument("--min-speakers", type=int, help="Minimum number of speakers")
@@ -191,7 +191,12 @@ def main():
         print(json.dumps(result))
         sys.exit(0 if deps_ok else 1)
     
-    # Validate audio file
+    # Validate audio file is provided
+    if not args.audio_file:
+        print("ERROR: Audio file argument is required", file=sys.stderr)
+        sys.exit(1)
+    
+    # Validate audio file exists
     if not Path(args.audio_file).exists():
         print(f"ERROR: Audio file not found: {args.audio_file}", file=sys.stderr)
         sys.exit(1)
