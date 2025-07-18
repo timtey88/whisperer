@@ -25,7 +25,8 @@ node_modules/
 .DS_Store
 venv/
 *.bin
-*.onnx
+# Only ignore onnx files in user data directories, not bundled models
+# *.onnx  # Commented out to allow bundled models in desktop/src-tauri/models/
 *.pfx
 *trace*.log
 samples/**/*.txt
