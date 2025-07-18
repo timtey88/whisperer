@@ -277,7 +277,7 @@ pub fn transcribe(
         }
         #[cfg(not(feature = "diarization"))]
         {
-            return Err(eyre!("Diarization requested but diarization feature not enabled. This is a temporary limitation due to library compatibility issues. Diarization will be re-enabled in a future version."));
+            return Err(eyre!("Diarization requested but not enabled. thewh1teagle's pyannote-rs fork is available but needs ort compatibility fix. Enable with --features diarization when compatibility is restored."));
         }
     } else {
         if let Some(callback) = progress_callback {
