@@ -13,11 +13,6 @@ import { invoke } from '@tauri-apps/api/core'
 import * as config from '~/lib/config'
 import { path } from '@tauri-apps/api'
 import { exists } from '@tauri-apps/plugin-fs'
-import { open as shellOpen } from '@tauri-apps/plugin-shell'
-import { toast as hotToast } from 'react-hot-toast'
-
-import * as dialog from '@tauri-apps/plugin-dialog'
-import { Claude, defaultClaudeConfig, defaultOllamaConfig, Llm, Ollama } from '~/lib/llm'
 
 interface ParamsProps {
 	options: IModelOptions
@@ -29,17 +24,6 @@ export default function ModelOptions({ options, setOptions }: ParamsProps) {
 	const preference = usePreferenceProvider()
 	const { t } = useTranslation()
 	const toast = useToastProvider()
-	const [llm, setLlm] = useState<Llm | null>(null)
-
-	useEffect(() => {
-		if (preference.llmConfig?.platform === 'ollama') {
-			const llmInstance = new Ollama(preference.llmConfig)
-			setLlm(llmInstance)
-		} else {
-			const llmInstance = new Claude(preference.llmConfig)
-			setLlm(llmInstance)
-		}
-	}, [preference.llmConfig])
 
 	useEffect(() => {
 		if (preference.recognizeSpeakers) {
@@ -111,41 +95,6 @@ export default function ModelOptions({ options, setOptions }: ParamsProps) {
 		handleProgressEvents()
 	}, [])
 
-	async function validateLlmPrompt() {
-		let valid = true
-		if (!preference.llmConfig?.prompt) {
-			valid = false
-		} else {
-			valid = preference.llmConfig.prompt.includes('%s')
-		}
-		if (!valid) {
-			await dialog.message(t('common.invalid-llm-prompt'), {
-				kind: 'error',
-			})
-		}
-		return valid
-	}
-
-	const llmConfig = preference.llmConfig
-	const setLlmConfig = preference.setLlmConfig
-
-	async function onEnableLlm(_e: ChangeEvent<HTMLInputElement>) {
-		preference.setLlmConfig({ ...llmConfig, enabled: !llmConfig?.enabled })
-	}
-
-	async function checkLlm() {
-		try {
-			const promise = llm!.ask('Hello, how are you?')
-			hotToast.promise(promise, {
-				error: t('common.check-error') as string,
-				success: t('common.check-success') as string,
-				loading: t('common.check-loading') as string,
-			})
-			await promise
-		} catch (e) {
-			console.error(e)
-		}
-	}
 
 	return (
 		<div className={cx('collapse !overflow-visible', open && 'collapse-open')}>
@@ -205,149 +154,6 @@ export default function ModelOptions({ options, setOptions }: ParamsProps) {
 						/>
 					</label>
 
-					<div className="label mt-10">
-						<span className="label-text text-2xl font-bold">{t('common.process-with-llm')} ✨</span>
-					</div>
-					<div className="form-control w-full mt-2">
-						<label className="label cursor-pointer">
-							<span className="label-text flex items-center gap-1 cursor-default">
-								<InfoTooltip text={t('common.info-llm-summarize')} />
-								{t('common.process-with-llm')}
-							</span>
-							<input type="checkbox" className="toggle toggle-primary" checked={preference.llmConfig?.enabled} onChange={(e) => onEnableLlm(e)} />
-						</label>
-					</div>
-
-					<label className="form-control w-full">
-						<div className="label">
-							<span className="label-text flex items-center gap-1">{t('common.llm-platform')}</span>
-						</div>
-						<CustomSelect
-							options={[
-								{ value: 'claude', label: 'Claude' },
-								{ value: 'ollama', label: 'Ollama' }
-							]}
-							value={llmConfig?.platform || 'claude'}
-							onChange={(newPlatform) => {
-								if (newPlatform === 'ollama') {
-									const defaultConfig = defaultOllamaConfig()
-									setLlmConfig({
-										...defaultConfig,
-										ollamaBaseUrl: llmConfig.ollamaBaseUrl,
-										claudeApiKey: llmConfig.claudeApiKey,
-										enabled: llmConfig?.enabled ?? false,
-									})
-								} else if (newPlatform === 'claude') {
-									const defaultConfig = defaultClaudeConfig()
-									setLlmConfig({
-										...defaultConfig,
-										ollamaBaseUrl: llmConfig.ollamaBaseUrl,
-										claudeApiKey: llmConfig.claudeApiKey,
-										enabled: llmConfig?.enabled ?? false,
-									})
-								}
-							}}
-						/>
-					</label>
-
-					{llmConfig?.platform === 'claude' && (
-						<label className="form-control w-full">
-							<div className="label">
-								<span className="label-text flex items-center gap-1">
-									<InfoTooltip text={t('common.info-llm-api-key')} />
-									{t('common.llm-api-key')}
-									<div onClick={() => shellOpen(config.llmApiKeyUrl)} className="link link-primary">
-										{t('common.find-here')}
-									</div>
-								</span>
-							</div>
-
-							<input
-								value={llmConfig?.claudeApiKey}
-								onChange={(e) => setLlmConfig({ ...preference.llmConfig, claudeApiKey: e.target.value })}
-								className="input input-bordered opacity-50 text-sm"
-								placeholder="Paste here your API key"
-								type="text"
-							/>
-						</label>
-					)}
-
-					{llmConfig?.platform === 'ollama' && (
-						<>
-							<label className="form-control w-full">
-								<div className="label">
-									<span className="label-text flex items-center gap-1">{t('common.ollama-base-url')}</span>
-								</div>
-								<input
-									value={llmConfig?.ollamaBaseUrl}
-									onChange={(e) => setLlmConfig({ ...preference.llmConfig, ollamaBaseUrl: e.target.value })}
-									className="input input-bordered opacity-50 text-sm"></input>
-							</label>
-							<label className="form-control w-full">
-								<div className="label">
-									<span className="label-text flex items-center gap-1">
-										{t('common.llm-model')}{' '}
-										{llmConfig.platform === 'ollama' && (
-											<div className="link link-primary" onClick={() => shellOpen(`https://ollama.com/library/${llmConfig.model}`)}>
-												{t('common.find-here')}
-											</div>
-										)}
-									</span>
-								</div>
-								<input
-									value={llmConfig?.model}
-									onChange={(e) => setLlmConfig({ ...preference.llmConfig, model: e.target.value })}
-									className="input input-bordered opacity-50 text-sm"></input>
-							</label>
-						</>
-					)}
-
-					<label className="form-control w-full">
-						<div className="label">
-							<span className="label-text flex items-center gap-1">
-								<InfoTooltip text={t('common.info-llm-prompt')} />
-								{t('common.llm-prompt')}
-							</span>
-						</div>
-						<textarea
-							value={llmConfig?.prompt}
-							onChange={(e) => setLlmConfig({ ...preference.llmConfig, prompt: e.target.value })}
-							onBlur={validateLlmPrompt}
-							className="textarea textarea-bordered w-full"></textarea>
-					</label>
-
-					<label className="form-control w-full">
-						<div className="label">
-							<span className="label-text flex items-center gap-1">
-								<InfoTooltip text={t('common.info-max-tokens')} />
-								{t('common.max-tokens')}
-							</span>
-						</div>
-						<input
-							onChange={(e) => setLlmConfig({ ...llmConfig, maxTokens: parseInt(e.target.value) ?? 1 })}
-							value={llmConfig?.maxTokens}
-							className="input input-bordered"
-							type="number"
-						/>
-					</label>
-
-					<label className="form-control w-full mt-5">
-						<button onClick={checkLlm} className="btn btn-primary btn-sm">
-							{t('common.run-llm-check')}
-						</button>
-					</label>
-
-					{llmConfig?.platform === 'claude' && (
-						<>
-							<div onClick={() => shellOpen(config.llmLimitsUrl)} className="link link-primary mt-2">
-								{t('common.set-monthly-spend-limit')}
-							</div>
-
-							<div onClick={() => shellOpen(config.llmCostUrl)} className="link link-primary mt-2">
-								{t('common.llm-current-cost')}
-							</div>
-						</>
-					)}
 
 					<div className="label mt-10">
 						<span className="label-text text-2xl font-bold">{t('common.model-options')}</span>
@@ -405,12 +211,7 @@ export default function ModelOptions({ options, setOptions }: ParamsProps) {
 						</div>
 						<input
 							value={options.max_sentence_len}
-							onChange={(e) => {
-								if (!options.word_timestamps) {
-									dialog.message(t('common.please-enable-word-timestamps'))
-								}
-								setOptions({ ...options, max_sentence_len: parseInt(e.target.value) ?? 1 })
-							}}
+							onChange={(e) => setOptions({ ...options, max_sentence_len: parseInt(e.target.value) ?? 1 })}
 							className="input input-bordered"
 							type="number"
 						/>
@@ -482,7 +283,7 @@ export default function ModelOptions({ options, setOptions }: ParamsProps) {
 						<div className="label">
 							<span className="label-text flex items-center gap-1">
 								<InfoTooltip text="best_of: Top candidates in Greedy mode (default: 5) — higher = better accuracy, slower. beam_size: Paths explored in Beam Search (default: 5) — higher = better accuracy, slower." />
-								{preference.modelOptions.sampling_strategy === 'greedy' ? 'Besf of' : 'Beam size'}
+								{preference.modelOptions.sampling_strategy === 'greedy' ? 'Best of' : 'Beam size'}
 							</span>
 						</div>
 						<input

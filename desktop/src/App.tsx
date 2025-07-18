@@ -1,22 +1,16 @@
 import '@fontsource/roboto'
 import { useTranslation } from 'react-i18next'
 import { Route, Routes } from 'react-router-dom'
-import UpdateProgress from '~/components/UpdaterProgress'
 import '~/globals.css'
 import '~/lib/i18n'
 import HomePage from '~/pages/home/Page'
-import BatchPage from './pages/batch/Page'
-import ModelsPage from './pages/models/Page'
-import ModelOptionsPage from './pages/model-options/Page'
 import SettingsPage from './pages/settings/Page'
 import { ErrorModalProvider } from './providers/ErrorModal'
-import { UpdaterProvider } from './providers/Updater'
 import { PreferenceProvider } from './providers/Preference'
 import { ErrorBoundary } from 'react-error-boundary'
 import { BoundaryFallback } from './components/BoundaryFallback'
 import ErrorModalWithContext from './components/ErrorModalWithContext'
 import { Toaster } from 'react-hot-toast'
-import { FilesProvider } from './providers/FilesProvider'
 import { ToastProvider } from './providers/Toast'
 
 export default function App() {
@@ -30,23 +24,15 @@ export default function App() {
 				<Toaster position="bottom-right" />
 			</div>
 			<ErrorModalProvider>
-				<UpdaterProvider>
-					<PreferenceProvider>
-						<ToastProvider>
-							<ErrorModalWithContext />
-							<UpdateProgress />
-							<FilesProvider>
-								<Routes>
-									<Route path="/" element={<HomePage />} />
-									<Route path="/batch" element={<BatchPage />} />
-									<Route path="/models" element={<ModelsPage />} />
-									<Route path="/model-options" element={<ModelOptionsPage />} />
-									<Route path="/settings" element={<SettingsPage />} />
-								</Routes>
-							</FilesProvider>
-						</ToastProvider>
-					</PreferenceProvider>
-				</UpdaterProvider>
+				<PreferenceProvider>
+					<ToastProvider>
+						<ErrorModalWithContext />
+						<Routes>
+							<Route path="/" element={<HomePage />} />
+							<Route path="/settings" element={<SettingsPage />} />
+						</Routes>
+					</ToastProvider>
+				</PreferenceProvider>
 			</ErrorModalProvider>
 		</ErrorBoundary>
 	)

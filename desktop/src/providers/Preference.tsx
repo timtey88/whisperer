@@ -7,7 +7,6 @@ import * as os from '@tauri-apps/plugin-os'
 import { supportedLanguages } from '~/lib/i18n'
 import WhisperLanguages from '~/assets/whisper-languages.json'
 import { useTranslation } from 'react-i18next'
-import { defaultOllamaConfig, LlmConfig } from '~/lib/llm'
 import { message } from '@tauri-apps/plugin-dialog'
 
 type Direction = 'ltr' | 'rtl'
@@ -66,19 +65,10 @@ export interface Preference {
 	homeTabIndex: number
 	setHomeTabIndex: ModifyState<number>
 
-	llmConfig: LlmConfig
-	setLlmConfig: ModifyState<LlmConfig>
 	ffmpegOptions: FfmpegOptions
 	setFfmpegOptions: ModifyState<FfmpegOptions>
 	resetOptions: () => void
 	enableSubtitlesPreset: () => void
-	ytDlpVersion: string | null
-	setYtDlpVersion: ModifyState<string | null>
-	shouldCheckYtDlpVersion: boolean
-	setShouldCheckYtDlpVersion: ModifyState<boolean>
-
-	advancedTranscribeOptions: AdvancedTranscribeOptions
-	setAdvancedTranscribeOptions: ModifyState<AdvancedTranscribeOptions>
 	
 	huggingFaceToken: string | null
 	setHuggingFaceToken: ModifyState<string | null>
@@ -190,9 +180,6 @@ const defaultOptions = {
 	maxSpeakers: 5,
 	diarizeThreshold: 0.5,
 	storeRecordInDocuments: true,
-	llmConfig: defaultOllamaConfig(),
-	ytDlpVersion: null,
-	shouldCheckYtDlpVersion: true,
 	huggingFaceToken: null,
 }
 
@@ -227,14 +214,6 @@ export function PreferenceProvider({ children }: { children: ReactNode }) {
 	const [maxSpeakers, setMaxSpeakers] = useLocalStorage<number>('prefs_max_speakers', defaultOptions.maxSpeakers)
 	const [diarizeThreshold, setDiarizeThreshold] = useLocalStorage<number>('prefs_diarize_threshold', defaultOptions.diarizeThreshold)
 	const [storeRecordInDocuments, setStoreRecordInDocuments] = useLocalStorage('prefs_store_record_in_documents', defaultOptions.storeRecordInDocuments)
-	const [llmConfig, setLlmConfig] = useLocalStorage<LlmConfig>('prefs_llm_config', defaultOptions.llmConfig)
-	const [ytDlpVersion, setYtDlpVersion] = useLocalStorage<string | null>('prefs_ytdlp_version', null)
-	const [shouldCheckYtDlpVersion, setShouldCheckYtDlpVersion] = useLocalStorage<boolean>('prefs_should_check_ytdlp_version', true)
-	const [advancedTranscribeOptions, setAdvancedTranscribeOptions] = useLocalStorage<AdvancedTranscribeOptions>('prefs_advanced_transcribe_options', {
-		includeSubFolders: false,
-		saveNextToAudioFile: true,
-		skipIfExists: true,
-	})
 	const [huggingFaceToken, setHuggingFaceToken] = useLocalStorage<string | null>('prefs_huggingface_token', defaultOptions.huggingFaceToken)
 
 	useEffect(() => {
@@ -292,7 +271,6 @@ export function PreferenceProvider({ children }: { children: ReactNode }) {
 		setMaxSpeakers(defaultOptions.maxSpeakers)
 		setDiarizeThreshold(defaultOptions.diarizeThreshold)
 		setStoreRecordInDocuments(defaultOptions.storeRecordInDocuments)
-		setLlmConfig(defaultOptions.llmConfig)
 		message(i18n.t('common.success-action'))
 	}
 
@@ -306,9 +284,7 @@ export function PreferenceProvider({ children }: { children: ReactNode }) {
 		useGpu,
 		setUseGpu,
 		enableSubtitlesPreset,
-		llmConfig,
 		resetOptions,
-		setLlmConfig,
 		setLanguageDirections: setLanguageDefaults,
 		diarizeThreshold,
 		setDiarizeThreshold,
@@ -352,12 +328,6 @@ export function PreferenceProvider({ children }: { children: ReactNode }) {
 		setHomeTabIndex,
 		ffmpegOptions,
 		setFfmpegOptions,
-		ytDlpVersion,
-		setYtDlpVersion,
-		shouldCheckYtDlpVersion,
-		setShouldCheckYtDlpVersion,
-		advancedTranscribeOptions,
-		setAdvancedTranscribeOptions,
 		huggingFaceToken,
 		setHuggingFaceToken,
 	}
