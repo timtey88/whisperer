@@ -7,6 +7,7 @@ import HomePage from '~/pages/home/Page'
 import SettingsPage from './pages/settings/Page'
 import { ErrorModalProvider } from './providers/ErrorModal'
 import { PreferenceProvider } from './providers/Preference'
+import { FilesProvider } from './providers/FilesProvider'
 import { ErrorBoundary } from 'react-error-boundary'
 import { BoundaryFallback } from './components/BoundaryFallback'
 import ErrorModalWithContext from './components/ErrorModalWithContext'
@@ -25,13 +26,15 @@ export default function App() {
 			</div>
 			<ErrorModalProvider>
 				<PreferenceProvider>
-					<ToastProvider>
-						<ErrorModalWithContext />
-						<Routes>
-							<Route path="/" element={<HomePage />} />
-							<Route path="/settings" element={<SettingsPage />} />
-						</Routes>
-					</ToastProvider>
+					<FilesProvider>
+						<ToastProvider>
+							<ErrorModalWithContext />
+							<Routes>
+								<Route path="/" element={<HomePage />} />
+								<Route path="/settings" element={<SettingsPage />} />
+							</Routes>
+						</ToastProvider>
+					</FilesProvider>
 				</PreferenceProvider>
 			</ErrorModalProvider>
 		</ErrorBoundary>
