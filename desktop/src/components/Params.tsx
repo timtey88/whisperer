@@ -207,11 +207,6 @@ export default function ModelOptions({ options, setOptions }: ParamsProps) {
 						<span className="label-text text-2xl font-bold">{t('common.presets')}</span>
 					</div>
 
-					<label className="form-control w-full mt-5">
-						<button onClick={preference.enableSubtitlesPreset} className="btn btn-md btn-secondary">
-							{t('common.preset-for-subtitles')}
-						</button>
-					</label>
 
 					<label className="form-control w-full">
 						<button onClick={preference.resetOptions} className="btn btn-md">
