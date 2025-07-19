@@ -8,7 +8,6 @@ import * as dialog from '@tauri-apps/plugin-dialog'
 import * as fs from '@tauri-apps/plugin-fs'
 import { useContext, useEffect, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useLocalStorage } from 'usehooks-ts'
 import successSound from '~/assets/success.mp3'
@@ -58,7 +57,6 @@ export function viewModel() {
 	const [audioDuration] = useState<number | null>(null)
 	const [transcriptionResult, setTranscriptionResult] = useState<TranscriptionResult | null>(null)
 	const [showTranscriptionResult, setShowTranscriptionResult] = useState(false)
-	const { t } = useTranslation()
 	const [transcriptTab, setTranscriptTab] = useLocalStorage<'transcript' | 'summary'>('prefs_transcript_tab', 'transcript')
 	useConfirmExit((segments?.length ?? 0) > 0 || loading)
 
@@ -100,7 +98,7 @@ export function viewModel() {
 		const isCrashed = await invoke<boolean>('is_crashed_recently')
 		if (isCrashed) {
 			preference.setUseGpu(false)
-			dialog.message(t('common.crashed-recently'))
+			dialog.message('The application crashed recently. GPU acceleration has been disabled as a precaution.')
 			await invoke('rename_crash_file')
 		}
 	}
@@ -429,7 +427,7 @@ export function viewModel() {
 			})
 			setShowTranscriptionResult(true)
 			
-			toast.success(t('common.transcribe-took', { total: String(processingDuration) }), { position: 'bottom-center' })
+			toast.success(`Transcription completed in ${processingDuration} seconds`, { position: 'bottom-center' })
 		} catch (error) {
 			const processingDuration = Math.round((performance.now() - processStartTime) / 1000)
 			const transcriptionEndTime = Date.now()

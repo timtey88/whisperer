@@ -2,7 +2,6 @@ import { invoke } from '@tauri-apps/api/core'
 import { ask, open } from '@tauri-apps/plugin-dialog'
 import * as shell from '@tauri-apps/plugin-shell'
 import { useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import * as config from '~/lib/config'
 import { NamedPath, ls, resetApp } from '~/lib/utils'
 import { usePreferenceProvider } from '~/providers/Preference'
@@ -50,11 +49,10 @@ export function viewModel() {
 	const [appVersion, setAppVersion] = useState('')
 	const [isDiarizationAvailable, setIsDiarizationAvailable] = useState(false)
 	const preference = usePreferenceProvider()
-	const { t } = useTranslation()
 	const listenersRef = useRef<UnlistenFn[]>([])
 
 	async function askAndReset() {
-		const yes = await ask(t('common.reset-ask-dialog'), { kind: 'info' })
+		const yes = await ask('Are you sure you want to reset all settings? This action cannot be undone.', { kind: 'info' })
 		if (yes) {
 			resetApp()
 		}
