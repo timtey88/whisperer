@@ -61,6 +61,44 @@ pub fn clean_old_files() -> Result<()> {
     Ok(())
 }
 
+pub fn clean_current_temp_folder() -> Result<()> {
+    let current_temp_dir = get_whisperer_temp_folder();
+    
+    if current_temp_dir.exists() {
+        if let Err(e) = std::fs::remove_dir_all(&current_temp_dir) {
+            tracing::warn!("Failed to remove current temp folder {}: {}", current_temp_dir.display(), e);
+            return Err(e.into());
+        }
+        tracing::debug!("Cleaned current temp directory: {}", current_temp_dir.display());
+    } else {
+        tracing::debug!("Current temp directory does not exist: {}", current_temp_dir.display());
+    }
+    
+    Ok(())
+}
+
+pub fn clean_all_temp_folders() -> Result<()> {
+    let temp_dir = std::env::temp_dir();
+    let temp_dir = temp_dir.to_str().unwrap_or_default();
+    // Remove suffix
+    let temp_dir = temp_dir.strip_suffix('/').unwrap_or(temp_dir);
+    let temp_dir = temp_dir.strip_suffix('\\').unwrap_or(temp_dir);
+    let pattern = format!("{}/whisperer_temp*", temp_dir);
+
+    let mut cleaned_count = 0;
+    for path in glob::glob(&pattern)? {
+        let path = path?;
+        if std::fs::remove_dir_all(&path).is_ok() {
+            cleaned_count += 1;
+        }
+    }
+
+    if cleaned_count > 0 {
+        tracing::debug!("Cleaned {} temp directories on exit", cleaned_count);
+    }
+    Ok(())
+}
+
 pub fn clean_updater_files() -> Result<()> {
     let current_temp_dir = get_whisperer_temp_folder();
     let temp_dir = std::env::temp_dir();

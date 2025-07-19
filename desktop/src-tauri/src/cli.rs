@@ -240,6 +240,13 @@ pub async fn run(app_handle: &AppHandle) -> Result<()> {
     }
 
     app_handle.cleanup_before_exit();
+    
+    // Clean up temp folders before exit
+    tracing::debug!("CLI mode: cleaning up temp folders before exit");
+    if let Err(e) = crate::cleaner::clean_all_temp_folders() {
+        eprintln!("Warning: Failed to clean temp folders: {}", e);
+    }
+    
     eprintln!(
         "Transcription completed in {:.1}s ⏱️",
         elapsed.as_secs_f64() + elapsed.subsec_nanos() as f64 * 1e-9

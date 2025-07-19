@@ -51,6 +51,15 @@ fn main() -> Result<()> {
             app.emit("single-instance", argv).map_err(|e| eyre!("{:?}", e)).log_error();
         }))
         .setup(|app| setup::setup(app))
+        .on_window_event(|window, event| {
+            match event {
+                tauri::WindowEvent::CloseRequested { .. } => {
+                    tracing::debug!("Window close requested, cleaning up temp folders");
+                    cleaner::clean_all_temp_folders().log_error();
+                }
+                _ => {}
+            }
+        })
         .plugin(
             tauri_plugin_window_state::Builder::default()
                 .with_state_flags(!StateFlags::VISIBLE)
