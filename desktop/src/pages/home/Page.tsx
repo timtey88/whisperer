@@ -44,8 +44,8 @@ export default function Home() {
         <div className="flex flex-col gap-4">
           <LanguageInput />
           
-          
-          {!vm.files.length && (
+          {/* No file selected state */}
+          {vm.files.length === 0 && (
             <div className="mt-2">
               <div className="label">
                 <span className="label-text text-lg font-medium">{t('common.select-file')}</span>
@@ -53,55 +53,78 @@ export default function Home() {
               <AudioInput onClick={vm.selectFiles} />
             </div>
           )}
+
+          {/* File selected state */}
+          {vm.files.length > 0 && (
+            <div className="mt-2">
+              <div className="space-y-4">
+                {/* File information and audio player */}
+                {vm.audio ? (
+                  <AudioPlayer 
+                    label={vm.files[0].name} 
+                    onLabelClick={() => vm.openPath(vm.files[0])} 
+                    audio={vm.audio} 
+                  />
+                ) : (
+                  <div className="bg-base-200 p-4 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{vm.files[0].name}</p>
+                        <p className="text-sm text-base-content/60">Loading audio...</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* File actions */}
+                {!vm.loading && (
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={vm.selectFiles}
+                      className="btn btn-outline btn-sm flex-1"
+                    >
+                      {t('common.change-file')}
+                    </button>
+                    <button 
+                      onClick={vm.clearFiles}
+                      className="btn btn-outline btn-sm"
+                    >
+                      {t('common.clear-file')}
+                    </button>
+                  </div>
+                )}
+
+                {/* Transcribe section */}
+                {vm.files.length > 0 && !vm.loading && (
+                  <div className="mt-4">
+                    {isValidFile ? (
+                      <button 
+                        onClick={() => vm.transcribe(vm.files[0].path)} 
+                        className="btn btn-primary w-full"
+                      >
+                        {t('common.transcribe')}
+                      </button>
+                    ) : (
+                      <div className="space-y-2">
+                        <button 
+                          disabled
+                          className="btn btn-primary w-full opacity-50 cursor-not-allowed"
+                        >
+                          {t('common.transcribe')}
+                        </button>
+                        <div className="alert alert-error">
+                          <span className="text-sm">
+                            {validateFileAndGetError(vm.files[0].name).error}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
-      
-        {vm.audio && (
-          <div>
-            {vm.files.length > 0 && (
-              <AudioPlayer 
-                label={vm.files[0].name} 
-                onLabelClick={() => vm.openPath(vm.files[0])} 
-                audio={vm.audio} 
-              />
-            )}
-
-            {!vm.loading && (
-              <div 
-                onClick={vm.selectFiles} 
-                className="text-xs text-base-content font-medium cursor-pointer mb-3 mt-1"
-              >
-                {t('common.change-file')}
-              </div>
-            )}
-          </div>
-        )}
-
-        {vm.audio && !vm.loading && (
-          <div className="mt-4">
-            {isValidFile ? (
-              <button 
-                onClick={() => vm.transcribe(vm.files[0].path)} 
-                className="btn btn-primary w-full"
-              >
-                {t('common.transcribe')}
-              </button>
-            ) : (
-              <div className="space-y-2">
-                <button 
-                  disabled
-                  className="btn btn-primary w-full opacity-50 cursor-not-allowed"
-                >
-                  {t('common.transcribe')}
-                </button>
-                <div className="alert alert-error">
-                  <span className="text-sm">
-                    {vm.files.length > 0 ? validateFileAndGetError(vm.files[0].name).error : 'No file selected'}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </MainContent>
 
       <div className="flex flex-col items-center w-full px-6">

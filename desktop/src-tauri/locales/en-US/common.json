@@ -236,5 +236,6 @@
   "file-validation-error": "File validation failed",
   "supported-audio-formats": "Supported audio formats",
   "supported-video-formats": "Supported video formats",
-  "no-file-selected": "No file selected"
+  "no-file-selected": "No file selected",
+  "clear-file": "Clear"
 }

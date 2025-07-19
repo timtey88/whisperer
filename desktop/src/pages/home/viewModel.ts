@@ -74,8 +74,26 @@ export function viewModel() {
 
 	async function onFilesChanged() {
 		if (files.length === 1) {
-			setAudio(new Audio(convertFileSrc(files[0].path)))
+			try {
+				setAudio(new Audio(convertFileSrc(files[0].path)))
+			} catch (error) {
+				console.error('Failed to create audio:', error)
+				setAudio(null)
+			}
+		} else {
+			setAudio(null)
 		}
+	}
+
+	function clearFiles() {
+		setFiles([])
+		setAudio(null)
+		setSegments(null)
+		setSummarizeSegments(null)
+		setProgress(0)
+		setFileSize(null)
+		setTranscriptionResult(null)
+		setShowTranscriptionResult(false)
 	}
 
 	async function checkIfCrashedRecently() {
@@ -532,5 +550,6 @@ Original error: ${errorString}`
 		setTranscriptionResult,
 		showTranscriptionResult,
 		setShowTranscriptionResult,
+		clearFiles,
 	}
 }
