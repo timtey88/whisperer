@@ -116,8 +116,8 @@
 	"recognize-speakers": "識別發言者",
 	"record": "錄音",
 	"replace-all": "全部替換",
-	"reset-app": "重置 Whisperer"
-	"reset-ask-dialog": "確定要重置 Whisperer 嗎？這會清除應用程式的所有數據和模型檔案。"
+	"reset-app": "重置 Whisperer",
+	"reset-ask-dialog": "確定要重置 Whisperer 嗎？這會清除應用程式的所有數據和模型檔案。",
 	"reset-options": "恢復預設選項",
 	"right-alignment": "右對齊",
 	"run-llm-check": "運行檢查",

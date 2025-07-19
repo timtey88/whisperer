@@ -116,8 +116,8 @@
 	"recognize-speakers": "Nhận diện người nói",
 	"record": "Ghi âm",
 	"replace-all": "Thay Thế Tất Cả",
-	"reset-app": "Đặt Lại Whisperer"
-	"reset-ask-dialog": "Bạn có chắc chắn muốn đặt lại Whisperer? Dữ liệu ứng dụng sẽ bị xóa bao gồm các tập tin mô hình."
+	"reset-app": "Đặt Lại Whisperer",
+	"reset-ask-dialog": "Bạn có chắc chắn muốn đặt lại Whisperer? Dữ liệu ứng dụng sẽ bị xóa bao gồm các tập tin mô hình.",
 	"reset-options": "Khôi phục các tùy chọn mặc định",
 	"right-alignment": "Căn chỉnh bên phải",
 	"run-llm-check": "Chạy kiểm tra",

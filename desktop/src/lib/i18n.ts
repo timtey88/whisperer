@@ -19,6 +19,9 @@ export const supportedLanguages: { [key: string]: string } = {
 	'it-IT': 'italian',
 	'hi-IN': 'hindi',
 	'ru-RU': 'russian',
+	'es-MX': 'spanish',
+	'ko-KR': 'korean',
+	'vi-VN': 'vietnamese',
 }
 export const supportedLanguageKeys = Object.keys(supportedLanguages)
 export const supportedLanguageValues = Object.values(supportedLanguages)
