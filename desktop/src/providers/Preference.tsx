@@ -4,9 +4,6 @@ import { useLocalStorage } from 'usehooks-ts'
 import { TextFormat, ExportFormat, TextViewMode } from '~/lib/formats'
 import { ModifyState } from '~/lib/utils'
 import * as os from '@tauri-apps/plugin-os'
-import { supportedLanguages } from '~/lib/i18n'
-import WhisperLanguages from '~/assets/whisper-languages.json'
-import { useTranslation } from 'react-i18next'
 import { message } from '@tauri-apps/plugin-dialog'
 
 type Direction = 'ltr' | 'rtl'
@@ -19,8 +16,6 @@ export interface AdvancedTranscribeOptions {
 
 // Define the type of preference
 export interface Preference {
-	displayLanguage: string
-	setDisplayLanguage: ModifyState<string>
 	soundOnFinish: boolean
 	setSoundOnFinish: ModifyState<boolean>
 	focusOnFinish: boolean
@@ -61,7 +56,6 @@ export interface Preference {
 	setMaxSpeakers: ModifyState<number>
 	diarizeThreshold: number
 	setDiarizeThreshold: ModifyState<number>
-	setLanguageDirections: () => void
 	homeTabIndex: number
 	setHomeTabIndex: ModifyState<number>
 
@@ -185,10 +179,7 @@ const defaultOptions = {
 
 // Preference provider component
 export function PreferenceProvider({ children }: { children: ReactNode }) {
-	const { i18n } = useTranslation()
-	const previ18Language = useRef(i18n.language)
-	const [language, setLanguage] = useLocalStorage('prefs_display_language', i18n.language)
-	const [isFirstRun, setIsFirstRun] = useLocalStorage('prefs_first_localstorage_read', true)
+	const [, setIsFirstRun] = useLocalStorage('prefs_first_localstorage_read', true)
 
 	const [gpuDevice, setGpuDevice] = useLocalStorage<number>('prefs_gpu_device', 0)
 	const [useGpu, setUseGpu] = useLocalStorage<boolean | null>('prefs_use_gpu', true)
@@ -240,28 +231,6 @@ export function PreferenceProvider({ children }: { children: ReactNode }) {
 		document.documentElement.setAttribute('data-theme', theme)
 	}, [theme])
 
-	function setLanguageDefaults() {
-		const name = supportedLanguages[preference.displayLanguage]
-		if (name) {
-			preference.setModelOptions({ ...preference.modelOptions, lang: WhisperLanguages[name as keyof typeof WhisperLanguages] })
-			preference.setTextAreaDirection(i18n.dir())
-		}
-	}
-	useEffect(() => {
-		if (!isMounted.current) {
-			isMounted.current = true
-			return
-		}
-		if (previ18Language.current != i18n.language || isFirstRun) {
-			previ18Language.current = i18n.language
-			setLanguageDefaults()
-		}
-	}, [i18n.language])
-
-	useEffect(() => {
-		i18n.changeLanguage(language)
-	}, [language])
-
 	function resetOptions() {
 		setSoundOnFinish(defaultOptions.soundOnFinish)
 		setFocusOnFinish(defaultOptions.focusOnFinish)
@@ -271,13 +240,13 @@ export function PreferenceProvider({ children }: { children: ReactNode }) {
 		setMaxSpeakers(defaultOptions.maxSpeakers)
 		setDiarizeThreshold(defaultOptions.diarizeThreshold)
 		setStoreRecordInDocuments(defaultOptions.storeRecordInDocuments)
-		message(i18n.t('common.success-action'))
+		message('Settings reset successfully')
 	}
 
 	function enableSubtitlesPreset() {
 		setModelOptions({ ...preference.modelOptions, word_timestamps: true, max_sentence_len: 32 })
 		setTextFormat('srt')
-		message(i18n.t('common.success-action'))
+		message('Subtitles preset enabled successfully')
 	}
 
 	const preference: Preference = {
@@ -285,7 +254,6 @@ export function PreferenceProvider({ children }: { children: ReactNode }) {
 		setUseGpu,
 		enableSubtitlesPreset,
 		resetOptions,
-		setLanguageDirections: setLanguageDefaults,
 		diarizeThreshold,
 		setDiarizeThreshold,
 		maxSpeakers,
@@ -312,8 +280,6 @@ export function PreferenceProvider({ children }: { children: ReactNode }) {
 		setTextAreaDirection,
 		skippedSetup,
 		setSkippedSetup,
-		displayLanguage: language,
-		setDisplayLanguage: setLanguage,
 		soundOnFinish,
 		setSoundOnFinish,
 		focusOnFinish,

@@ -1,8 +1,6 @@
 import '@fontsource/roboto'
-import { useTranslation } from 'react-i18next'
 import { Route, Routes } from 'react-router-dom'
 import '~/globals.css'
-import '~/lib/i18n'
 import HomePage from '~/pages/home/Page'
 import SettingsPage from './pages/settings/Page'
 import ModelsPage from './pages/models/Page'
@@ -17,9 +15,6 @@ import { Toaster } from 'react-hot-toast'
 import { ToastProvider } from './providers/Toast'
 
 export default function App() {
-	const { i18n } = useTranslation()
-	document.body.dir = i18n.dir()
-
 	return (
 		// Handle errors before first render
 		<ErrorBoundary FallbackComponent={BoundaryFallback}>

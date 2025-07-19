@@ -2,7 +2,6 @@ import formatDuration from 'format-duration'
 import { useEffect, useState } from 'react'
 import { ReactComponent as PauseIcon } from '~/icons/pause.svg'
 import { ReactComponent as PlayIcon } from '~/icons/play.svg'
-import i18n from '~/lib/i18n'
 import { cx } from '~/lib/utils'
 
 interface AudioInputProps {
@@ -28,8 +27,8 @@ export default function AudioPlayer({ audio, label, onLabelClick }: AudioInputPr
 		// Get the total width of the progress bar
 		const progressBarWidth = e.currentTarget.clientWidth
 
-		// Calculate the clicked position as a percentage
-		const clickPositionPercentage = ((i18n.dir() === 'rtl' ? progressBarWidth - e.nativeEvent.offsetX : e.nativeEvent.offsetX) / progressBarWidth) * 100
+		// Calculate the clicked position as a percentage (assuming LTR direction)
+		const clickPositionPercentage = (e.nativeEvent.offsetX / progressBarWidth) * 100
 
 		// Calculate the new time based on the total duration and clicked position
 		const newTime = (clickPositionPercentage / 100) * totalDuration

@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
 import { webviewWindow } from '@tauri-apps/api';
 
@@ -18,7 +17,6 @@ import { viewModel } from './viewModel';
 import { validateFileAndGetError } from '~/lib/utils';
 
 export default function Home() {
-  const { t } = useTranslation();
   const vm = viewModel();
 
   // Check if the current file is valid for transcription
@@ -48,7 +46,7 @@ export default function Home() {
           {vm.files.length === 0 && (
             <div className="mt-2">
               <div className="label">
-                <span className="label-text text-lg font-medium">{t('common.select-file')}</span>
+                <span className="label-text text-lg font-medium">Select File</span>
               </div>
               <AudioInput onClick={vm.selectFiles} />
             </div>
@@ -83,13 +81,13 @@ export default function Home() {
                       onClick={vm.selectFiles}
                       className="btn btn-outline btn-sm flex-1"
                     >
-                      {t('common.change-file')}
+                      Change File
                     </button>
                     <button 
                       onClick={vm.clearFiles}
                       className="btn btn-outline btn-sm"
                     >
-                      {t('common.clear-file')}
+                      Clear
                     </button>
                   </div>
                 )}
@@ -102,7 +100,7 @@ export default function Home() {
                         onClick={() => vm.transcribe(vm.files[0].path)} 
                         className="btn btn-primary w-full"
                       >
-                        {t('common.transcribe')}
+                        Transcribe
                       </button>
                     ) : (
                       <div className="space-y-2">
@@ -110,7 +108,7 @@ export default function Home() {
                           disabled
                           className="btn btn-primary w-full opacity-50 cursor-not-allowed"
                         >
-                          {t('common.transcribe')}
+                          Transcribe
                         </button>
                         <div className="alert alert-error">
                           <span className="text-sm">
@@ -155,7 +153,7 @@ export default function Home() {
               <TextArea
                 setSegments={vm.setSegments}
                 file={vm.files[0]}
-                placeholder={t('common.transcript-will-displayed-shortly')}
+                placeholder="Transcript will be displayed here shortly..."
                 segments={vm.segments}
                 readonly={vm.loading}
               />

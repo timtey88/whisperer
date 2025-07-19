@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { InfoTooltip } from '~/components/InfoTooltip'
 import { ReactComponent as FolderIcon } from '~/icons/folder.svg'
@@ -9,7 +8,6 @@ import { ReactComponent as CopyIcon } from '~/icons/copy.svg'
 import { ReactComponent as ListIcon } from '~/icons/list.svg'
 
 import * as config from '~/lib/config'
-import { supportedLanguages } from '~/lib/i18n'
 import { viewModel } from './viewModel'
 import * as os from '@tauri-apps/plugin-os'
 import { useEffect, useState } from 'react'
@@ -19,22 +17,15 @@ import NavigationBar from '~/components/NavigationBar'
 import MainContent from '~/components/MainContent'
 
 export default function SettingsPage() {
-	const { t, i18n } = useTranslation()
 	const vm = viewModel()
 	const navigate = useNavigate()
 
 	const [platform, setPlatform] = useState<os.Platform | null>(null)
 
-	// Create language options for CustomSelect
-	const languageOptions: SelectOption[] = Object.entries(supportedLanguages).map(([code, name]) => ({
-		value: code,
-		label: code === i18n.language ? t(`language.${name}`) : name
-	}))
-
 	// Create theme options for CustomSelect
 	const themeOptions: SelectOption[] = config.themes.map((theme) => ({
 		value: theme,
-		label: t(`common.${theme}`)
+		label: theme === 'dark' ? 'Dark' : 'Light'
 	}))
 
 	// Create model options for CustomSelect
@@ -58,35 +49,23 @@ export default function SettingsPage() {
 
 				<label className="form-control w-full">
 					<div className="label">
-						<span className="label-text">{t('common.language')}</span>
-					</div>
-					<CustomSelect
-						options={languageOptions}
-						value={vm.preference.displayLanguage}
-						onChange={(value) => vm.preference.setDisplayLanguage(value)}
-						placeholder={t('common.select-language')}
-					/>
-				</label>
-
-				<label className="form-control w-full">
-					<div className="label">
-						<span className="label-text">{t('common.theme')}</span>
+						<span className="label-text">Theme</span>
 					</div>
 					<CustomSelect
 						options={themeOptions}
 						value={vm.preference.theme}
 						onChange={(value) => vm.preference.setTheme(value as any)}
-						placeholder={t('common.select-theme')}
+						placeholder="Select Theme"
 					/>
 				</label>
 
 				<div className="label mt-5">
-					<span className="label-text opacity-60">{t('common.when-completing-transcription')}</span>
+					<span className="label-text opacity-60">When completing transcription</span>
 				</div>
 
 				<div className="form-control">
 					<label className="label cursor-pointer">
-						<span className="label-text">{t('common.play-sound-on-finish')}</span>
+						<span className="label-text">Play sound on finish</span>
 						<input
 							type="checkbox"
 							className="toggle toggle-primary"
@@ -95,7 +74,7 @@ export default function SettingsPage() {
 						/>
 					</label>
 					<label className="label cursor-pointer">
-						<span className="label-text">{t('common.focus-window-on-finish')}</span>
+						<span className="label-text">Focus window on finish</span>
 						<input
 							type="checkbox"
 							className="toggle toggle-primary"
@@ -107,8 +86,8 @@ export default function SettingsPage() {
 
 				<div className="label mt-10">
 					<span className="label-text flex items-center gap-1">
-						<InfoTooltip text={t('common.customize-info')} />
-						{t('common.customize')}
+						<InfoTooltip text="Configure transcription model and options" />
+						Customize
 					</span>
 				</div>
 				<div className="flex flex-col gap-1">
@@ -117,7 +96,7 @@ export default function SettingsPage() {
 							options={modelOptions}
 							value={vm.preference.modelPath ?? ''}
 							onChange={(value) => vm.preference.setModelPath(value)}
-							placeholder={t('common.select-model')}
+							placeholder="Select model"
 						/>
 					</div>
 					{modelOptions.length === 0 && (
@@ -130,34 +109,34 @@ export default function SettingsPage() {
 					)}
 
 					<button onMouseDown={() => navigate('/models')} className="btn bg-base-300 text-base-content">
-						{t('common.manage-models')}
+						Manage models
 						<ListIcon className="w-4 h-4" />
 					</button>
 					<button onMouseDown={() => navigate('/model-options')} className="btn bg-base-300 text-base-content">
-						{t('common.model-options')}
+						Model options
 						<WrenchIcon className="w-4 h-4" />
 					</button>
 					<button onMouseDown={vm.openModelPath} className="btn bg-base-300 text-base-content">
-						{t('common.models-folder')}
+						Models folder
 						<FolderIcon className="h-4 w-4" />
 					</button>
 					<button onMouseDown={vm.changeModelsFolder} className="btn bg-base-300 text-base-content">
-						{t('common.change-models-folder')}
+						Change models folder
 						<WrenchIcon className="h-4 w-4" />
 					</button>
 					<button onMouseDown={vm.openModelsUrl} className="btn bg-base-300 text-base-content">
-						{t('common.models-source')}
+						Models source
 						<LinkIcon className="w-4 h-4" />
 					</button>
 				</div>
 
 				<div className="label mt-10">
-					<span className="label-text">{t('common.advanced')}</span>
+					<span className="label-text">Advanced</span>
 				</div>
 				<label className="form-control w-full py-2">
 					<span className="label-text flex items-center gap-1 cursor-default">
-						<InfoTooltip text={t('common.info-gpu-device')} />
-						{t('common.gpu-device')}
+						<InfoTooltip text="GPU device index to use for acceleration" />
+						GPU device
 					</span>
 					<input
 						value={vm.preference.gpuDevice}
@@ -168,7 +147,7 @@ export default function SettingsPage() {
 				</label>
 				<div className="form-control">
 					<label className="label cursor-pointer">
-						<span className="label-text">{t('common.use-gpu')}</span>
+						<span className="label-text">Use GPU</span>
 						<input
 							type="checkbox"
 							className="toggle toggle-primary"
@@ -181,8 +160,8 @@ export default function SettingsPage() {
 					<div className="form-control w-full mt-3">
 						<label className="label cursor-pointer">
 							<span className="label-text flex items-center gap-1 cursor-default">
-								<InfoTooltip text={t('common.info-high-gpu-performance')} />
-								{t('common.high-gpu-performance')}
+								<InfoTooltip text="Enable high performance GPU scheduling on Windows" />
+								High GPU performance
 							</span>
 
 							<input
@@ -198,13 +177,13 @@ export default function SettingsPage() {
 				{vm.isDiarizationAvailable && (
 					<>
 						<div className="label mt-10">
-							<span className="label-text">{t('common.speaker-recognition')}</span>
+							<span className="label-text">Speaker recognition</span>
 						</div>
 						<div className="form-control w-full">
 							<label className="label cursor-pointer">
 								<span className="label-text flex items-center gap-1 cursor-default">
-									<InfoTooltip text={t('common.info-recognize-speakers')} />
-									{t('common.recognize-speakers')}
+									<InfoTooltip text="Identify and separate different speakers in the audio" />
+									Recognize speakers
 								</span>
 								<input
 									type="checkbox"
@@ -219,8 +198,8 @@ export default function SettingsPage() {
 							<>
 								<label className="form-control w-full py-2">
 									<span className="label-text flex items-center gap-1 cursor-default">
-										<InfoTooltip text={t('common.info-max-speakers')} />
-										{t('common.max-speakers')}
+										<InfoTooltip text="Maximum number of speakers to identify" />
+										Max speakers
 									</span>
 									<input
 										value={vm.preference.maxSpeakers}
@@ -233,8 +212,8 @@ export default function SettingsPage() {
 								</label>
 								<label className="form-control w-full py-2">
 									<span className="label-text flex items-center gap-1 cursor-default">
-										<InfoTooltip text={t('common.info-diarize-threshold')} />
-										{t('common.diarize-threshold')}
+										<InfoTooltip text="Threshold for speaker change detection (0-1)" />
+										Diarization threshold
 									</span>
 									<input
 										value={vm.preference.diarizeThreshold}
@@ -282,19 +261,19 @@ export default function SettingsPage() {
 
 				<div className="flex flex-col gap-1">
 					<button onMouseDown={vm.copyLogs} className="btn bg-base-300 text-base-content">
-						{t('common.copy-logs')}
+						Copy logs
 						<CopyIcon className="h-4 w-4" />
 					</button>
 					<button onMouseDown={vm.revealLogs} className="btn bg-base-300 text-base-content">
-						{t('common.logs-folder')}
+						Logs folder
 						<FolderIcon className="h-4 w-4" />
 					</button>
 					<button onMouseDown={vm.revealTemp} className="btn bg-base-300 text-base-content">
-						{t('common.temp-folder')}
+						Temp folder
 						<FolderIcon className="h-4 w-4" />
 					</button>
 					<button onClick={vm.askAndReset} className="btn bg-base-300">
-						{t('common.reset-app')}
+						Reset app
 						<ResetIcon className="h-5 w-5" />
 					</button>
 					<p className="text-center font-light mt-2">{vm.appVersion}</p>

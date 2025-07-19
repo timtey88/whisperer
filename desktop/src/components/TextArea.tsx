@@ -1,7 +1,6 @@
 import * as dialog from '@tauri-apps/plugin-dialog'
 import * as fs from '@tauri-apps/plugin-fs'
 import { useEffect, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { ReactComponent as CopyIcon } from '~/icons/copy.svg'
 import { ReactComponent as DownloadIcon } from '~/icons/download.svg'
 import { ReactComponent as PrintIcon } from '~/icons/print.svg'
@@ -21,14 +20,13 @@ import { toDocx } from '~/lib/docx'
 import { path } from '@tauri-apps/api'
 
 function Copy({ text, disabled = false }: { text: string; disabled?: boolean }) {
-	const { t } = useTranslation()
-	const [info, setInfo] = useState(t('common.copy'))
+	const [info, setInfo] = useState('Copy')
 
 	function onCopy() {
 		if (disabled) return
 		clipboard.writeText(text)
-		setInfo(t('common.copied'))
-		setTimeout(() => setInfo(t('common.copy')), 1000)
+		setInfo('Copied')
+		setTimeout(() => setInfo('Copy'), 1000)
 	}
 	
 	const tooltipText = disabled ? 'Copy not available for this view' : info
@@ -66,7 +64,6 @@ function ReplaceWithBox({
 }) {
 	const boxRef = useRef<HTMLDivElement>(null)
 	const textAreaRef = useRef<HTMLTextAreaElement>(null)
-	const { t } = useTranslation()
 	const [value, setValue] = useState('')
 
 	useEffect(() => {
@@ -122,10 +119,10 @@ function ReplaceWithBox({
 						className="textarea textarea-bordered resize-none"
 						name=""
 						id=""
-						placeholder={`${t('common.replace-all')}... (${selected})`}
+						placeholder={`Replace all... (${selected})`}
 					/>
 					<button onClick={replace} className="btn btn-primary btn-xs">
-						{t('common.replace-all')}
+						Replace all
 					</button>
 				</ul>
 			</details>
@@ -146,13 +143,12 @@ export default function TextArea({
 	placeholder?: string
 	file: NamedPath
 }) {
-	const { t } = useTranslation()
 	const preference = usePreferenceProvider()
 	const [text, setText] = useState('')
 
 	// Format options for CustomSelect
 	const formatOptions: SelectOption[] = [
-		{ value: 'text', label: t('common.mode-text') },
+		{ value: 'text', label: 'Text' },
 		{ value: 'document', label: 'Document' },
 		{ value: 'srt', label: 'SRT' },
 		{ value: 'vtt', label: 'VTT' },
@@ -169,16 +165,16 @@ export default function TextArea({
 		if (segments) {
 			setText(
 				preference.textFormat === 'vtt'
-					? asVtt(segments, t('common.speaker-prefix'), true, true) // Always use standard VTT format
+					? asVtt(segments, 'Speaker', true, true) // Always use standard VTT format
 					: preference.textFormat === 'srt'
-					? asSrt(segments, t('common.speaker-prefix'), true, true) // Always use standard SRT format
+					? asSrt(segments, 'Speaker', true, true) // Always use standard SRT format
 					: preference.textFormat === 'json'
 					? asJson(segments)
 					: preference.textFormat === 'document'
 					? '' // Document format uses HTMLView component, not text
 					: preference.textFormat === 'text'
-					? asText(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
-					: asText(segments, t('common.speaker-prefix'), preference.showTimestamps, preference.showParagraphs)
+					? asText(segments, 'Speaker', preference.showTimestamps, preference.showParagraphs)
+					: asText(segments, 'Speaker', preference.showTimestamps, preference.showParagraphs)
 			)
 		} else {
 			setText('')
@@ -235,7 +231,7 @@ export default function TextArea({
 			toast(
 				(mytoast) => (
 					<span>
-						{`${t('common.save-success')}`}
+						File saved successfully
 						<button
 							onClick={() => {
 								toast.dismiss(mytoast.id)
@@ -291,7 +287,7 @@ export default function TextArea({
 			toast(
 				(mytoast) => (
 					<span>
-						{`${t('common.save-success')}`}
+						File saved successfully
 						<button
 							onClick={() => {
 								toast.dismiss(mytoast.id)
@@ -380,7 +376,7 @@ export default function TextArea({
 							<DocumentExportMenu 
 								onExport={exportDocument}
 							/>
-							<div className="tooltip tooltip-bottom" data-tip={t('common.print-tooltip')}>
+							<div className="tooltip tooltip-bottom" data-tip="Print document">
 								<button onMouseDown={() => window.print()} className="btn btn-square btn-md">
 									<PrintIcon className="w-6 h-6" />
 								</button>
@@ -392,7 +388,7 @@ export default function TextArea({
 								text={text} 
 								disabled={false} 
 							/>
-							<div className="tooltip tooltip-bottom" data-tip={t('common.save-transcript')}>
+							<div className="tooltip tooltip-bottom" data-tip="Save transcript">
 								<button 
 									onMouseDown={() => download(text, preference.textFormat, file)} 
 									className="btn btn-square btn-md"
@@ -409,7 +405,7 @@ export default function TextArea({
 
 				{/* Timestamp Toggle - Only show for formats that support it */}
 				{['text', 'document'].includes(preference.textFormat) && (
-					<div className="tooltip tooltip-bottom" data-tip={preference.showTimestamps ? t('common.hide-timestamps') : t('common.show-timestamps')}>
+					<div className="tooltip tooltip-bottom" data-tip={preference.showTimestamps ? 'Hide timestamps' : 'Show timestamps'}>
 						<button
 							onMouseDown={() => preference.setShowTimestamps(!preference.showTimestamps)}
 							className={cx('btn btn-square btn-md', preference.showTimestamps && 'btn-active')}>
@@ -434,7 +430,7 @@ export default function TextArea({
 
 				{/* Format Selector */}
 				<div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto justify-center sm:justify-end">
-					<span className="text-sm font-medium opacity-70">{t('common.format')}:</span>
+					<span className="text-sm font-medium opacity-70">Format:</span>
 					<CustomSelect
 						options={formatOptions}
 						value={preference.textFormat}

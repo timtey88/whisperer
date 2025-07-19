@@ -1,10 +1,8 @@
-import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ReactComponent as TranscribeIcon } from '~/icons/microphone.svg'
 import { ReactComponent as SettingsIcon } from '~/icons/settings.svg'
 
 export default function NavigationBar() {
-	const { t } = useTranslation()
 	const location = useLocation()
 	const navigate = useNavigate()
 
@@ -20,14 +18,14 @@ export default function NavigationBar() {
 						className={`tab tab-lg gap-2 px-6 ${isTranscribeActive ? 'tab-active' : ''}`}
 					>
 						<TranscribeIcon className="w-5 h-5" />
-						{t('common.transcribe')}
+						Transcribe
 					</button>
 					<button
 						onClick={() => navigate('/settings')}
 						className={`tab tab-lg gap-2 px-6 ${isSettingsActive ? 'tab-active' : ''}`}
 					>
 						<SettingsIcon className="w-5 h-5" />
-						{t('common.settings')}
+						Settings
 					</button>
 				</div>
 			</div>

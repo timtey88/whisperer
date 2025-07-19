@@ -1,18 +1,15 @@
-import { useTranslation } from 'react-i18next'
 import WhisperLanguages from '~/assets/whisper-languages.json'
-import { getI18nLanguageName } from '~/lib/i18n'
 import { usePreferenceProvider } from '~/providers/Preference'
 import CustomSelect, { SelectOption } from './CustomSelect'
 
 const specialModels = [{ pattern: 'ug.bin', languages: [{ code: 'ug', label: 'Uyghur', name: 'uyghur' }] }]
 
 export default function LanguageInput() {
-	const { t } = useTranslation()
 	const preference = usePreferenceProvider()
 
-	// create entries with translated labels
+	// create entries with English labels
 	const entries = Object.entries(WhisperLanguages).map(([name, code]) => {
-		return { label: t(`language.${name}`, { defaultValue: name }), name, code }
+		return { label: name, name, code }
 	})
 
 	// Speical models with special languages
@@ -25,7 +22,7 @@ export default function LanguageInput() {
 	entries.sort((a, b) => {
 		return a.label.localeCompare(b.label)
 	})
-	const popularLanguages = [getI18nLanguageName(), 'auto', 'english']
+	const popularLanguages = ['auto', 'english']
 	const popularEntries: { label: string; code: string }[] = []
 	const otherEntries: { label: string; code: string }[] = []
 
@@ -39,8 +36,8 @@ export default function LanguageInput() {
 
 	// Group names
 	const groupNames = {
-		popular: t('common.popular'),
-		others: t('common.others'),
+		popular: 'Popular',
+		others: 'Others',
 	}
 
 	// Create options for CustomSelect with groups
@@ -60,13 +57,13 @@ export default function LanguageInput() {
 	return (
 		<label className="form-control w-full">
 			<div className="label">
-				<span className="label-text">{t('common.language')}</span>
+				<span className="label-text">Language</span>
 			</div>
 			<CustomSelect
 				options={languageOptions}
 				value={preference.modelOptions.lang}
 				onChange={(value) => preference.setModelOptions({ ...preference.modelOptions, lang: value })}
-				placeholder={t('common.select-language')}
+				placeholder="Select Language"
 			/>
 		</label>
 	)
