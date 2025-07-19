@@ -2,7 +2,6 @@ import * as dialog from '@tauri-apps/plugin-dialog'
 import * as process from '@tauri-apps/plugin-process'
 import { DownloadEvent, Update, check as checkUpdate } from '@tauri-apps/plugin-updater'
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { ErrorModalContext } from './ErrorModal'
 import { ModifyState } from '~/lib/utils'
 import { invoke } from '@tauri-apps/api/core'
@@ -37,7 +36,6 @@ export function UpdaterProvider({ children }: { children: React.ReactNode }) {
 	const [totalSize, setTotal] = useState<number | null>(null)
 	const [partSize, setPartSize] = useState<number | null>(null)
 	const { setState: setErrorModal } = useContext(ErrorModalContext)
-	const { t } = useTranslation()
 	const [progress, setProgress] = useState<number | null>(null)
 
 	useEffect(() => {
@@ -63,11 +61,11 @@ export function UpdaterProvider({ children }: { children: React.ReactNode }) {
 	}, [])
 
 	async function askForRelaunch() {
-		const shouldRelaunch = await dialog.ask(t('common.ask-for-relaunch-body'), {
-			title: t('common.ask-for-relaunch-title'),
+		const shouldRelaunch = await dialog.ask('The update has been installed successfully. Would you like to restart the application now?', {
+			title: 'Installation Complete',
 			kind: 'info',
-			cancelLabel: t('common.cancel-relaunch'),
-			okLabel: t('common.confirm-relaunch'),
+			cancelLabel: 'Restart Later',
+			okLabel: 'Restart Now',
 		})
 		if (shouldRelaunch) {
 			console.info('relaunch....')
@@ -116,11 +114,11 @@ export function UpdaterProvider({ children }: { children: React.ReactNode }) {
 			return
 		}
 
-		const shouldUpdate = await dialog.ask(t('common.ask-for-update-body', { version: update?.version }), {
-			title: t('common.ask-for-update-title'),
+		const shouldUpdate = await dialog.ask(`A new version ${update?.version} is available. Would you like to download and install it now?`, {
+			title: 'Update Available',
 			kind: 'info',
-			cancelLabel: t('common.cancel-update'),
-			okLabel: t('common.confirm-update'),
+			cancelLabel: 'Cancel',
+			okLabel: 'Update Now',
 		})
 		if (shouldUpdate) {
 			try {

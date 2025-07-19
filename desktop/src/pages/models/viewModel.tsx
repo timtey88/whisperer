@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { ask } from '@tauri-apps/plugin-dialog'
-import { useTranslation } from 'react-i18next'
 import modelsData from '~/lib/data/ggml_models.json'
 import encodersData from '~/lib/data/ggml_models_encoder.json'
 
@@ -25,7 +24,6 @@ interface DownloadProgress {
 }
 
 export function viewModel() {
-	const { t } = useTranslation()
 	const [models, setModels] = useState<ModelInfo[]>([])
 	const [activeTab, setActiveTab] = useState<'models' | 'encoders'>('models')
 	const [filter, setFilter] = useState<string>('all')
@@ -260,7 +258,7 @@ export function viewModel() {
 	async function deleteModel(model: ModelInfo) {
 		try {
 			const confirmed = await ask(
-				t('common.confirm-uninstall-model', { modelName: model.model }),
+				`Are you sure you want to uninstall ${model.model}? This action cannot be undone.`,
 				{ kind: 'warning' }
 			)
 			

@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next'
 import { Segment, formatTimestamp, mergeSpeakerSegments } from '~/lib/transcript'
 import { NamedPath, formatSpeaker } from '~/lib/utils'
 import { Preference } from '~/providers/Preference'
@@ -23,12 +22,11 @@ export function formatDuration(start: number, stop: number, direction: 'rtl' | '
 
 export default function HTMLView({ segments, file, preference, showParagraphs = true }: HTMLViewProps) {
 	segments = mergeSpeakerSegments(segments)
-	const { t } = useTranslation()
 	
 	// Single paragraph mode - combine all segments into one continuous paragraph
 	if (!showParagraphs) {
 		const combinedText = segments.map(segment => {
-			const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, t('common.speaker-prefix'))}: ` : ''
+			const speakerText = segment.speaker ? `${formatSpeaker(segment.speaker, 'Speaker')}: ` : ''
 			return `${speakerText}${segment.text.trim()}`
 		}).join(' ')
 		
@@ -137,7 +135,7 @@ export default function HTMLView({ segments, file, preference, showParagraphs = 
 								marginBottom: '8px',
 								color: '#374151'
 							}}>
-								{formatSpeaker(segment.speaker, t('common.speaker-prefix'))}
+								{formatSpeaker(segment.speaker, 'Speaker')}
 							</div>
 						)}
 						<div style={{ fontSize: '18px', lineHeight: '1.7', textAlign: 'justify' }}>

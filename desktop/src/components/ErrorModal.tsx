@@ -1,5 +1,4 @@
 import * as shell from '@tauri-apps/plugin-shell'
-import { useTranslation } from 'react-i18next'
 import { ReactComponent as CopyIcon } from '~/icons/copy.svg'
 import { ModifyState, cx, getIssueUrl, resetApp } from '~/lib/utils'
 import { ErrorModalState } from '~/providers/ErrorModal'
@@ -12,7 +11,6 @@ interface ErrorModalProps {
 }
 
 export default function ErrorModal({ state, setState }: ErrorModalProps) {
-	const { t } = useTranslation()
 
 	async function clearLogAndReset() {
 		setState({ open: false, log: '' })
@@ -34,8 +32,8 @@ export default function ErrorModal({ state, setState }: ErrorModalProps) {
 	return (
 		<dialog id="modal-error" className={cx('modal', state?.open && 'modal-open')}>
 			<div className="modal-box">
-				<h3 className="font-bold text-lg">{t('common.error-title')}</h3>
-				<p className="py-4">{t('common.modal-error-body')}</p>
+				<h3 className="font-bold text-lg">Error</h3>
+				<p className="py-4">An error occurred while processing your request. Please try again or report the issue if it persists.</p>
 				<div className="relative">
 					<textarea readOnly className="w-full rounded-lg p-3 max-h-20 textarea textarea-bordered" dir="ltr" value={state?.log} />
 					<CopyIcon
@@ -46,16 +44,16 @@ export default function ErrorModal({ state, setState }: ErrorModalProps) {
 				</div>
 				<div className="flex justify-center gap-3 mt-3">
 					<button onClick={clearLogAndReset} className="btn btn-primary cursor-pointer">
-						{t('common.reset-app')}
+						Reset App
 					</button>
 					<button onMouseDown={reportIssue} className="btn btn-outline">
-						{t('common.report-issue')}
+						Report Issue
 					</button>
 				</div>
 				<div className="modal-action">
 					<form method="dialog">
 						<button onClick={() => setState?.({ log: '', open: false })} className="btn cursor-pointer">
-							{t('common.modal-close')}
+							Close
 						</button>
 					</form>
 				</div>

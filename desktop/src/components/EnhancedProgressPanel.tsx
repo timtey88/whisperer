@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef } from 'react'
-import { useTranslation } from 'react-i18next'
 import { ReactComponent as CpuIcon } from '~/icons/cpu.svg'
 import { ReactComponent as GpuIcon } from '~/icons/gpu.svg'
 import { ReactComponent as MicrophoneIcon } from '~/icons/microphone.svg'
@@ -38,7 +37,6 @@ export default function EnhancedProgressPanel({
 	useGpu = false,
 	currentPhase = 'Loading Model'
 }: EnhancedProgressPanelProps) {
-	const { t } = useTranslation()
 	const [startTime] = useState(Date.now())
 	const [elapsedTime, setElapsedTime] = useState(0)
 	const [progressHistory, setProgressHistory] = useState<Array<{time: number, progress: number}>>([])
@@ -198,7 +196,7 @@ export default function EnhancedProgressPanel({
 								</div>
 								<div className="flex-1 min-w-0">
 									<p className="font-medium text-sm mb-1">
-										{isAborting ? t('common.aborting') : t('common.transcribing')}
+										{isAborting ? 'Aborting' : 'Transcribing'}
 									</p>
 									{fileName && (
 										<p 
@@ -390,7 +388,7 @@ export default function EnhancedProgressPanel({
 							<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
 							</svg>
-							{t('common.cancel')}
+							Cancel
 						</button>
 					)}
 				</div>

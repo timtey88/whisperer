@@ -1,5 +1,4 @@
 import { Dispatch, SetStateAction } from 'react'
-import { useTranslation } from 'react-i18next'
 
 import { TextFormat, ExportFormat, TextViewMode, formatExtensions, exportExtensions, textViewExtensions } from '~/lib/formats'
 
@@ -12,11 +11,10 @@ interface FormatSelectProps {
 	setFormat: Dispatch<SetStateAction<TextFormat>>
 }
 export default function FormatSelect({ format, setFormat }: FormatSelectProps) {
-	const { t } = useTranslation()
 	return (
 		<label className="form-control w-full">
 			<div className="label">
-				<span className="label-text">{t('common.format')}</span>
+				<span className="label-text">Format</span>
 			</div>
 			<select
 				value={format}
@@ -24,7 +22,7 @@ export default function FormatSelect({ format, setFormat }: FormatSelectProps) {
 					setFormat(event.target.value as unknown as TextFormat)
 				}}
 				className="select select-bordered">
-				<option value="text">{t('common.mode-text')}</option>
+				<option value="text">Text</option>
 				<option value="document">Document</option>
 				<option value="srt">SRT</option>
 				<option value="vtt">VTT</option>
