@@ -1,16 +1,14 @@
 import { useEffect } from 'react'
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
-import { useTranslation } from 'react-i18next'
 import { UnlistenFn } from '@tauri-apps/api/event'
 
 export function useConfirmExit(shouldConfirm: boolean) {
-	const { t } = useTranslation()
 	useEffect(() => {
 		let unlistenFn: UnlistenFn | null = null
 		getCurrentWebviewWindow()
 			.listen('tauri://close-requested', async () => {
 				if (shouldConfirm) {
-					if (await confirm(t('common.confirm-exit'))) {
+					if (await confirm('Are you sure you want to exit? Any ongoing transcription will be cancelled.')) {
 						getCurrentWebviewWindow().destroy()
 					}
 				} else {

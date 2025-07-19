@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@fontsource/roboto": "^5.1.0",
-    "@formatjs/intl-durationformat": "^0.6.3",
     "@tauri-apps/api": "~2.1.1",
     "@tauri-apps/plugin-clipboard-manager": "~2.0.0",
     "@tauri-apps/plugin-deep-link": "~2.0.0",
@@ -24,8 +23,6 @@
     "@tauri-apps/plugin-shell": "~2.0.1",
     "@tauri-apps/plugin-store": "~2.1.0",
     "@tauri-apps/plugin-updater": "~2.0.0",
-    "@tauri-apps/plugin-window-state": "~2.0.0",
-    "caniuse-lite": "^1.0.30001727",
     "docx": "^9.0.3",
     "format-duration": "^3.0.2",
     "framer-motion": "^12.23.1",
