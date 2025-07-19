@@ -42,12 +42,29 @@ ${logs}
 	clipboard.writeText(templated)
 }
 
+interface GpuDevice {
+	index: number
+	name: string
+	device_type: string
+	vendor: string
+	is_recommended: boolean
+}
+
+interface GpuInfo {
+	devices: GpuDevice[]
+	recommended_device: number
+	has_discrete_gpu: boolean
+	gpu_acceleration_available: boolean
+	current_features: string[]
+}
+
 export function viewModel() {
 	const [isLogToFileSet, setLogToFile] = useStoreValue<boolean>('prefs_log_to_file')
 
 	const [models, setModels] = useState<NamedPath[]>([])
 	const [appVersion, setAppVersion] = useState('')
 	const [isDiarizationAvailable, setIsDiarizationAvailable] = useState(false)
+	const [gpuInfo, setGpuInfo] = useState<GpuInfo | null>(null)
 	const preference = usePreferenceProvider()
 	const listenersRef = useRef<UnlistenFn[]>([])
 
@@ -172,6 +189,16 @@ export function viewModel() {
 		}
 	}
 
+	async function detectGpu() {
+		try {
+			const result = await invoke<GpuInfo>('get_gpu_info')
+			setGpuInfo(result)
+		} catch (error) {
+			console.error('GPU detection error:', error)
+			await ask(`❌ Failed to detect GPU devices: ${error}`, { title: 'GPU Detection Failed' })
+		}
+	}
+
 	return {
 		copyLogs,
 		isLogToFileSet,
@@ -189,5 +216,7 @@ export function viewModel() {
 		testDiarization,
 		prepareForUninstall,
 		isDiarizationAvailable,
+		detectGpu,
+		gpuInfo,
 	}
 }

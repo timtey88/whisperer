@@ -115,6 +115,7 @@ fn main() -> Result<()> {
             cmd::check_model_exists,
             cmd::delete_model,
             cmd::prepare_for_uninstall,
+            cmd::get_gpu_info,
             #[cfg(feature = "diarization")]
             cmd::diarization::check_diarization_dependencies,
             #[cfg(feature = "diarization")]

@@ -932,3 +932,129 @@ pub async fn prepare_for_uninstall(app_handle: tauri::AppHandle) -> Result<Strin
     
     Ok(message.to_string())
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GpuDevice {
+    pub index: i32,
+    pub name: String,
+    pub device_type: String,
+    pub vendor: String,
+    pub is_recommended: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GpuInfo {
+    pub devices: Vec<GpuDevice>,
+    pub recommended_device: i32,
+    pub has_discrete_gpu: bool,
+    pub gpu_acceleration_available: bool,
+    pub current_features: Vec<String>,
+}
+
+#[tauri::command]
+pub async fn get_gpu_info() -> Result<GpuInfo> {
+    tracing::debug!("Starting GPU detection");
+    
+    // Get current build features
+    let features = get_cargo_features();
+    
+    // Enumerate GPUs using wgpu
+    let mut devices = enumerate_gpu_devices().await?;
+    
+    // Determine recommendations
+    let has_discrete_gpu = devices.iter().any(|d| d.device_type == "Discrete");
+    let recommended_device = find_recommended_device(&devices);
+    let gpu_acceleration_available = !features.is_empty() && !devices.is_empty();
+    
+    // Mark the recommended device
+    for device in &mut devices {
+        device.is_recommended = device.index == recommended_device;
+    }
+    
+    Ok(GpuInfo {
+        devices,
+        recommended_device,
+        has_discrete_gpu,
+        gpu_acceleration_available,
+        current_features: features,
+    })
+}
+
+async fn enumerate_gpu_devices() -> Result<Vec<GpuDevice>> {
+    use wgpu::{Backends, Instance, DeviceType};
+    
+    let instance = Instance::new(wgpu::InstanceDescriptor {
+        backends: Backends::all(),
+        dx12_shader_compiler: wgpu::Dx12Compiler::default(),
+        flags: wgpu::InstanceFlags::default(),
+        gles_minor_version: wgpu::Gles3MinorVersion::Automatic,
+    });
+    
+    let mut devices = Vec::new();
+    let mut index = 0;
+    
+    for adapter in instance.enumerate_adapters(Backends::all()) {
+        let info = adapter.get_info();
+        
+        let device_type = match info.device_type {
+            DeviceType::IntegratedGpu => "Integrated",
+            DeviceType::DiscreteGpu => "Discrete", 
+            DeviceType::VirtualGpu => "Virtual",
+            DeviceType::Cpu => "CPU",
+            DeviceType::Other => "Other",
+        };
+        
+        let vendor = match info.vendor {
+            0x10DE => "NVIDIA",  // NVIDIA vendor ID
+            0x1002 => "AMD",     // AMD vendor ID  
+            0x8086 => "Intel",   // Intel vendor ID
+            0x106B => "Apple",   // Apple vendor ID
+            _ => "Unknown",
+        };
+        
+        devices.push(GpuDevice {
+            index,
+            name: info.name,
+            device_type: device_type.to_string(),
+            vendor: vendor.to_string(),
+            is_recommended: false, // Will be set later
+        });
+        
+        index += 1;
+    }
+    
+    tracing::debug!("Found {} GPU devices", devices.len());
+    Ok(devices)
+}
+
+fn find_recommended_device(devices: &[GpuDevice]) -> i32 {
+    // Priority order for recommendations:
+    // 1. Discrete NVIDIA GPU (best for CUDA)
+    // 2. Discrete AMD GPU (good for general compute)
+    // 3. Apple Silicon GPU (unified memory, good performance)
+    // 4. Other discrete GPUs
+    // 5. Integrated GPUs
+    
+    // First try to find discrete NVIDIA
+    if let Some(device) = devices.iter().find(|d| d.device_type == "Discrete" && d.vendor == "NVIDIA") {
+        return device.index;
+    }
+    
+    // Then discrete AMD
+    if let Some(device) = devices.iter().find(|d| d.device_type == "Discrete" && d.vendor == "AMD") {
+        return device.index;
+    }
+    
+    // Apple Silicon (good unified memory performance)
+    if let Some(device) = devices.iter().find(|d| d.vendor == "Apple") {
+        return device.index;
+    }
+    
+    // Any other discrete GPU
+    if let Some(device) = devices.iter().find(|d| d.device_type == "Discrete") {
+        return device.index;
+    }
+    
+    // Fallback to first device (usually index 0)
+    0
+}

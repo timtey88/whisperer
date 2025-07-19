@@ -84,7 +84,7 @@ export default function SettingsPage() {
 					</label>
 				</div>
 
-				<div className="label mt-10">
+				<div className="label mt-5">
 					<span className="label-text flex items-center gap-1">
 						<InfoTooltip text="Configure transcription model and options" />
 						Customize
@@ -133,29 +133,71 @@ export default function SettingsPage() {
 				<div className="label mt-10">
 					<span className="label-text">Advanced</span>
 				</div>
-				<label className="form-control w-full py-2">
-					<span className="label-text flex items-center gap-1 cursor-default">
-						<InfoTooltip text="GPU device index to use for acceleration" />
-						GPU device
-					</span>
-					<input
-						value={vm.preference.gpuDevice}
-						onChange={(e) => vm.preference.setGpuDevice(parseInt(e.target.value) ?? 0)}
-						className="input input-bordered"
-						type="number"
-					/>
-				</label>
-				<div className="form-control">
-					<label className="label cursor-pointer">
-						<span className="label-text">Use GPU</span>
-						<input
-							type="checkbox"
-							className="toggle toggle-primary"
-							onChange={(e) => vm.preference.setUseGpu(e.target.checked)}
-							checked={Boolean(vm.preference.useGpu)}
-						/>
-					</label>
+				<div className="flex flex-col gap-1">
+					<div>
+						<div className="form-control">
+							<label className="label cursor-pointer">
+								<span className="label-text">Use GPU</span>
+								<input
+									type="checkbox"
+									className="toggle toggle-primary"
+									onChange={(e) => vm.preference.setUseGpu(e.target.checked)}
+									checked={Boolean(vm.preference.useGpu)}
+								/>
+							</label>
+						</div>
+					</div>
+					
+					<div>
+						<label className="form-control w-full py-2">
+							<span className="label-text flex items-center gap-1 cursor-default mb-2">
+								<InfoTooltip text="GPU device index to use for acceleration. Usually 0 for integrated GPUs, 1+ for discrete GPUs. Use 'Detect GPU Devices' button below to find the recommended device for your system." />
+								GPU device
+							</span>
+							<input
+								value={vm.preference.gpuDevice}
+								onChange={(e) => vm.preference.setGpuDevice(parseInt(e.target.value) ?? 0)}
+								className="input input-bordered"
+								type="number"
+							/>
+						</label>
+					</div>
+
+					<button onClick={vm.detectGpu} className="btn bg-base-300 text-base-content">
+						Detect GPU Devices
+						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+							<path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+						</svg>
+					</button>
 				</div>
+
+				{vm.gpuInfo && (
+					<div className="bg-base-200 p-4 rounded-lg mt-4 space-y-3">
+						<h4 className="font-semibold text-base mb-3">Recommended Settings</h4>
+						
+						{/* Actionable Recommendations */}
+						<div className="space-y-2 text-sm">
+							<div className="flex items-center justify-between p-3 bg-base-100 rounded border">
+								<span className="font-medium">Set GPU Device to:</span>
+								<span className="font-mono font-bold text-primary text-lg">{vm.gpuInfo.recommended_device}</span>
+							</div>
+							<div className="flex items-center justify-between p-3 bg-base-100 rounded border">
+								<span className="font-medium">GPU Acceleration:</span>
+								<span className={`font-medium ${vm.gpuInfo.gpu_acceleration_available ? 'text-green-600' : 'text-red-500'}`}>
+									{vm.gpuInfo.gpu_acceleration_available ? 'Enable' : 'Disable'}
+								</span>
+							</div>
+							{vm.gpuInfo.devices.length > 0 && vm.gpuInfo.devices[vm.gpuInfo.recommended_device] && (
+								<div className="flex items-center justify-between p-3 bg-base-100 rounded border">
+									<span className="font-medium">Detected GPU:</span>
+									<span className="text-base-content/80">
+										{vm.gpuInfo.devices[vm.gpuInfo.recommended_device].name} ({vm.gpuInfo.devices[vm.gpuInfo.recommended_device].device_type})
+									</span>
+								</div>
+							)}
+						</div>
+					</div>
+				)}
 				{platform === 'windows' && (
 					<div className="form-control w-full mt-3">
 						<label className="label cursor-pointer">
@@ -259,7 +301,7 @@ export default function SettingsPage() {
 					</>
 				)}
 
-				<div className="flex flex-col gap-1">
+				<div className="flex flex-col gap-1 mt-10">
 					<button onMouseDown={vm.copyLogs} className="btn bg-base-300 text-base-content">
 						Copy logs
 						<CopyIcon className="h-4 w-4" />
