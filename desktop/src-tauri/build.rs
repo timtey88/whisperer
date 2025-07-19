@@ -1,4 +1,3 @@
-use std::env;
 use std::path::{Path, PathBuf};
 
 fn commit_hash() -> String {
@@ -30,16 +29,6 @@ fn copy_folder(src: &Path, dst: &Path) {
     }
 }
 
-fn copy_locales() {
-    let src_tauri = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let target_dir = out_dir.parent().unwrap().parent().unwrap().parent().unwrap();
-
-    // Construct the source and target paths for the locales folder
-    let src_locales = src_tauri.join("locales");
-    let target_locales = target_dir.join("locales");
-    copy_folder(src_locales.as_path(), &target_locales);
-}
 
 fn extract_whisper_env() {
     println!("cargo:rerun-if-env-changed=WHISPER_NO_AVX");
@@ -90,7 +79,6 @@ fn main() {
         std::env::var("WINDOWS_PORTABLE").unwrap_or_default().trim()
     );
 
-    copy_locales();
     extract_whisper_env();
     tauri_build::build();
 }
