@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { ReactComponent as ChevronLeftIcon } from '~/icons/chevron-left.svg'
 import { ReactComponent as SettingsIcon } from '~/icons/settings.svg'
@@ -13,7 +12,6 @@ import { useState } from 'react'
 import { whisperOptions } from '~/lib/whisperInfo'
 
 export default function ModelOptionsPage() {
-	const { t } = useTranslation()
 	const navigate = useNavigate()
 	const preference = usePreferenceProvider()
 	const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['basic']))
@@ -21,7 +19,7 @@ export default function ModelOptionsPage() {
 
 	// Language options for the language selector
 	const languageOptions: SelectOption[] = [
-		{ value: 'auto', label: t('common.auto-detect') },
+		{ value: 'auto', label: 'Auto-detect' },
 		{ value: 'en', label: 'English' },
 		{ value: 'es', label: 'Spanish' },
 		{ value: 'fr', label: 'French' },
@@ -48,7 +46,7 @@ export default function ModelOptionsPage() {
 	}
 
 	const resetToDefaults = () => {
-		if (window.confirm(t('common.confirm-reset-model-options'))) {
+		if (window.confirm('Are you sure you want to reset all model options to their default values?')) {
 			// Reset all model options to defaults
 			const defaultModelOptions = {
 				init_prompt: '',
@@ -168,23 +166,23 @@ export default function ModelOptionsPage() {
 					<button
 						onClick={() => navigate('/settings')}
 						className="btn btn-ghost btn-sm"
-						title={t('common.back')}
+						title="Back"
 					>
 						<ChevronLeftIcon className="w-5 h-5" />
 					</button>
 					<div className="flex-1">
-						<h1 className="text-3xl font-bold">{t('common.model-options')}</h1>
+						<h1 className="text-3xl font-bold">Model Options</h1>
 						<p className="text-sm opacity-70 mt-1">
-							{t('common.model-options-description')}
+							Configure advanced Whisper model settings for optimal transcription
 						</p>
 					</div>
 					<button
 						onClick={resetToDefaults}
 						className="btn btn-outline btn-sm gap-2"
-						title={t('common.reset-to-defaults')}
+						title="Reset to Defaults"
 					>
 						<ResetIcon className="w-4 h-4" />
-						{t('common.reset')}
+						Reset
 					</button>
 				</div>
 
@@ -209,11 +207,11 @@ export default function ModelOptionsPage() {
 					<>
 						{/* Basic Options */}
 				<SectionCard 
-					title={t('common.basic-options')}
+					title="Basic Options"
 					sectionKey="basic"
-					description={t('common.basic-options-description')}
+					description="Essential settings for transcription quality and language"
 				>
-					<OptionRow label={t('common.language')} optionKey="language">
+					<OptionRow label="Language" optionKey="language">
 						<CustomSelect
 							options={languageOptions}
 							value={preference.modelOptions.lang}
@@ -226,7 +224,7 @@ export default function ModelOptionsPage() {
 						/>
 					</OptionRow>
 
-					<OptionRow label={t('common.temperature')} optionKey="temperature">
+					<OptionRow label="Temperature" optionKey="temperature">
 						<div className="flex items-center gap-3">
 							<input
 								type="range"
@@ -255,7 +253,7 @@ export default function ModelOptionsPage() {
 						</div>
 					</OptionRow>
 
-					<OptionRow label={t('common.sampling-strategy')} optionKey="beam_size">
+					<OptionRow label="Sampling Strategy" optionKey="beam_size">
 						<div className="flex gap-2">
 							<label className="label cursor-pointer gap-2">
 								<input
@@ -269,7 +267,7 @@ export default function ModelOptionsPage() {
 									})}
 									className="radio radio-primary radio-sm"
 								/>
-								<span className="text-sm">{t('common.greedy')}</span>
+								<span className="text-sm">Greedy</span>
 							</label>
 							<label className="label cursor-pointer gap-2">
 								<input
@@ -283,13 +281,13 @@ export default function ModelOptionsPage() {
 									})}
 									className="radio radio-primary radio-sm"
 								/>
-								<span className="text-sm">{t('common.beam-search')}</span>
+								<span className="text-sm">Beam Search</span>
 							</label>
 						</div>
 					</OptionRow>
 
 					{preference.modelOptions.sampling_strategy === 'beam search' && (
-						<OptionRow label={t('common.beam-size')} optionKey="beam_size">
+						<OptionRow label="Beam Size" optionKey="beam_size">
 							<input
 								type="number"
 								min="1"
@@ -305,7 +303,7 @@ export default function ModelOptionsPage() {
 					)}
 
 					{preference.modelOptions.sampling_strategy === 'greedy' && (
-						<OptionRow label={t('common.best-of')} optionKey="best_of">
+						<OptionRow label="Best Of" optionKey="best_of">
 							<input
 								type="number"
 								min="1"
@@ -320,14 +318,14 @@ export default function ModelOptionsPage() {
 						</OptionRow>
 					)}
 
-					<OptionRow label={t('common.initial-prompt')} optionKey="init_prompt">
+					<OptionRow label="Initial Prompt" optionKey="init_prompt">
 						<textarea
 							value={preference.modelOptions.init_prompt || ''}
 							onChange={(e) => preference.setModelOptions({
 								...preference.modelOptions,
 								init_prompt: e.target.value
 							})}
-							placeholder={t('common.initial-prompt-placeholder')}
+							placeholder="Enter context or vocabulary to guide transcription..."
 							className="textarea textarea-bordered textarea-sm w-80 h-20"
 						/>
 					</OptionRow>
@@ -335,11 +333,11 @@ export default function ModelOptionsPage() {
 
 				{/* Advanced Processing */}
 				<SectionCard 
-					title={t('common.advanced-processing')}
+					title="Advanced Processing"
 					sectionKey="advanced"
-					description={t('common.advanced-processing-description')}
+					description="Fine-tune model behavior and performance"
 				>
-					<OptionRow label={t('common.threads')} optionKey="n_threads">
+					<OptionRow label="CPU Threads" optionKey="n_threads">
 						<input
 							type="number"
 							min="1"
@@ -353,7 +351,7 @@ export default function ModelOptionsPage() {
 						/>
 					</OptionRow>
 
-					<OptionRow label={t('common.context-length')} optionKey="max_text_ctx">
+					<OptionRow label="Context Length" optionKey="max_text_ctx">
 						<input
 							type="number"
 							min="1"
@@ -368,7 +366,7 @@ export default function ModelOptionsPage() {
 						/>
 					</OptionRow>
 
-					<OptionRow label={t('common.fp16-precision')} tooltip={t('common.fp16-precision-tooltip')}>
+					<OptionRow label="FP16 Precision" tooltip="Use 16-bit floating point for faster inference with minimal quality loss">
 						<input
 							type="checkbox"
 							checked={preference.modelOptions.fp16 ?? true}
@@ -380,7 +378,7 @@ export default function ModelOptionsPage() {
 						/>
 					</OptionRow>
 
-					<OptionRow label={t('common.condition-on-previous')} tooltip={t('common.condition-on-previous-tooltip')}>
+					<OptionRow label="Use Previous Context" tooltip="Use previous segment output as context for better coherence">
 						<input
 							type="checkbox"
 							checked={preference.modelOptions.condition_on_previous_text ?? true}
@@ -395,11 +393,11 @@ export default function ModelOptionsPage() {
 
 				{/* Output & Formatting */}
 				<SectionCard 
-					title={t('common.output-formatting')}
+					title="Output & Formatting"
 					sectionKey="output"
-					description={t('common.output-formatting-description')}
+					description="Control timestamp formatting and output style"
 				>
-					<OptionRow label={t('common.word-timestamps')} optionKey="word_timestamps">
+					<OptionRow label="Word Timestamps" optionKey="word_timestamps">
 						<input
 							type="checkbox"
 							checked={preference.modelOptions.word_timestamps || false}
@@ -411,7 +409,7 @@ export default function ModelOptionsPage() {
 						/>
 					</OptionRow>
 
-					<OptionRow label={t('common.translate-to-english')} optionKey="translate">
+					<OptionRow label="Translate to English" optionKey="translate">
 						<input
 							type="checkbox"
 							checked={preference.modelOptions.translate || false}
@@ -425,7 +423,7 @@ export default function ModelOptionsPage() {
 
 					{preference.modelOptions.word_timestamps && (
 						<>
-							<OptionRow label={t('common.highlight-words')} tooltip={t('common.highlight-words-tooltip')}>
+							<OptionRow label="Highlight Words" tooltip="Underline each word as it is spoken in subtitle formats">
 								<input
 									type="checkbox"
 									checked={preference.modelOptions.highlight_words || false}
@@ -437,7 +435,7 @@ export default function ModelOptionsPage() {
 								/>
 							</OptionRow>
 
-							<OptionRow label={t('common.max-line-width')} tooltip={t('common.max-line-width-tooltip')}>
+							<OptionRow label="Max Line Width" tooltip="Maximum characters per line in subtitle output">
 								<input
 									type="number"
 									min="10"
@@ -452,7 +450,7 @@ export default function ModelOptionsPage() {
 								/>
 							</OptionRow>
 
-							<OptionRow label={t('common.max-words-per-line')} tooltip={t('common.max-words-per-line-tooltip')}>
+							<OptionRow label="Max Words Per Line" tooltip="Maximum words per line in subtitle output">
 								<input
 									type="number"
 									min="1"
@@ -472,11 +470,11 @@ export default function ModelOptionsPage() {
 
 				{/* Quality & Performance */}
 				<SectionCard 
-					title={t('common.quality-performance')}
+					title="Quality & Performance"
 					sectionKey="quality"
-					description={t('common.quality-performance-description')}
+					description="Adjust quality thresholds and performance parameters"
 				>
-					<OptionRow label={t('common.compression-ratio-threshold')} tooltip={t('common.compression-ratio-threshold-tooltip')}>
+					<OptionRow label="Compression Ratio" tooltip="Treat decoding as failed if compression ratio exceeds this value">
 						<input
 							type="number"
 							min="1.0"
@@ -491,7 +489,7 @@ export default function ModelOptionsPage() {
 						/>
 					</OptionRow>
 
-					<OptionRow label={t('common.logprob-threshold')} tooltip={t('common.logprob-threshold-tooltip')}>
+					<OptionRow label="Log Probability Threshold" tooltip="Treat decoding as failed if average log probability is below this value">
 						<input
 							type="number"
 							min="-5.0"
@@ -506,7 +504,7 @@ export default function ModelOptionsPage() {
 						/>
 					</OptionRow>
 
-					<OptionRow label={t('common.no-speech-threshold')} tooltip={t('common.no-speech-threshold-tooltip')}>
+					<OptionRow label="No Speech Threshold" tooltip="Consider segment as silence if no-speech probability exceeds this value">
 						<input
 							type="number"
 							min="0.0"
@@ -521,7 +519,7 @@ export default function ModelOptionsPage() {
 						/>
 					</OptionRow>
 
-					<OptionRow label={t('common.temperature-increment')} tooltip={t('common.temperature-increment-tooltip')}>
+					<OptionRow label="Temperature Increment" tooltip="Amount to increase temperature when decoding fails">
 						<input
 							type="number"
 							min="0.0"
@@ -536,7 +534,7 @@ export default function ModelOptionsPage() {
 						/>
 					</OptionRow>
 
-					<OptionRow label={t('common.suppress-tokens')} tooltip={t('common.suppress-tokens-tooltip')}>
+					<OptionRow label="Suppress Tokens" tooltip="Comma-separated token IDs to suppress during sampling (-1 for common punctuation)">
 						<input
 							type="text"
 							value={preference.modelOptions.suppress_tokens || '-1'}
@@ -553,7 +551,7 @@ export default function ModelOptionsPage() {
 				{/* Save indicator */}
 				<div className="text-center py-4">
 					<p className="text-sm opacity-60">
-						{t('common.settings-auto-saved')}
+						Settings are automatically saved
 					</p>
 				</div>
 				</>
@@ -586,7 +584,7 @@ export default function ModelOptionsPage() {
 							<label className="label cursor-pointer">
 								<span className="label-text flex items-center gap-1 cursor-default">
 									<InfoTooltip text="Enable automatic loudness normalization. This applies the loudnorm filter to standardize audio levels before transcription." />
-									{t('common.normalize-loudness')}
+									Normalize loudness
 								</span>
 
 								<input
@@ -602,7 +600,7 @@ export default function ModelOptionsPage() {
 							<div className="label">
 								<span className="label-text flex items-center gap-1">
 									<InfoTooltip text="Enter custom FFmpeg options to insert into the command. Use when you need specific audio processing beyond normalize loudness. Leave empty to use default processing." />
-									{t('common.custom-ffmpeg-command')}
+									Custom FFmpeg Command
 								</span>
 							</div>
 
@@ -632,7 +630,7 @@ export default function ModelOptionsPage() {
 						{/* Save indicator */}
 						<div className="text-center py-4">
 							<p className="text-sm opacity-60">
-								{t('common.settings-auto-saved')}
+								Settings are automatically saved
 							</p>
 						</div>
 					</>

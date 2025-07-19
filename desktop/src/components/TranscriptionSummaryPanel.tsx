@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next'
 import { ReactComponent as CheckIcon } from '~/icons/check.svg'
 import { ReactComponent as CancelIcon } from '~/icons/cancel.svg'
 import { ReactComponent as ClockIcon } from '~/icons/clock.svg'
@@ -19,7 +18,6 @@ export default function TranscriptionSummaryPanel({
 	result,
 	onDismiss
 }: TranscriptionSummaryPanelProps) {
-	const { t } = useTranslation()
 
 	const modelInfo = result.modelPath ? getModelInfo(result.modelPath) : null
 
@@ -51,11 +49,11 @@ export default function TranscriptionSummaryPanel({
 	const getStatusText = () => {
 		switch (result.status) {
 			case 'completed':
-				return t('common.transcribed')
+				return 'Transcribed'
 			case 'failed':
-				return t('common.error')
+				return 'Error'
 			case 'canceled':
-				return t('common.cancel')
+				return 'Canceled'
 			case 'incomplete':
 				return 'Incomplete'
 			default:

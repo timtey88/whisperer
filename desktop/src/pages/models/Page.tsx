@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { ReactComponent as ChevronLeftIcon } from '~/icons/chevron-left.svg'
 import { ReactComponent as DownloadIcon } from '~/icons/download.svg'
@@ -12,7 +11,6 @@ import AnimatedLoader from '~/components/AnimatedLoader'
 import { AnimatedDownload } from '~/components/AnimatedDownload'
 
 export default function ModelsPage() {
-	const { t } = useTranslation()
 	const navigate = useNavigate()
 	const vm = viewModel()
 
@@ -49,14 +47,14 @@ export default function ModelsPage() {
 						className="btn btn-ghost btn-sm"
 					>
 						<ChevronLeftIcon className="w-4 h-4" />
-						{t('common.back')}
+						Back
 					</button>
-					<h1 className="text-2xl font-bold flex-1">{t('common.models-management')}</h1>
+					<h1 className="text-2xl font-bold flex-1">Models Management</h1>
 					<button
 						onClick={vm.manualRefresh}
 						disabled={vm.isRefreshing}
 						className="btn btn-ghost btn-sm"
-						title={t('common.refresh')}
+						title="Refresh"
 					>
 						{vm.isRefreshing ? (
 							<AnimatedLoader size={16} strokeWidth={2} />
@@ -65,7 +63,7 @@ export default function ModelsPage() {
 								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
 							</svg>
 						)}
-						{t('common.refresh')}
+						Refresh
 					</button>
 				</div>
 
@@ -75,13 +73,13 @@ export default function ModelsPage() {
 						className={cx('tab', vm.activeTab === 'models' && 'tab-active')}
 						onClick={() => vm.setActiveTab('models')}
 					>
-						{t('common.models')}
+						Models
 					</a>
 					<a
 						className={cx('tab', vm.activeTab === 'encoders' && 'tab-active')}
 						onClick={() => vm.setActiveTab('encoders')}
 					>
-						{t('common.encoders')}
+						Encoders
 					</a>
 				</div>
 
@@ -94,7 +92,7 @@ export default function ModelsPage() {
 								className={cx('tab', vm.filter === type && 'tab-active')}
 								onClick={() => vm.setFilter(type)}
 							>
-								{type === 'all' ? t('common.all') : type}
+								{type === 'all' ? 'All' : type}
 							</a>
 						))}
 					</div>
@@ -133,14 +131,14 @@ export default function ModelsPage() {
 									{/* Model info */}
 									<div className="flex justify-between items-center mb-4">
 										<div className="text-sm">
-											<span className="font-medium">{t('common.size')}: </span>
+											<span className="font-medium">Size: </span>
 											<span className="opacity-80">{model.file_size}</span>
 										</div>
 										{model.isDownloaded && (
 											<div className="flex items-center gap-1">
 												<CheckIcon className="w-4 h-4 text-success" />
 												<span className="text-sm text-success font-medium">
-													{t('common.installed')}
+													Installed
 												</span>
 											</div>
 										)}
@@ -175,7 +173,7 @@ export default function ModelsPage() {
 													) : (
 														<CancelIcon className="w-4 h-4" />
 													)}
-													{isDeleting ? t('common.uninstalling') : t('common.uninstall')}
+													{isDeleting ? 'Uninstalling...' : 'Uninstall'}
 												</button>
 											) : (
 												<button
@@ -184,7 +182,7 @@ export default function ModelsPage() {
 													onClick={() => vm.downloadModel(model)}
 												>
 													<DownloadIcon className="w-4 h-4" />
-													{t('common.download')}
+													Download
 												</button>
 											)}
 										</div>
@@ -199,10 +197,10 @@ export default function ModelsPage() {
 				{vm.filteredModels.length === 0 && vm.models.length > 0 && (
 					<div className="text-center py-12">
 						<p className="text-lg opacity-60">
-							{vm.activeTab === 'models' ? t('common.no-models-found') : t('common.no-encoders-found')}
+							{vm.activeTab === 'models' ? 'No models found' : 'No encoders found'}
 						</p>
 						{vm.activeTab === 'models' && (
-							<p className="text-sm opacity-40 mt-2">{t('common.try-different-filter')}</p>
+							<p className="text-sm opacity-40 mt-2">Try a different filter</p>
 						)}
 					</div>
 				)}

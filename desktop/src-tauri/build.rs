@@ -1,4 +1,3 @@
-use std::path::{Path, PathBuf};
 
 fn commit_hash() -> String {
     let output = std::process::Command::new("git")
@@ -8,26 +7,6 @@ fn commit_hash() -> String {
     String::from_utf8(output.stdout).unwrap()
 }
 
-fn copy_folder(src: &Path, dst: &Path) {
-    std::fs::create_dir_all(dst).expect("Failed to create dst directory");
-    if cfg!(unix) {
-        std::process::Command::new("cp")
-            .arg("-rf")
-            .arg(src)
-            .arg(dst.parent().unwrap())
-            .status()
-            .expect("Failed to execute cp command");
-    }
-
-    if cfg!(windows) {
-        std::process::Command::new("robocopy.exe")
-            .arg("/e")
-            .arg(src)
-            .arg(dst)
-            .status()
-            .expect("Failed to execute robocopy command");
-    }
-}
 
 
 fn extract_whisper_env() {
