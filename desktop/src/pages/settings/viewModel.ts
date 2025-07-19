@@ -147,6 +147,31 @@ export function viewModel() {
 		}
 	}
 
+	async function prepareForUninstall() {
+		const confirmed = await ask(
+			'This will permanently delete all app data, including downloaded models, logs, and cache files. This action cannot be undone.\n\nAre you sure you want to prepare the app for uninstall?',
+			{ 
+				title: 'Confirm Uninstall Preparation',
+				kind: 'warning'
+			}
+		)
+		
+		if (!confirmed) {
+			return
+		}
+
+		try {
+			const result = await invoke<string>('prepare_for_uninstall')
+			await ask(
+				`✅ ${result}\n\nYou can now safely delete the Whisperer application. All data has been removed.`,
+				{ title: 'Uninstall Preparation Complete' }
+			)
+		} catch (error) {
+			console.error('Uninstall preparation error:', error)
+			await ask(`❌ Failed to prepare for uninstall: ${error}`, { title: 'Uninstall Preparation Failed' })
+		}
+	}
+
 	return {
 		copyLogs,
 		isLogToFileSet,
@@ -162,6 +187,7 @@ export function viewModel() {
 		loadModels,
 		changeModelsFolder,
 		testDiarization,
+		prepareForUninstall,
 		isDiarizationAvailable,
 	}
 }

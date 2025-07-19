@@ -130,6 +130,26 @@ impl Default for CleanupSettings {
     }
 }
 
+impl CleanupSettings {
+    /// Normal app close profile - preserves models and compiled models
+    pub fn app_close_profile() -> Self {
+        Self {
+            clean_logs: true,
+            clean_models: false,         // Preserve models on normal close
+            clean_compiled_models: false, // Preserve compiled models on normal close
+        }
+    }
+    
+    /// User-initiated uninstall preparation profile - cleans everything
+    pub fn uninstall_profile() -> Self {
+        Self {
+            clean_logs: true,
+            clean_models: true,          // Clean models for uninstall
+            clean_compiled_models: true, // Clean compiled models for uninstall
+        }
+    }
+}
+
 pub fn clean_app_cache_selective() -> Result<()> {
     // Get the application cache directory
     let cache_dir = if let Some(home) = std::env::var_os("HOME") {
@@ -173,6 +193,29 @@ pub fn clean_app_cache_selective() -> Result<()> {
         tracing::debug!("Cleaned {} cache items", cleaned_items);
     }
     
+    Ok(())
+}
+
+pub fn clean_app_cache_complete() -> Result<()> {
+    // Get the application cache directory
+    let cache_dir = if let Some(home) = std::env::var_os("HOME") {
+        PathBuf::from(home).join("Library/Caches/whisperer")
+    } else {
+        return Ok(()); // Skip if can't determine home directory
+    };
+
+    if !cache_dir.exists() {
+        tracing::debug!("Cache directory does not exist: {}", cache_dir.display());
+        return Ok(());
+    }
+
+    // Remove entire cache directory for uninstall
+    if let Err(e) = std::fs::remove_dir_all(&cache_dir) {
+        tracing::warn!("Failed to remove cache directory {}: {}", cache_dir.display(), e);
+        return Err(e.into());
+    }
+    
+    tracing::debug!("Completely removed cache directory: {}", cache_dir.display());
     Ok(())
 }
 
@@ -249,6 +292,25 @@ pub fn clean_app_support_configurable(app_handle: &tauri::AppHandle, settings: C
     Ok(())
 }
 
+pub fn clean_app_support_complete(app_handle: &tauri::AppHandle) -> Result<()> {
+    // Get the application support directory (app_config_dir)
+    let app_support_dir = app_handle.path().app_config_dir().wrap_err("Can't get app config directory")?;
+    
+    if !app_support_dir.exists() {
+        tracing::debug!("App support directory does not exist: {}", app_support_dir.display());
+        return Ok(());
+    }
+
+    // Remove entire Application Support directory for uninstall
+    if let Err(e) = std::fs::remove_dir_all(&app_support_dir) {
+        tracing::warn!("Failed to remove app support directory {}: {}", app_support_dir.display(), e);
+        return Err(e.into());
+    }
+    
+    tracing::debug!("Completely removed app support directory: {}", app_support_dir.display());
+    Ok(())
+}
+
 pub fn clean_all_on_exit(app_handle: &tauri::AppHandle, cleanup_settings: Option<CleanupSettings>) -> Result<()> {
     // Always clean temp folders
     clean_all_temp_folders()?;
@@ -256,10 +318,28 @@ pub fn clean_all_on_exit(app_handle: &tauri::AppHandle, cleanup_settings: Option
     // Always clean cache selectively
     clean_app_cache_selective()?;
     
-    // Clean app support based on settings
-    let settings = cleanup_settings.unwrap_or_default();
+    // Clean app support based on settings (use app_close_profile by default)
+    let settings = cleanup_settings.unwrap_or_else(CleanupSettings::app_close_profile);
     clean_app_support_configurable(app_handle, settings)?;
     
     tracing::debug!("Completed exit cleanup");
+    Ok(())
+}
+
+pub fn clean_for_uninstall(app_handle: &tauri::AppHandle) -> Result<()> {
+    // Clean temp folders
+    clean_all_temp_folders()?;
+    
+    // Clean cache completely (including all subdirectories)
+    clean_app_cache_complete()?;
+    
+    // Clean app support completely using uninstall profile
+    let settings = CleanupSettings::uninstall_profile();
+    clean_app_support_configurable(app_handle, settings)?;
+    
+    // Additional complete cleanup - remove entire Application Support directory
+    clean_app_support_complete(app_handle)?;
+    
+    tracing::debug!("Completed uninstall cleanup");
     Ok(())
 }

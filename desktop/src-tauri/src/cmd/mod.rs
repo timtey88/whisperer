@@ -919,3 +919,16 @@ pub fn delete_model(models_folder: String, file_name: String) -> Result<()> {
     }
     Ok(())
 }
+
+#[tauri::command]
+pub async fn prepare_for_uninstall(app_handle: tauri::AppHandle) -> Result<String> {
+    tracing::info!("User initiated uninstall preparation");
+    
+    // Run comprehensive cleanup for uninstall
+    crate::cleaner::clean_for_uninstall(&app_handle)?;
+    
+    let message = "App data cleaned successfully. You can now safely delete the application.";
+    tracing::info!("Uninstall preparation completed successfully");
+    
+    Ok(message.to_string())
+}

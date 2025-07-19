@@ -114,6 +114,7 @@ fn main() -> Result<()> {
             cmd::rename_crash_file,
             cmd::check_model_exists,
             cmd::delete_model,
+            cmd::prepare_for_uninstall,
             #[cfg(feature = "diarization")]
             cmd::diarization::check_diarization_dependencies,
             #[cfg(feature = "diarization")]

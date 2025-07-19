@@ -123,6 +123,10 @@ struct Args {
     /// Port
     #[arg(long, default_value = "3022")]
     port: u16,
+
+    /// Prepare app for uninstall by cleaning all data
+    #[arg(long)]
+    prepare_uninstall: bool,
 }
 
 fn get_possible_languages() -> Vec<String> {
@@ -169,6 +173,29 @@ pub async fn run(app_handle: &AppHandle) -> Result<()> {
 
     #[allow(unused_mut)]
     let mut args = Args::parse();
+
+    // Handle prepare uninstall flag
+    if args.prepare_uninstall {
+        eprintln!("🗑️  Preparing app for uninstall...");
+        match crate::cleaner::clean_for_uninstall(app_handle) {
+            Ok(()) => {
+                eprintln!("✅ App data cleaned successfully.");
+                eprintln!("📁 Removed:");
+                eprintln!("   • All temporary files");
+                eprintln!("   • Browser cache and cookies");
+                eprintln!("   • Downloaded AI models");
+                eprintln!("   • Compiled model cache");
+                eprintln!("   • Application support data");
+                eprintln!("   • Log files");
+                eprintln!("🚮 You can now safely delete the Whisperer application.");
+                process::exit(0);
+            }
+            Err(e) => {
+                eprintln!("❌ Failed to prepare for uninstall: {}", e);
+                process::exit(1);
+            }
+        }
+    }
 
     if args.diarize && args.diarize_vad_model.is_none() {
         panic!("Please provide model path with --diarize-vad-model")
