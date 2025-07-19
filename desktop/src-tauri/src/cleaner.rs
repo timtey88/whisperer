@@ -1,5 +1,8 @@
 use crate::{cmd::get_logs_folder, config, logging::get_log_path};
-use eyre::{ContextCompat, Result};
+use eyre::{ContextCompat, Result, WrapErr};
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
+use tauri::Manager;
 use whisperer_core::get_whisperer_temp_folder;
 
 pub fn clean_old_logs(app: &tauri::AppHandle) -> Result<()> {
@@ -61,21 +64,6 @@ pub fn clean_old_files() -> Result<()> {
     Ok(())
 }
 
-pub fn clean_current_temp_folder() -> Result<()> {
-    let current_temp_dir = get_whisperer_temp_folder();
-    
-    if current_temp_dir.exists() {
-        if let Err(e) = std::fs::remove_dir_all(&current_temp_dir) {
-            tracing::warn!("Failed to remove current temp folder {}: {}", current_temp_dir.display(), e);
-            return Err(e.into());
-        }
-        tracing::debug!("Cleaned current temp directory: {}", current_temp_dir.display());
-    } else {
-        tracing::debug!("Current temp directory does not exist: {}", current_temp_dir.display());
-    }
-    
-    Ok(())
-}
 
 pub fn clean_all_temp_folders() -> Result<()> {
     let temp_dir = std::env::temp_dir();
@@ -122,5 +110,156 @@ pub fn clean_updater_files() -> Result<()> {
     if cleaned_count > 0 {
         tracing::debug!("Cleaned {} old updater directories", cleaned_count);
     }
+    Ok(())
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CleanupSettings {
+    pub clean_logs: bool,
+    pub clean_models: bool,
+    pub clean_compiled_models: bool,
+}
+
+impl Default for CleanupSettings {
+    fn default() -> Self {
+        Self {
+            clean_logs: true,        // Default: clean old logs
+            clean_models: false,     // Default: preserve downloaded models
+            clean_compiled_models: false, // Default: preserve compiled models
+        }
+    }
+}
+
+pub fn clean_app_cache_selective() -> Result<()> {
+    // Get the application cache directory
+    let cache_dir = if let Some(home) = std::env::var_os("HOME") {
+        PathBuf::from(home).join("Library/Caches/whisperer")
+    } else {
+        return Ok(()); // Skip if can't determine home directory
+    };
+
+    if !cache_dir.exists() {
+        tracing::debug!("Cache directory does not exist: {}", cache_dir.display());
+        return Ok(());
+    }
+
+    let mut cleaned_items = 0;
+    
+    // Clean WebKit cache (browser data)
+    let webkit_cache = cache_dir.join("WebKit");
+    if webkit_cache.exists() {
+        if let Err(e) = std::fs::remove_dir_all(&webkit_cache) {
+            tracing::warn!("Failed to remove WebKit cache: {}", e);
+        } else {
+            cleaned_items += 1;
+            tracing::debug!("Cleaned WebKit cache");
+        }
+    }
+
+    // Clean cookies
+    let cookies_file = cache_dir.join(".cookies");
+    if cookies_file.exists() {
+        if let Err(e) = std::fs::remove_file(&cookies_file) {
+            tracing::warn!("Failed to remove cookies file: {}", e);
+        } else {
+            cleaned_items += 1;
+            tracing::debug!("Cleaned cookies file");
+        }
+    }
+
+    // Preserve E5RT cache (CoreML compilation cache) - expensive to regenerate
+    
+    if cleaned_items > 0 {
+        tracing::debug!("Cleaned {} cache items", cleaned_items);
+    }
+    
+    Ok(())
+}
+
+pub fn clean_app_support_configurable(app_handle: &tauri::AppHandle, settings: CleanupSettings) -> Result<()> {
+    // Get the application support directory (app_config_dir)
+    let app_support_dir = app_handle.path().app_config_dir().wrap_err("Can't get app config directory")?;
+    
+    if !app_support_dir.exists() {
+        tracing::debug!("App support directory does not exist: {}", app_support_dir.display());
+        return Ok(());
+    }
+
+    let mut cleaned_items = 0;
+
+    // Always preserve critical app state files
+    let _protected_files = vec!["app_config.json", ".window-state.json"];
+
+    if settings.clean_logs {
+        // Clean old log files (keep current day's log)
+        let current_log_path = get_log_path(app_handle)?;
+        let pattern = format!("{}/log_*.txt", app_support_dir.display());
+        
+        for path in glob::glob(&pattern)? {
+            let path = path?;
+            if path != current_log_path {
+                if let Err(e) = std::fs::remove_file(&path) {
+                    tracing::warn!("Failed to remove log file {}: {}", path.display(), e);
+                } else {
+                    cleaned_items += 1;
+                    tracing::debug!("Cleaned old log file: {}", path.display());
+                }
+            }
+        }
+    }
+
+    if settings.clean_models {
+        // Clean downloaded AI models (.bin, .onnx files)
+        let model_extensions = vec!["*.bin", "*.onnx"];
+        
+        for ext in model_extensions {
+            let pattern = format!("{}/{}", app_support_dir.display(), ext);
+            for path in glob::glob(&pattern)? {
+                let path = path?;
+                if let Err(e) = std::fs::remove_file(&path) {
+                    tracing::warn!("Failed to remove model file {}: {}", path.display(), e);
+                } else {
+                    cleaned_items += 1;
+                    tracing::debug!("Cleaned model file: {}", path.display());
+                }
+            }
+        }
+    }
+
+    if settings.clean_compiled_models {
+        // Clean compiled CoreML models (.mlmodelc bundles)
+        let pattern = format!("{}/*.mlmodelc", app_support_dir.display());
+        for path in glob::glob(&pattern)? {
+            let path = path?;
+            if path.is_dir() {
+                if let Err(e) = std::fs::remove_dir_all(&path) {
+                    tracing::warn!("Failed to remove compiled model {}: {}", path.display(), e);
+                } else {
+                    cleaned_items += 1;
+                    tracing::debug!("Cleaned compiled model: {}", path.display());
+                }
+            }
+        }
+    }
+
+    if cleaned_items > 0 {
+        tracing::debug!("Cleaned {} app support items", cleaned_items);
+    }
+
+    Ok(())
+}
+
+pub fn clean_all_on_exit(app_handle: &tauri::AppHandle, cleanup_settings: Option<CleanupSettings>) -> Result<()> {
+    // Always clean temp folders
+    clean_all_temp_folders()?;
+    
+    // Always clean cache selectively
+    clean_app_cache_selective()?;
+    
+    // Clean app support based on settings
+    let settings = cleanup_settings.unwrap_or_default();
+    clean_app_support_configurable(app_handle, settings)?;
+    
+    tracing::debug!("Completed exit cleanup");
     Ok(())
 }

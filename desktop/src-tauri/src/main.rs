@@ -54,8 +54,11 @@ fn main() -> Result<()> {
         .on_window_event(|window, event| {
             match event {
                 tauri::WindowEvent::CloseRequested { .. } => {
-                    tracing::debug!("Window close requested, cleaning up temp folders");
-                    cleaner::clean_all_temp_folders().log_error();
+                    tracing::debug!("Window close requested, running comprehensive cleanup");
+                    // Get app handle for cleanup
+                    let app_handle = window.app_handle();
+                    // Use default cleanup settings (clean logs only)
+                    cleaner::clean_all_on_exit(app_handle, None).log_error();
                 }
                 _ => {}
             }
