@@ -835,39 +835,6 @@ pub async fn copy_bundled_models(app_handle: tauri::AppHandle) -> Result<()> {
     Ok(())
 }
 
-#[tauri::command]
-pub fn load_locale_files(app_handle: tauri::AppHandle, language: String) -> Result<Value> {
-    use std::collections::HashMap;
-
-    let resource_path = app_handle.path().resource_dir().context("Can't get resource directory")?;
-    let locale_path = resource_path.join("locales").join(&language);
-
-    tracing::debug!("Loading locale files from: {}", locale_path.display());
-
-    if !locale_path.exists() {
-        bail!("Locale directory not found: {}", locale_path.display());
-    }
-
-    let mut translations = HashMap::<String, Value>::new();
-
-    // Read all JSON files in the locale directory
-    for entry in std::fs::read_dir(&locale_path)? {
-        let entry = entry?;
-        let path = entry.path();
-
-        if path.extension().and_then(|s| s.to_str()) == Some("json") {
-            let namespace = path.file_stem().and_then(|s| s.to_str()).unwrap_or("unknown").to_string();
-
-            let content = std::fs::read_to_string(&path)?;
-            let value: Value = serde_json::from_str(&content)?;
-            translations.insert(namespace.clone(), value);
-
-            tracing::debug!("Loaded locale file: {} -> {}", path.display(), namespace);
-        }
-    }
-
-    Ok(json!(translations))
-}
 
 #[tauri::command]
 pub fn is_diarization_available() -> bool {
