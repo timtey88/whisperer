@@ -2,12 +2,14 @@ import '@fontsource/roboto'
 import { Route, Routes } from 'react-router-dom'
 import '~/globals.css'
 import HomePage from '~/pages/home/Page'
+import HistoryPage from './pages/history/Page'
 import SettingsPage from './pages/settings/Page'
 import ModelsPage from './pages/models/Page'
 import ModelOptionsPage from './pages/model-options/Page'
 import { ErrorModalProvider } from './providers/ErrorModal'
 import { PreferenceProvider } from './providers/Preference'
 import { FilesProvider } from './providers/FilesProvider'
+import { HistoryProvider } from './providers/HistoryProvider'
 import { UpdaterProvider } from './providers/Updater'
 import { ErrorBoundary } from 'react-error-boundary'
 import { BoundaryFallback } from './components/BoundaryFallback'
@@ -26,15 +28,18 @@ export default function App() {
 				<PreferenceProvider>
 					<UpdaterProvider>
 						<FilesProvider>
-							<ToastProvider>
+							<HistoryProvider>
+								<ToastProvider>
 								<ErrorModalWithContext />
 								<Routes>
 									<Route path="/" element={<HomePage />} />
+									<Route path="/history" element={<HistoryPage />} />
 									<Route path="/settings" element={<SettingsPage />} />
 									<Route path="/models" element={<ModelsPage />} />
 									<Route path="/model-options" element={<ModelOptionsPage />} />
 								</Routes>
-							</ToastProvider>
+								</ToastProvider>
+							</HistoryProvider>
 						</FilesProvider>
 					</UpdaterProvider>
 				</PreferenceProvider>

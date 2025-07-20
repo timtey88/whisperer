@@ -20,6 +20,7 @@ import { NamedPath, ls, openPath, pathToNamedPath, startKeepAwake, stopKeepAwake
 import { getX86Features } from '~/lib/x86Features'
 import { ErrorModalContext } from '~/providers/ErrorModal'
 import { useFilesContext } from '~/providers/FilesProvider'
+import { useHistory } from '~/providers/HistoryProvider'
 import { ModelOptions, usePreferenceProvider } from '~/providers/Preference'
 import { UpdaterContext } from '~/providers/Updater'
 
@@ -61,6 +62,7 @@ export function viewModel() {
 	useConfirmExit((segments?.length ?? 0) > 0 || loading)
 
 	const { files, setFiles } = useFilesContext()
+	const { addHistoryEntry } = useHistory()
 	const preference = usePreferenceProvider()
 	const preferenceRef = useRef(preference)
 	const [devices, setDevices] = useState<AudioDevice[]>([])
@@ -421,16 +423,33 @@ export function viewModel() {
 			
 			// Set successful transcription result
 			const transcriptionEndTime = Date.now()
-			setTranscriptionResult({
+			const transcriptionResult = {
 				fileName,
-				status: 'completed',
+				status: 'completed' as const,
 				duration: processingDuration,
 				startTime: transcriptionStartTime,
 				endTime: transcriptionEndTime,
 				modelPath: modelPath || undefined,
 				useGpu: preferenceRef.current.useGpu || undefined
-			})
+			}
+			setTranscriptionResult(transcriptionResult)
 			setShowTranscriptionResult(true)
+			
+			// Save to history
+			addHistoryEntry({
+				fileName,
+				filePath: path,
+				status: 'completed',
+				duration: processingDuration,
+				startTime: transcriptionStartTime,
+				endTime: transcriptionEndTime,
+				modelPath: modelPath || undefined,
+				useGpu: preferenceRef.current.useGpu || undefined,
+				segments: res.segments,
+				settings: {
+					modelOptions: preferenceRef.current.modelOptions
+				}
+			})
 			
 			toast.success(`Transcription completed in ${processingDuration} seconds`, { position: 'bottom-center' })
 		} catch (error) {
@@ -439,16 +458,32 @@ export function viewModel() {
 			
 			if (abortRef.current) {
 				// Transcription was canceled
-				setTranscriptionResult({
+				const transcriptionResult = {
 					fileName,
-					status: 'canceled',
+					status: 'canceled' as const,
 					duration: processingDuration,
 					startTime: transcriptionStartTime,
 					endTime: transcriptionEndTime,
 					modelPath: modelPath || undefined,
 					useGpu: preferenceRef.current.useGpu || undefined
-				})
+				}
+				setTranscriptionResult(transcriptionResult)
 				setShowTranscriptionResult(true)
+				
+				// Save canceled transcription to history
+				addHistoryEntry({
+					fileName,
+					filePath: path,
+					status: 'canceled',
+					duration: processingDuration,
+					startTime: transcriptionStartTime,
+					endTime: transcriptionEndTime,
+					modelPath: modelPath || undefined,
+					useGpu: preferenceRef.current.useGpu || undefined,
+					settings: {
+						modelOptions: preferenceRef.current.modelOptions
+					}
+				})
 			} else {
 				// Transcription failed - provide better error messages
 				const errorString = String(error)
@@ -477,17 +512,34 @@ Original error: ${errorString}`
 • Try restarting the application`
 				}
 				
-				setTranscriptionResult({
+				const transcriptionResult = {
 					fileName,
-					status: 'failed',
+					status: 'failed' as const,
 					duration: processingDuration,
 					startTime: transcriptionStartTime,
 					endTime: transcriptionEndTime,
 					error: userFriendlyError,
 					modelPath: modelPath || undefined,
 					useGpu: preferenceRef.current.useGpu || undefined
-				})
+				}
+				setTranscriptionResult(transcriptionResult)
 				setShowTranscriptionResult(true)
+				
+				// Save failed transcription to history
+				addHistoryEntry({
+					fileName,
+					filePath: path,
+					status: 'failed',
+					duration: processingDuration,
+					startTime: transcriptionStartTime,
+					endTime: transcriptionEndTime,
+					error: userFriendlyError,
+					modelPath: modelPath || undefined,
+					useGpu: preferenceRef.current.useGpu || undefined,
+					settings: {
+						modelOptions: preferenceRef.current.modelOptions
+					}
+				})
 				stopKeepAwake()
 				console.error('Transcription error: ', error)
 				setErrorModal?.({ log: userFriendlyError, open: true })
