@@ -18,7 +18,7 @@ export default function NavigationBar() {
 	return (
 		<div className="w-full max-w-4xl mx-auto px-6 mt-8 mb-8">
 			{/* Transcription Status Indicator */}
-			{isTranscribing && transcription.current && (
+			{isTranscribing && !isHistoryActive && transcription.current && (
 				<div className="mb-4 bg-info/10 border border-info/20 rounded-lg p-3">
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-3">

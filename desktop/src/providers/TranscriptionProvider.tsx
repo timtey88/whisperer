@@ -227,12 +227,15 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 			})
 		}
 
-		updateState({
+		// Clear both memory and localStorage state immediately
+		const clearedState = {
 			isActive: false,
 			current: null,
 			isAborting: false,
 			error: undefined
-		})
+		}
+		setMemoryState(clearedState)
+		setTranscriptionState(clearedState)
 	}
 
 	const failTranscription = (error: string, processingDuration?: number) => {
@@ -249,12 +252,15 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 			})
 		}
 
-		updateState({
+		// Clear both memory and localStorage state immediately
+		const clearedState = {
 			isActive: false,
 			current: null,
 			isAborting: false,
 			error
-		})
+		}
+		setMemoryState(clearedState)
+		setTranscriptionState(clearedState)
 	}
 
 	const cancelTranscription = (processingDuration?: number) => {
@@ -270,21 +276,27 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 			})
 		}
 
-		updateState({
+		// Clear both memory and localStorage state immediately
+		const clearedState = {
 			isActive: false,
 			current: null,
 			isAborting: false,
 			error: undefined
-		})
+		}
+		setMemoryState(clearedState)
+		setTranscriptionState(clearedState)
 	}
 
 	const clearTranscription = () => {
-		updateState({
+		// Clear both memory and localStorage state immediately
+		const clearedState = {
 			isActive: false,
 			current: null,
 			isAborting: false,
 			error: undefined
-		})
+		}
+		setMemoryState(clearedState)
+		setTranscriptionState(clearedState)
 	}
 
 	const contextValue: TranscriptionContextValue = {
