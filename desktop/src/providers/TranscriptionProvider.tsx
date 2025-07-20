@@ -22,6 +22,7 @@ interface TranscriptionState {
 	isActive: boolean
 	current: CurrentTranscription | null
 	isAborting: boolean
+	isCompleting: boolean
 	error?: string
 }
 
@@ -51,6 +52,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		isActive: false,
 		current: null,
 		isAborting: false,
+		isCompleting: false,
 		error: undefined
 	})
 
@@ -87,10 +89,29 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 			// Listen for new segments
 			segmentUnlisten = await listen<any>('new_segment', (event) => {
 				const { payload } = event
-				if (memoryState.current) {
-					const updatedSegments = memoryState.current.segments ? [...memoryState.current.segments, payload] : [payload]
-					setSegments(updatedSegments)
-				}
+				console.log('Received new segment:', payload)
+				
+				// Use functional state update to avoid stale closure
+				setMemoryState(currentState => {
+					if (currentState.current) {
+						const existingSegments = currentState.current.segments || []
+						const updatedSegments = [...existingSegments, payload]
+						console.log('Accumulating segments. Total:', updatedSegments.length)
+						
+						const newState = {
+							...currentState,
+							current: {
+								...currentState.current,
+								segments: updatedSegments
+							}
+						}
+						
+						// Also update localStorage
+						setTranscriptionState(newState)
+						return newState
+					}
+					return currentState
+				})
 			})
 		}
 
@@ -167,6 +188,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				isActive: true,
 				current: newTranscription,
 				isAborting: false,
+				isCompleting: false,
 				error: undefined
 			})
 
@@ -178,7 +200,17 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 	}
 
 	const updateProgress = (progress: number, phase: string) => {
-		if (!memoryState.current) return
+		if (!memoryState.current || memoryState.isCompleting) {
+			console.log('Skipping progress update - no current transcription or completing:', { 
+				hasCurrent: !!memoryState.current, 
+				isCompleting: memoryState.isCompleting,
+				progress,
+				phase 
+			})
+			return
+		}
+
+		console.log('Updating progress:', { progress, phase })
 
 		// Update transcription state
 		updateState({
@@ -224,6 +256,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				isActive: false,
 				current: null,
 				isAborting: false,
+				isCompleting: false,
 				error: undefined
 			}
 			setMemoryState(clearedState)
@@ -231,6 +264,12 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		}
 
 		try {
+			// Set completing flag to prevent progress updates from overriding completion
+			console.log('Setting completion flag to prevent progress update races')
+			updateState({
+				isCompleting: true
+			})
+
 			const processingEntry = getProcessingEntry()
 			if (processingEntry && memoryState.current) {
 				const endTime = Date.now()
@@ -280,6 +319,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				isActive: false,
 				current: null,
 				isAborting: false,
+				isCompleting: false,
 				error
 			}
 			setMemoryState(clearedState)
@@ -291,6 +331,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				isActive: false,
 				current: null,
 				isAborting: false,
+				isCompleting: false,
 				error
 			}
 			setMemoryState(clearedState)
@@ -317,6 +358,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				isActive: false,
 				current: null,
 				isAborting: false,
+				isCompleting: false,
 				error: undefined
 			}
 			setMemoryState(clearedState)
@@ -328,6 +370,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				isActive: false,
 				current: null,
 				isAborting: false,
+				isCompleting: false,
 				error: undefined
 			}
 			setMemoryState(clearedState)
@@ -341,6 +384,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 			isActive: false,
 			current: null,
 			isAborting: false,
+			isCompleting: false,
 			error: undefined
 		}
 		setMemoryState(clearedState)
