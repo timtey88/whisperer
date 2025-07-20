@@ -21,6 +21,9 @@ export default function Home() {
 
   // Check if the current file is valid for transcription
   const isValidFile = vm.files.length > 0 ? validateFileAndGetError(vm.files[0].name).isValid : false;
+  
+  // Check if transcription can proceed (valid file + models available)
+  const canTranscribe = isValidFile && vm.hasModels;
 
   async function showWindow() {
     const currentWindow = webviewWindow.getCurrentWebviewWindow();
@@ -95,7 +98,7 @@ export default function Home() {
                 {/* Transcribe section */}
                 {vm.files.length > 0 && !vm.loading && (
                   <div className="mt-4">
-                    {isValidFile ? (
+                    {canTranscribe ? (
                       <button 
                         onClick={() => vm.transcribe(vm.files[0].path)} 
                         className="btn btn-primary w-full"
@@ -110,11 +113,19 @@ export default function Home() {
                         >
                           Transcribe
                         </button>
-                        <div className="alert alert-error">
-                          <span className="text-sm">
-                            {validateFileAndGetError(vm.files[0].name).error}
-                          </span>
-                        </div>
+                        {!isValidFile ? (
+                          <div className="alert alert-error">
+                            <span className="text-sm">
+                              {validateFileAndGetError(vm.files[0].name).error}
+                            </span>
+                          </div>
+                        ) : !vm.hasModels ? (
+                          <div className="alert alert-warning">
+                            <span className="text-sm">
+                              No models installed. Go to Settings → Model Management to download models.
+                            </span>
+                          </div>
+                        ) : null}
                       </div>
                     )}
                   </div>

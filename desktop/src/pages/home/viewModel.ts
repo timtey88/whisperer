@@ -66,6 +66,7 @@ export function viewModel() {
 	const [devices, setDevices] = useState<AudioDevice[]>([])
 	const [inputDevice, setInputDevice] = useState<AudioDevice | null>(null)
 	const [outputDevice, setOutputDevice] = useState<AudioDevice | null>(null)
+	const [hasModels, setHasModels] = useState<boolean>(false)
 
 	const { updateApp, availableUpdate } = useContext(UpdaterContext)
 	const { setState: setErrorModal } = useContext(ErrorModalContext)
@@ -206,7 +207,10 @@ export function viewModel() {
 			if (filtered.length === 0) {
 				// No models found - user needs to manually download models
 				console.log('No models found. Please download a model manually from settings.')
+				setHasModels(false)
 			} else {
+				// Models found - update state
+				setHasModels(true)
 				if (!preference.modelPath || !(await fs.exists(preference.modelPath))) {
 					// if model path not found set another one as default
 					const absPath = await path.join(configPath, filtered[0].name)
@@ -216,6 +220,7 @@ export function viewModel() {
 		} catch (e) {
 			console.error('Error checking models folder:', e)
 			// Model folder might not exist yet, this is OK for manual setup
+			setHasModels(false)
 		}
 	}
 
@@ -549,5 +554,6 @@ Original error: ${errorString}`
 		showTranscriptionResult,
 		setShowTranscriptionResult,
 		clearFiles,
+		hasModels,
 	}
 }
