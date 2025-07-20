@@ -350,14 +350,19 @@ export function viewModel() {
 		const processStartTime = performance.now()
 
 		// Start global transcription tracking
-		startTranscription(
-			{ fileName, filePath: path },
-			{
-				modelPath: preferenceRef.current.modelPath || undefined,
-				useGpu: preferenceRef.current.useGpu || undefined,
-				settings: { modelOptions: preferenceRef.current.modelOptions }
-			}
-		)
+		try {
+			await startTranscription(
+				{ fileName, filePath: path },
+				{
+					modelPath: preferenceRef.current.modelPath || undefined,
+					useGpu: preferenceRef.current.useGpu || undefined,
+					settings: { modelOptions: preferenceRef.current.modelOptions }
+				}
+			)
+		} catch (error) {
+			console.error('Failed to start transcription tracking:', error)
+			// Continue with transcription even if history fails
+		}
 		
 		// Basic audio file validation
 		try {
@@ -395,7 +400,9 @@ export function viewModel() {
 			setShowTranscriptionResult(true)
 			
 			// Update global state
-			failTranscription(errorString, processingDuration)
+			failTranscription(errorString, processingDuration).catch(error => {
+				console.error('Failed to update failed transcription in history:', error)
+			})
 			
 			stopKeepAwake()
 			setErrorModal?.({ log: errorString, open: true })
@@ -441,7 +448,9 @@ export function viewModel() {
 			setShowTranscriptionResult(true)
 			
 			// Complete global transcription (this will update history)
-			completeTranscription(res.segments, processingDuration)
+			completeTranscription(res.segments, processingDuration).catch(error => {
+				console.error('Failed to complete transcription in history:', error)
+			})
 			
 			toast.success(`Transcription completed in ${processingDuration} seconds`, { position: 'bottom-center' })
 		} catch (error) {
@@ -463,7 +472,9 @@ export function viewModel() {
 				setShowTranscriptionResult(true)
 				
 				// Cancel global transcription (this will update history)
-				cancelTranscription(processingDuration)
+				cancelTranscription(processingDuration).catch(error => {
+					console.error('Failed to update canceled transcription in history:', error)
+				})
 			} else {
 				// Transcription failed - provide better error messages
 				const errorString = String(error)
@@ -506,7 +517,9 @@ Original error: ${errorString}`
 				setShowTranscriptionResult(true)
 				
 				// Fail global transcription (this will update history)
-				failTranscription(userFriendlyError, processingDuration)
+				failTranscription(userFriendlyError, processingDuration).catch(error => {
+					console.error('Failed to update failed transcription in history:', error)
+				})
 				
 				stopKeepAwake()
 				console.error('Transcription error: ', error)

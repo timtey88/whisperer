@@ -31,13 +31,13 @@ interface TranscriptionContextValue {
 		modelPath?: string
 		useGpu?: boolean
 		settings?: any
-	}) => string
+	}) => Promise<string>
 	updateProgress: (progress: number, phase: string) => void
 	setSegments: (segments: any[]) => void
 	abortTranscription: () => void
-	completeTranscription: (segments?: any[], processingDuration?: number) => void
-	failTranscription: (error: string, processingDuration?: number) => void
-	cancelTranscription: (processingDuration?: number) => void
+	completeTranscription: (segments?: any[], processingDuration?: number) => Promise<void>
+	failTranscription: (error: string, processingDuration?: number) => Promise<void>
+	cancelTranscription: (processingDuration?: number) => Promise<void>
 	clearTranscription: () => void
 }
 
@@ -124,7 +124,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		setTranscriptionState(newState)
 	}
 
-	const startTranscription = (
+	const startTranscription = async (
 		file: { fileName: string; filePath: string }, 
 		options?: {
 			modelPath?: string
@@ -147,29 +147,34 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 			settings: options?.settings
 		}
 
-		// Add processing entry to history immediately
-		addHistoryEntry({
-			fileName: file.fileName,
-			filePath: file.filePath,
-			status: 'processing',
-			duration: 0,
-			startTime,
-			endTime: 0, // Will be set when completed
-			progress: 0,
-			phase: 'Loading Model',
-			modelPath: options?.modelPath,
-			useGpu: options?.useGpu,
-			settings: options?.settings
-		})
+		try {
+			// Add processing entry to history immediately
+			await addHistoryEntry({
+				fileName: file.fileName,
+				filePath: file.filePath,
+				status: 'processing',
+				duration: 0,
+				startTime,
+				endTime: 0, // Will be set when completed
+				progress: 0,
+				phase: 'Loading Model',
+				modelPath: options?.modelPath,
+				useGpu: options?.useGpu,
+				settings: options?.settings
+			})
 
-		updateState({
-			isActive: true,
-			current: newTranscription,
-			isAborting: false,
-			error: undefined
-		})
+			updateState({
+				isActive: true,
+				current: newTranscription,
+				isAborting: false,
+				error: undefined
+			})
 
-		return id
+			return id
+		} catch (error) {
+			console.error('Failed to start transcription:', error)
+			throw error
+		}
 	}
 
 	const updateProgress = (progress: number, phase: string) => {
@@ -184,12 +189,14 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 			}
 		})
 
-		// Update history entry with current progress
+		// Update history entry with current progress (async, but don't block)
 		const processingEntry = getProcessingEntry()
 		if (processingEntry) {
 			updateHistoryEntry(processingEntry.id, {
 				progress,
 				phase
+			}).catch(error => {
+				console.error('Failed to update progress in history:', error)
 			})
 		}
 	}
@@ -211,80 +218,119 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		})
 	}
 
-	const completeTranscription = (segments?: any[], processingDuration?: number) => {
-		const processingEntry = getProcessingEntry()
-		if (processingEntry && memoryState.current) {
-			const endTime = Date.now()
-			const duration = processingDuration || Math.round((endTime - processingEntry.startTime) / 1000)
-			
-			updateHistoryEntry(processingEntry.id, {
-				status: 'completed',
-				endTime,
-				duration,
-				progress: 100,
-				phase: 'Completed',
-				segments: segments || memoryState.current.segments
-			})
-		}
+	const completeTranscription = async (segments?: any[], processingDuration?: number) => {
+		try {
+			const processingEntry = getProcessingEntry()
+			if (processingEntry && memoryState.current) {
+				const endTime = Date.now()
+				const duration = processingDuration || Math.round((endTime - processingEntry.startTime) / 1000)
+				
+				await updateHistoryEntry(processingEntry.id, {
+					status: 'completed',
+					endTime,
+					duration,
+					progress: 100,
+					phase: 'Completed',
+					segments: segments || memoryState.current.segments
+				})
+			}
 
-		// Clear both memory and localStorage state immediately
-		const clearedState = {
-			isActive: false,
-			current: null,
-			isAborting: false,
-			error: undefined
+			// Clear both memory and localStorage state immediately
+			const clearedState = {
+				isActive: false,
+				current: null,
+				isAborting: false,
+				error: undefined
+			}
+			setMemoryState(clearedState)
+			setTranscriptionState(clearedState)
+		} catch (error) {
+			console.error('Failed to complete transcription:', error)
+			// Still clear the state even if history update fails
+			const clearedState = {
+				isActive: false,
+				current: null,
+				isAborting: false,
+				error: undefined
+			}
+			setMemoryState(clearedState)
+			setTranscriptionState(clearedState)
 		}
-		setMemoryState(clearedState)
-		setTranscriptionState(clearedState)
 	}
 
-	const failTranscription = (error: string, processingDuration?: number) => {
-		const processingEntry = getProcessingEntry()
-		if (processingEntry) {
-			const endTime = Date.now()
-			const duration = processingDuration || Math.round((endTime - processingEntry.startTime) / 1000)
-			
-			updateHistoryEntry(processingEntry.id, {
-				status: 'failed',
-				endTime,
-				duration,
+	const failTranscription = async (error: string, processingDuration?: number) => {
+		try {
+			const processingEntry = getProcessingEntry()
+			if (processingEntry) {
+				const endTime = Date.now()
+				const duration = processingDuration || Math.round((endTime - processingEntry.startTime) / 1000)
+				
+				await updateHistoryEntry(processingEntry.id, {
+					status: 'failed',
+					endTime,
+					duration,
+					error
+				})
+			}
+
+			// Clear both memory and localStorage state immediately
+			const clearedState = {
+				isActive: false,
+				current: null,
+				isAborting: false,
 				error
-			})
+			}
+			setMemoryState(clearedState)
+			setTranscriptionState(clearedState)
+		} catch (updateError) {
+			console.error('Failed to update failed transcription in history:', updateError)
+			// Still clear the state even if history update fails
+			const clearedState = {
+				isActive: false,
+				current: null,
+				isAborting: false,
+				error
+			}
+			setMemoryState(clearedState)
+			setTranscriptionState(clearedState)
 		}
-
-		// Clear both memory and localStorage state immediately
-		const clearedState = {
-			isActive: false,
-			current: null,
-			isAborting: false,
-			error
-		}
-		setMemoryState(clearedState)
-		setTranscriptionState(clearedState)
 	}
 
-	const cancelTranscription = (processingDuration?: number) => {
-		const processingEntry = getProcessingEntry()
-		if (processingEntry) {
-			const endTime = Date.now()
-			const duration = processingDuration || Math.round((endTime - processingEntry.startTime) / 1000)
-			
-			updateHistoryEntry(processingEntry.id, {
-				status: 'canceled',
-				endTime,
-				duration
-			})
-		}
+	const cancelTranscription = async (processingDuration?: number) => {
+		try {
+			const processingEntry = getProcessingEntry()
+			if (processingEntry) {
+				const endTime = Date.now()
+				const duration = processingDuration || Math.round((endTime - processingEntry.startTime) / 1000)
+				
+				await updateHistoryEntry(processingEntry.id, {
+					status: 'canceled',
+					endTime,
+					duration
+				})
+			}
 
-		// Clear both memory and localStorage state immediately
-		const clearedState = {
-			isActive: false,
-			current: null,
-			isAborting: false,
-			error: undefined
+			// Clear both memory and localStorage state immediately
+			const clearedState = {
+				isActive: false,
+				current: null,
+				isAborting: false,
+				error: undefined
+			}
+			setMemoryState(clearedState)
+			setTranscriptionState(clearedState)
+		} catch (updateError) {
+			console.error('Failed to update canceled transcription in history:', updateError)
+			// Still clear the state even if history update fails
+			const clearedState = {
+				isActive: false,
+				current: null,
+				isAborting: false,
+				error: undefined
+			}
+			setMemoryState(clearedState)
+			setTranscriptionState(clearedState)
 		}
-		setMemoryState(clearedState)
-		setTranscriptionState(clearedState)
 	}
 
 	const clearTranscription = () => {
