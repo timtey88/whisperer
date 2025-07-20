@@ -10,6 +10,7 @@ import { ErrorModalProvider } from './providers/ErrorModal'
 import { PreferenceProvider } from './providers/Preference'
 import { FilesProvider } from './providers/FilesProvider'
 import { HistoryProvider } from './providers/HistoryProvider'
+import { TranscriptionProvider } from './providers/TranscriptionProvider'
 import { UpdaterProvider } from './providers/Updater'
 import { ErrorBoundary } from 'react-error-boundary'
 import { BoundaryFallback } from './components/BoundaryFallback'
@@ -29,7 +30,8 @@ export default function App() {
 					<UpdaterProvider>
 						<FilesProvider>
 							<HistoryProvider>
-								<ToastProvider>
+								<TranscriptionProvider>
+									<ToastProvider>
 								<ErrorModalWithContext />
 								<Routes>
 									<Route path="/" element={<HomePage />} />
@@ -38,7 +40,8 @@ export default function App() {
 									<Route path="/models" element={<ModelsPage />} />
 									<Route path="/model-options" element={<ModelOptionsPage />} />
 								</Routes>
-								</ToastProvider>
+									</ToastProvider>
+								</TranscriptionProvider>
 							</HistoryProvider>
 						</FilesProvider>
 					</UpdaterProvider>

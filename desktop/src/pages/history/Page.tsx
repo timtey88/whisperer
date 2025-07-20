@@ -24,6 +24,8 @@ export default function HistoryPage() {
 			case 'completed': return 'text-success'
 			case 'failed': return 'text-error'
 			case 'canceled': return 'text-warning'
+			case 'processing': return 'text-info'
+			case 'incomplete': return 'text-base-content/60'
 			default: return 'text-base-content'
 		}
 	}
@@ -33,6 +35,8 @@ export default function HistoryPage() {
 			case 'completed': return '✓'
 			case 'failed': return '✗'
 			case 'canceled': return '○'
+			case 'processing': return '⟳'
+			case 'incomplete': return '⏸'
 			default: return '?'
 		}
 	}
@@ -102,14 +106,47 @@ export default function HistoryPage() {
 										<div className="flex-1 min-w-0">
 											<p className="font-medium truncate">{entry.fileName}</p>
 											<p className="text-sm text-base-content/60">
-												{formatDate(entry.timestamp)} • {formatDuration(entry.duration)}
+												{entry.status === 'processing' ? (
+													<span>
+														Started {formatDate(entry.timestamp)}
+														{entry.phase && <span> • {entry.phase}</span>}
+													</span>
+												) : (
+													<span>{formatDate(entry.timestamp)} • {formatDuration(entry.duration)}</span>
+												)}
 											</p>
 										</div>
 									</div>
 									<div className="flex items-center gap-2">
+										{entry.status === 'processing' && (
+											<div className="flex items-center gap-2">
+												{entry.progress !== undefined ? (
+													<>
+														<div className="text-xs text-base-content/60">
+															{entry.progress}%
+														</div>
+														<progress 
+															className="progress progress-info w-16" 
+															value={entry.progress} 
+															max="100"
+														></progress>
+													</>
+												) : (
+													<div className="loading loading-spinner loading-sm text-info"></div>
+												)}
+												<button 
+													onClick={() => navigate('/')}
+													className="btn btn-xs btn-primary"
+												>
+													View
+												</button>
+											</div>
+										)}
 										<span className={`badge badge-sm ${
 											entry.status === 'completed' ? 'badge-success' :
 											entry.status === 'failed' ? 'badge-error' :
+											entry.status === 'processing' ? 'badge-info' :
+											entry.status === 'incomplete' ? 'badge-neutral' :
 											'badge-warning'
 										}`}>
 											{entry.status}
@@ -119,6 +156,11 @@ export default function HistoryPage() {
 								{entry.error && (
 									<div className="mt-2 text-sm text-error bg-error/10 p-2 rounded">
 										{entry.error}
+									</div>
+								)}
+								{entry.status === 'incomplete' && (
+									<div className="mt-2 text-sm text-base-content/60 bg-base-300/50 p-2 rounded">
+										This transcription was interrupted (app was closed or refreshed during processing)
 									</div>
 								)}
 							</div>

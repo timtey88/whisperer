@@ -7,7 +7,7 @@ export interface HistoryEntry {
 	fileName: string
 	filePath: string
 	timestamp: number // Unix timestamp when transcription started
-	status: 'completed' | 'failed' | 'canceled' | 'incomplete'
+	status: 'processing' | 'completed' | 'failed' | 'canceled' | 'incomplete'
 	duration: number // Processing time in seconds
 	startTime: number
 	endTime: number
@@ -20,14 +20,19 @@ export interface HistoryEntry {
 		modelOptions?: any
 		language?: string
 	}
+	// Fields for processing entries
+	progress?: number // Current progress percentage (0-100)
+	phase?: string // Current transcription phase
 }
 
 interface HistoryContextValue {
 	history: HistoryEntry[]
 	addHistoryEntry: (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => void
+	updateHistoryEntry: (id: string, updates: Partial<HistoryEntry>) => void
 	removeHistoryEntry: (id: string) => void
 	clearHistory: () => void
 	getHistoryEntry: (id: string) => HistoryEntry | undefined
+	getProcessingEntry: () => HistoryEntry | undefined
 }
 
 const HistoryContext = createContext<HistoryContextValue | null>(null)
@@ -45,6 +50,12 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
 		setHistory(prev => [newEntry, ...prev]) // Add to beginning for recent-first order
 	}
 
+	const updateHistoryEntry = (id: string, updates: Partial<HistoryEntry>) => {
+		setHistory(prev => prev.map(entry => 
+			entry.id === id ? { ...entry, ...updates } : entry
+		))
+	}
+
 	const removeHistoryEntry = (id: string) => {
 		setHistory(prev => prev.filter(entry => entry.id !== id))
 	}
@@ -57,12 +68,18 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
 		return history.find(entry => entry.id === id)
 	}
 
+	const getProcessingEntry = () => {
+		return history.find(entry => entry.status === 'processing')
+	}
+
 	const contextValue: HistoryContextValue = {
 		history,
 		addHistoryEntry,
+		updateHistoryEntry,
 		removeHistoryEntry,
 		clearHistory,
 		getHistoryEntry,
+		getProcessingEntry,
 	}
 
 	return (

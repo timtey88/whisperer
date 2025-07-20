@@ -20,7 +20,7 @@ import { NamedPath, ls, openPath, pathToNamedPath, startKeepAwake, stopKeepAwake
 import { getX86Features } from '~/lib/x86Features'
 import { ErrorModalContext } from '~/providers/ErrorModal'
 import { useFilesContext } from '~/providers/FilesProvider'
-import { useHistory } from '~/providers/HistoryProvider'
+import { useTranscription } from '~/providers/TranscriptionProvider'
 import { ModelOptions, usePreferenceProvider } from '~/providers/Preference'
 import { UpdaterContext } from '~/providers/Updater'
 
@@ -45,26 +45,37 @@ export function viewModel() {
 	const location = useLocation()
 	const [settingsVisible, setSettingsVisible] = useState(location.hash === '#settings')
 	const navigate = useNavigate()
-	const [loading, setLoading] = useState(false)
 	const [isRecording, setIsRecording] = useState(false)
 	const abortRef = useRef<boolean>(false)
-	const [isAborting, setIsAborting] = useState(false)
 	const [segments, setSegments] = useState<transcript.Segment[] | null>(null)
 	const [summarizeSegments, setSummarizeSegments] = useState<transcript.Segment[] | null>(null)
 	const [audio, setAudio] = useState<HTMLAudioElement | null>(null)
-	const [progress, setProgress] = useState<number | null>(0)
-	const [currentPhase, setCurrentPhase] = useState<string>('Loading Model')
 	const [fileSize, setFileSize] = useState<number | null>(null)
 	const [audioDuration] = useState<number | null>(null)
 	const [transcriptionResult, setTranscriptionResult] = useState<TranscriptionResult | null>(null)
 	const [showTranscriptionResult, setShowTranscriptionResult] = useState(false)
 	const [transcriptTab, setTranscriptTab] = useLocalStorage<'transcript' | 'summary'>('prefs_transcript_tab', 'transcript')
-	useConfirmExit((segments?.length ?? 0) > 0 || loading)
 
 	const { files, setFiles } = useFilesContext()
-	const { addHistoryEntry } = useHistory()
+	const { 
+		transcription, 
+		startTranscription, 
+		setSegments: setGlobalSegments,
+		abortTranscription,
+		completeTranscription,
+		failTranscription,
+		cancelTranscription
+	} = useTranscription()
 	const preference = usePreferenceProvider()
 	const preferenceRef = useRef(preference)
+
+	// Use global transcription state
+	const loading = transcription.isActive
+	const isAborting = transcription.isAborting
+	const progress = transcription.current?.progress ?? null
+	const currentPhase = transcription.current?.phase ?? 'Loading Model'
+
+	useConfirmExit((segments?.length ?? 0) > 0 || loading)
 	const [devices, setDevices] = useState<AudioDevice[]>([])
 	const [inputDevice, setInputDevice] = useState<AudioDevice | null>(null)
 	const [outputDevice, setOutputDevice] = useState<AudioDevice | null>(null)
@@ -91,7 +102,6 @@ export function viewModel() {
 		setAudio(null)
 		setSegments(null)
 		setSummarizeSegments(null)
-		setProgress(0)
 		setFileSize(null)
 		setTranscriptionResult(null)
 		setShowTranscriptionResult(false)
@@ -129,24 +139,7 @@ export function viewModel() {
 
 
 
-	async function handleNewSegment() {
-		await listen('transcribe_progress', (event) => {
-			const value = event.payload as number
-			if (value >= 0 && value <= 100) {
-				setProgress(value)
-				// Update phase based on progress
-				if (value >= 10 && value < 95) {
-					setCurrentPhase('Transcribing')
-				} else if (value >= 95) {
-					setCurrentPhase('Post-Processing')
-				}
-			}
-		})
-		await listen<transcript.Segment>('new_segment', (event) => {
-			const { payload } = event
-			setSegments((prev) => (prev ? [...prev, payload] : [payload]))
-		})
-	}
+	// handleNewSegment removed - now handled by TranscriptionProvider
 
 	async function handleRecordFinish() {
 		await listen<{ path: string; name: string }>('record_finish', (event) => {
@@ -172,7 +165,7 @@ export function viewModel() {
 	}
 
 	async function onAbort() {
-		setIsAborting(true)
+		abortTranscription()
 		abortRef.current = true
 		event.emit('abort_transcribe')
 	}
@@ -306,7 +299,6 @@ export function viewModel() {
 
 		handleDrop()
 		checkModelExists()
-		handleNewSegment()
 		handleRecordFinish()
 		loadAudioDevices()
 	}
@@ -344,16 +336,21 @@ export function viewModel() {
 		setSummarizeSegments(null)
 		setTranscriptTab('transcript')
 		setShowTranscriptionResult(false) // Hide any previous result
-
-		setLoading(true)
-		setCurrentPhase('Loading Model')
-		setProgress(0)
 		abortRef.current = false
 
 		// Get file information and set up result tracking
 		const fileName = await basename(path)
-		const transcriptionStartTime = Date.now()
 		const processStartTime = performance.now()
+
+		// Start global transcription tracking
+		startTranscription(
+			{ fileName, filePath: path },
+			{
+				modelPath: preferenceRef.current.modelPath || undefined,
+				useGpu: preferenceRef.current.useGpu || undefined,
+				settings: { modelOptions: preferenceRef.current.modelOptions }
+			}
+		)
 		
 		// Basic audio file validation
 		try {
@@ -376,34 +373,36 @@ export function viewModel() {
 		} catch (error) {
 			// If file validation fails, show error immediately
 			const errorString = String(error)
+			const processingDuration = Math.round((performance.now() - processStartTime) / 1000)
+			
 			setTranscriptionResult({
 				fileName,
 				status: 'failed',
-				duration: 0,
-				startTime: transcriptionStartTime,
+				duration: processingDuration,
+				startTime: Date.now(),
 				endTime: Date.now(),
 				error: errorString,
 				modelPath: preferenceRef.current.modelPath || undefined,
 				useGpu: preferenceRef.current.useGpu || undefined
 			})
 			setShowTranscriptionResult(true)
+			
+			// Update global state
+			failTranscription(errorString, processingDuration)
+			
 			stopKeepAwake()
-			setLoading(false)
 			setErrorModal?.({ log: errorString, open: true })
 			return // Exit early if validation fails
 		}
 
 		const modelPath = preferenceRef.current.modelPath
 		try {
-			setCurrentPhase('Loading Model')
 			await invoke('load_model', { modelPath, gpuDevice: preferenceRef.current.gpuDevice, useGpu: preferenceRef.current.useGpu })
 			
-			setCurrentPhase('Audio Processing')
 			const options = {
 				path,
 				...preferenceRef.current.modelOptions,
 			}
-			setCurrentPhase('Transcribing')
 			
 			const diarizeOptions = { threshold: preferenceRef.current.diarizeThreshold, max_speakers: preferenceRef.current.maxSpeakers, enabled: preferenceRef.current.recognizeSpeakers }
 			const res: transcript.Transcript = await invoke('transcribe', {
@@ -413,21 +412,20 @@ export function viewModel() {
 				ffmpegOptions: preferenceRef.current.ffmpegOptions,
 			})
 
-			setCurrentPhase('Post-Processing')
-
 			// Calculate time
 			const processingDuration = Math.round((performance.now() - processStartTime) / 1000)
 			console.info(`Transcribe took ${processingDuration} seconds.`)
 
 			setSegments(res.segments)
+			setGlobalSegments(res.segments)
 			
-			// Set successful transcription result
+			// Set successful transcription result for local display
 			const transcriptionEndTime = Date.now()
 			const transcriptionResult = {
 				fileName,
 				status: 'completed' as const,
 				duration: processingDuration,
-				startTime: transcriptionStartTime,
+				startTime: transcriptionEndTime - (processingDuration * 1000),
 				endTime: transcriptionEndTime,
 				modelPath: modelPath || undefined,
 				useGpu: preferenceRef.current.useGpu || undefined
@@ -435,21 +433,8 @@ export function viewModel() {
 			setTranscriptionResult(transcriptionResult)
 			setShowTranscriptionResult(true)
 			
-			// Save to history
-			addHistoryEntry({
-				fileName,
-				filePath: path,
-				status: 'completed',
-				duration: processingDuration,
-				startTime: transcriptionStartTime,
-				endTime: transcriptionEndTime,
-				modelPath: modelPath || undefined,
-				useGpu: preferenceRef.current.useGpu || undefined,
-				segments: res.segments,
-				settings: {
-					modelOptions: preferenceRef.current.modelOptions
-				}
-			})
+			// Complete global transcription (this will update history)
+			completeTranscription(res.segments, processingDuration)
 			
 			toast.success(`Transcription completed in ${processingDuration} seconds`, { position: 'bottom-center' })
 		} catch (error) {
@@ -462,7 +447,7 @@ export function viewModel() {
 					fileName,
 					status: 'canceled' as const,
 					duration: processingDuration,
-					startTime: transcriptionStartTime,
+					startTime: transcriptionEndTime - (processingDuration * 1000),
 					endTime: transcriptionEndTime,
 					modelPath: modelPath || undefined,
 					useGpu: preferenceRef.current.useGpu || undefined
@@ -470,20 +455,8 @@ export function viewModel() {
 				setTranscriptionResult(transcriptionResult)
 				setShowTranscriptionResult(true)
 				
-				// Save canceled transcription to history
-				addHistoryEntry({
-					fileName,
-					filePath: path,
-					status: 'canceled',
-					duration: processingDuration,
-					startTime: transcriptionStartTime,
-					endTime: transcriptionEndTime,
-					modelPath: modelPath || undefined,
-					useGpu: preferenceRef.current.useGpu || undefined,
-					settings: {
-						modelOptions: preferenceRef.current.modelOptions
-					}
-				})
+				// Cancel global transcription (this will update history)
+				cancelTranscription(processingDuration)
 			} else {
 				// Transcription failed - provide better error messages
 				const errorString = String(error)
@@ -516,7 +489,7 @@ Original error: ${errorString}`
 					fileName,
 					status: 'failed' as const,
 					duration: processingDuration,
-					startTime: transcriptionStartTime,
+					startTime: transcriptionEndTime - (processingDuration * 1000),
 					endTime: transcriptionEndTime,
 					error: userFriendlyError,
 					modelPath: modelPath || undefined,
@@ -525,31 +498,15 @@ Original error: ${errorString}`
 				setTranscriptionResult(transcriptionResult)
 				setShowTranscriptionResult(true)
 				
-				// Save failed transcription to history
-				addHistoryEntry({
-					fileName,
-					filePath: path,
-					status: 'failed',
-					duration: processingDuration,
-					startTime: transcriptionStartTime,
-					endTime: transcriptionEndTime,
-					error: userFriendlyError,
-					modelPath: modelPath || undefined,
-					useGpu: preferenceRef.current.useGpu || undefined,
-					settings: {
-						modelOptions: preferenceRef.current.modelOptions
-					}
-				})
+				// Fail global transcription (this will update history)
+				failTranscription(userFriendlyError, processingDuration)
+				
 				stopKeepAwake()
 				console.error('Transcription error: ', error)
 				setErrorModal?.({ log: userFriendlyError, open: true })
-				setLoading(false)
 			}
 		} finally {
 			stopKeepAwake()
-			setLoading(false)
-			setIsAborting(false)
-			setProgress(null)
 			if (!abortRef.current) {
 				// Focus back the window and play sound
 				if (preferenceRef.current.soundOnFinish) {
