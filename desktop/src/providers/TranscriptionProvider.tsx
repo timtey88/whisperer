@@ -219,12 +219,26 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 	}
 
 	const completeTranscription = async (segments?: any[], processingDuration?: number) => {
+		const clearState = () => {
+			const clearedState = {
+				isActive: false,
+				current: null,
+				isAborting: false,
+				error: undefined
+			}
+			setMemoryState(clearedState)
+			setTranscriptionState(clearedState)
+		}
+
 		try {
 			const processingEntry = getProcessingEntry()
 			if (processingEntry && memoryState.current) {
 				const endTime = Date.now()
 				const duration = processingDuration || Math.round((endTime - processingEntry.startTime) / 1000)
 				
+				console.log('Completing transcription for:', processingEntry.fileName, 'with status: completed, progress: 100')
+				
+				// Wait for history update to complete before clearing state
 				await updateHistoryEntry(processingEntry.id, {
 					status: 'completed',
 					endTime,
@@ -233,28 +247,16 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 					phase: 'Completed',
 					segments: segments || memoryState.current.segments
 				})
+				
+				console.log('History entry updated successfully, clearing transcription state')
 			}
 
-			// Clear both memory and localStorage state immediately
-			const clearedState = {
-				isActive: false,
-				current: null,
-				isAborting: false,
-				error: undefined
-			}
-			setMemoryState(clearedState)
-			setTranscriptionState(clearedState)
+			// Only clear state after successful history update
+			clearState()
 		} catch (error) {
 			console.error('Failed to complete transcription:', error)
-			// Still clear the state even if history update fails
-			const clearedState = {
-				isActive: false,
-				current: null,
-				isAborting: false,
-				error: undefined
-			}
-			setMemoryState(clearedState)
-			setTranscriptionState(clearedState)
+			// Still clear state but log the error for debugging
+			clearState()
 		}
 	}
 

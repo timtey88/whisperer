@@ -137,9 +137,9 @@ export function viewModel() {
 		preferenceRef.current = preference
 	}, [preference])
 
-	// Sync global transcription segments with local segments state for live updates
+	// Sync global transcription segments to local segments state for live UI updates
 	useEffect(() => {
-		if (transcription.current?.segments) {
+		if (transcription.current?.segments && transcription.current.segments.length > 0) {
 			setSegments(transcription.current.segments)
 		}
 	}, [transcription.current?.segments])
