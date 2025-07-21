@@ -1,8 +1,7 @@
-use chrono::Local;
 use eyre::{Context, Result};
 use std::env;
 use std::sync::Arc;
-use std::{fs::OpenOptions, path::PathBuf, io::{BufRead, BufReader, Write}};
+use std::{fs::OpenOptions, path::PathBuf, io::{BufRead, BufReader}};
 use tauri::{AppHandle, Manager, Wry};
 use tauri_plugin_store::Store;
 use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Layer, Registry};
@@ -44,8 +43,9 @@ fn truncate_log_if_needed(log_path: &PathBuf) -> Result<()> {
     let reader = BufReader::new(file);
     let lines: Vec<String> = reader.lines().collect::<Result<Vec<_>, std::io::Error>>()?;
     
-    let keep_lines = lines.len() / 2; // Keep last 50% of lines
-    let kept_content = lines.into_iter().skip(lines.len() - keep_lines).collect::<Vec<_>>().join("\n");
+    let lines_len = lines.len();
+    let keep_lines = lines_len / 2; // Keep last 50% of lines
+    let kept_content = lines.into_iter().skip(lines_len - keep_lines).collect::<Vec<_>>().join("\n");
     
     // Write truncated content back
     std::fs::write(log_path, kept_content + "\n")?;

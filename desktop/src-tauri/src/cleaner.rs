@@ -1,5 +1,5 @@
-use crate::{cmd::get_logs_folder, config, logging::get_log_path};
-use eyre::{ContextCompat, Result, WrapErr};
+use crate::logging::get_log_path;
+use eyre::{Result, WrapErr};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tauri::Manager;
