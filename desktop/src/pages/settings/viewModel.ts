@@ -70,7 +70,7 @@ export function viewModel() {
 
 	async function askAndReset() {
 		const yes = await ask(
-			'This will reset the app to its initial state for troubleshooting:\n\n• All app settings and preferences will be cleared\n• Downloaded models will be removed\n• Transcription history will be deleted\n• The app will restart at the home page\n\nSystem files, logs, and cache will remain untouched.\nThis action cannot be undone.\n\nAre you sure you want to reset the app?',
+			'This will reset the app settings and clean temporary data:\n\n• All user preferences and settings will be cleared, including:\n  - Theme, language, and display preferences\n  - Whisper model settings and AI parameters\n  - Speaker recognition and audio processing settings\n  - Notification and behavior preferences\n• All temporary files and cache will be cleaned\n• The app will restart at the home page\n\n• Transcription history will be preserved\n• Downloaded models will be preserved\n\nThis action cannot be undone.\n\nAre you sure you want to reset the app?',
 			{ 
 				title: 'Confirm App Reset',
 				kind: 'warning' 

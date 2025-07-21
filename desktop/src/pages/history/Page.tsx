@@ -19,6 +19,9 @@ export default function HistoryPage() {
 	const [deleteEntryId, setDeleteEntryId] = useState<string | null>(null)
 	const [deleteFileName, setDeleteFileName] = useState<string>('')
 	
+	// Delete All confirmation states
+	const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false)
+	
 	const formatDate = (timestamp: number) => {
 		return new Date(timestamp).toLocaleString()
 	}
@@ -99,9 +102,23 @@ export default function HistoryPage() {
 		setDeleteFileName('')
 	}
 
+	// Delete All functionality
+	const showDeleteAllConfirmation = () => {
+		setShowDeleteAllConfirm(true)
+	}
+
+	const handleDeleteAll = async () => {
+		await clearHistory()
+		setShowDeleteAllConfirm(false)
+	}
+
+	const cancelDeleteAll = () => {
+		setShowDeleteAllConfirm(false)
+	}
+
 	// Handle keyboard shortcuts for confirmation modals
 	useEffect(() => {
-		if (!showCancelConfirm && !showDeleteConfirm) return
+		if (!showCancelConfirm && !showDeleteConfirm && !showDeleteAllConfirm) return
 
 		const handleKeyPress = (e: KeyboardEvent) => {
 			if (e.key === 'Escape') {
@@ -110,6 +127,8 @@ export default function HistoryPage() {
 					cancelConfirm()
 				} else if (showDeleteConfirm) {
 					cancelDelete()
+				} else if (showDeleteAllConfirm) {
+					cancelDeleteAll()
 				}
 			} else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
 				e.preventDefault()
@@ -117,13 +136,15 @@ export default function HistoryPage() {
 					confirmCancel()
 				} else if (showDeleteConfirm) {
 					handleDeleteEntry()
+				} else if (showDeleteAllConfirm) {
+					handleDeleteAll()
 				}
 			}
 		}
 
 		document.addEventListener('keydown', handleKeyPress)
 		return () => document.removeEventListener('keydown', handleKeyPress)
-	}, [showCancelConfirm, showDeleteConfirm])
+	}, [showCancelConfirm, showDeleteConfirm, showDeleteAllConfirm])
 
 	if (history.length === 0) {
 		return (
@@ -172,10 +193,13 @@ export default function HistoryPage() {
 							<p className="text-base-content/60">{history.length} transcription{history.length !== 1 ? 's' : ''}</p>
 						</div>
 						<button 
-							onClick={clearHistory}
-							className="btn btn-outline btn-sm"
+							onClick={showDeleteAllConfirmation}
+							className="btn btn-outline btn-error btn-sm hover:scale-105 transition-all duration-200"
 						>
-							Clear All
+							<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+							</svg>
+							Delete All
 						</button>
 					</div>
 					
@@ -383,6 +407,50 @@ export default function HistoryPage() {
 								className="btn btn-error"
 							>
 								Delete
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Delete All Confirmation Modal */}
+			{showDeleteAllConfirm && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+					<div className="bg-base-100 rounded-lg p-6 max-w-lg w-full mx-4 shadow-xl">
+						<div className="flex items-center gap-3 mb-4">
+							<div className="text-error">
+								<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+								</svg>
+							</div>
+							<h3 className="text-lg font-bold">Delete All Transcription History</h3>
+						</div>
+						<div className="mb-6 text-base-content/80">
+							<p className="mb-4">
+								This will permanently delete all <span className="font-semibold text-error">{history.length}</span> transcription entries from your history:
+							</p>
+							<ul className="list-disc list-inside space-y-1 text-sm">
+								<li>All completed transcriptions and their text</li>
+								<li>All processing, failed, and canceled entries</li>
+								<li>All transcription segments and metadata</li>
+							</ul>
+							<p className="mt-4 text-sm">
+								<span className="font-semibold">Your original audio files will remain untouched.</span><br/>
+								This action cannot be undone.
+							</p>
+						</div>
+						<div className="flex gap-3 justify-end">
+							<button 
+								onClick={cancelDeleteAll}
+								className="btn btn-outline"
+							>
+								Cancel
+							</button>
+							<button 
+								onClick={handleDeleteAll}
+								className="btn btn-error"
+							>
+								Delete All
 							</button>
 						</div>
 					</div>

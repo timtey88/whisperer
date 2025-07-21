@@ -981,6 +981,19 @@ pub fn delete_model(models_folder: String, file_name: String) -> Result<()> {
 }
 
 #[tauri::command]
+pub async fn reset_app_data(app_handle: tauri::AppHandle) -> Result<String> {
+    tracing::info!("User initiated app reset");
+
+    // Run selective cleanup for app reset (preserves models and history)
+    crate::cleaner::clean_for_app_reset(&app_handle)?;
+
+    let message = "App cache and temporary files cleaned successfully.";
+    tracing::info!("App reset cleanup completed successfully");
+
+    Ok(message.to_string())
+}
+
+#[tauri::command]
 pub async fn prepare_for_uninstall(app_handle: tauri::AppHandle) -> Result<String> {
     tracing::info!("User initiated uninstall preparation");
 

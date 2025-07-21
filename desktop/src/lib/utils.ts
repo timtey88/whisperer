@@ -85,22 +85,23 @@ export function validateFileAndGetError(fileName: string): { isValid: boolean; e
 }
 
 export async function resetApp() {
-	const modelPath = localStorage.getItem('model_path')
 	try {
+		// Clear the main app config store
 		const store = await load(config.storeFilename)
 		await store.clear()
-		if (modelPath) {
-			try {
-				await fsExt.remove(modelPath)
-			} catch (e) {
-				console.error(e)
-			}
+		
+		// Call backend to clean cache and temp files (preserves models and history)
+		try {
+			await invoke('reset_app_data')
+		} catch (e) {
+			console.error('Failed to call backend reset cleanup:', e)
 		}
 	} catch (e) {
-		console.error(e)
+		console.error('Error during app reset:', e)
 	} finally {
+		// Clear localStorage (user preferences)
 		localStorage.clear()
-		// Redirect to home page instead of non-existent setup page
+		// Redirect to home page
 		// Add a flag to show reset notification
 		localStorage.setItem('app_reset_complete', 'true')
 		location.href = '/'

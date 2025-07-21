@@ -115,6 +115,15 @@ impl CleanupSettings {
             clean_compiled_models: true, // Clean compiled models for uninstall
         }
     }
+
+    /// App reset profile - cleans temp/cache but preserves models and compiled models
+    pub fn app_reset_profile() -> Self {
+        Self {
+            clean_logs: true,
+            clean_models: false,         // Preserve models on reset
+            clean_compiled_models: false, // Preserve compiled models on reset
+        }
+    }
 }
 
 pub fn clean_app_cache_selective() -> Result<()> {
@@ -291,6 +300,20 @@ pub fn clean_all_on_exit(app_handle: &tauri::AppHandle, cleanup_settings: Option
     clean_app_support_configurable(app_handle, settings)?;
 
     tracing::debug!("Completed exit cleanup");
+    Ok(())
+}
+
+pub fn clean_for_app_reset(app_handle: &tauri::AppHandle) -> Result<()> {
+    // Clean temp folders
+    clean_all_temp_folders()?;
+
+    // Clean cache selectively (preserve expensive CoreML cache)
+    clean_app_cache_selective()?;
+
+    // Clean app support based on reset profile (preserves models)
+    clean_app_support_configurable(app_handle, CleanupSettings::app_reset_profile())?;
+
+    tracing::debug!("Completed app reset cleanup");
     Ok(())
 }
 
