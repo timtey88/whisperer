@@ -5,38 +5,6 @@ use std::path::PathBuf;
 use tauri::Manager;
 use whisperer_core::get_whisperer_temp_folder;
 
-pub fn clean_old_logs(app: &tauri::AppHandle) -> Result<()> {
-    let current_log_path = get_log_path(&app.clone())?;
-
-    // Get logs folder
-    let logs_folder = get_logs_folder(app.to_owned())?;
-    let logs_folder = logs_folder.to_str().context("tostr")?;
-
-    // Remove suffix
-    let logs_folder = logs_folder.strip_suffix('/').unwrap_or(logs_folder);
-    let logs_folder = logs_folder.strip_suffix('\\').unwrap_or(logs_folder);
-    let pattern = format!(
-        "{}/{}*{}",
-        logs_folder,
-        config::LOG_FILENAME_PREFIX,
-        config::LOG_FILENAME_SUFFIX
-    );
-
-    let mut cleaned_count = 0;
-    for path in glob::glob(&pattern)? {
-        let path = path?;
-        if path == current_log_path {
-            continue;
-        }
-        std::fs::remove_file(path)?;
-        cleaned_count += 1;
-    }
-
-    if cleaned_count > 0 {
-        tracing::debug!("Cleaned {} old log files", cleaned_count);
-    }
-    Ok(())
-}
 
 pub fn clean_old_files() -> Result<()> {
     let current_temp_dir = get_whisperer_temp_folder();
@@ -236,19 +204,14 @@ pub fn clean_app_support_configurable(app_handle: &tauri::AppHandle, settings: C
     let _protected_files = vec!["app_config.json", ".window-state.json"];
 
     if settings.clean_logs {
-        // Clean old log files (keep current day's log)
-        let current_log_path = get_log_path(app_handle)?;
-        let pattern = format!("{}/log_*.txt", app_support_dir.display());
-
-        for path in glob::glob(&pattern)? {
-            let path = path?;
-            if path != current_log_path {
-                if let Err(e) = std::fs::remove_file(&path) {
-                    tracing::warn!("Failed to remove log file {}: {}", path.display(), e);
-                } else {
-                    cleaned_items += 1;
-                    tracing::debug!("Cleaned old log file: {}", path.display());
-                }
+        // Clear the single log file (truncate to empty)
+        let log_path = get_log_path(app_handle)?;
+        if log_path.exists() {
+            if let Err(e) = std::fs::write(&log_path, "") {
+                tracing::warn!("Failed to clear log file {}: {}", log_path.display(), e);
+            } else {
+                cleaned_items += 1;
+                tracing::debug!("Cleared log file: {}", log_path.display());
             }
         }
     }

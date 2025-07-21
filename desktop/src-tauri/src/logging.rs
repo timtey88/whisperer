@@ -2,7 +2,7 @@ use chrono::Local;
 use eyre::{Context, Result};
 use std::env;
 use std::sync::Arc;
-use std::{fs::OpenOptions, path::PathBuf};
+use std::{fs::OpenOptions, path::PathBuf, io::{BufRead, BufReader, Write}};
 use tauri::{AppHandle, Manager, Wry};
 use tauri_plugin_store::Store;
 use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Layer, Registry};
@@ -16,17 +16,41 @@ pub fn get_log_path(app: &AppHandle) -> Result<PathBuf> {
         app.path().app_config_dir()?
     };
 
-    let current_datetime = Local::now();
-    let formatted_datetime = current_datetime.format("%Y-%m-%d").to_string();
     let log_filename = format!(
-        "{}_{}{}",
+        "{}{}",
         config::LOG_FILENAME_PREFIX,
-        formatted_datetime,
         config::LOG_FILENAME_SUFFIX
     );
     let log_path = config_path.join(log_filename);
 
     Ok(log_path)
+}
+
+// Maximum log file size in bytes (5MB)
+const MAX_LOG_SIZE: u64 = 5 * 1024 * 1024;
+
+fn truncate_log_if_needed(log_path: &PathBuf) -> Result<()> {
+    if !log_path.exists() {
+        return Ok(());
+    }
+
+    let metadata = std::fs::metadata(log_path)?;
+    if metadata.len() <= MAX_LOG_SIZE {
+        return Ok(());
+    }
+
+    // Read the file and keep the last 50% of content
+    let file = std::fs::File::open(log_path)?;
+    let reader = BufReader::new(file);
+    let lines: Vec<String> = reader.lines().collect::<Result<Vec<_>, std::io::Error>>()?;
+    
+    let keep_lines = lines.len() / 2; // Keep last 50% of lines
+    let kept_content = lines.into_iter().skip(lines.len() - keep_lines).collect::<Vec<_>>().join("\n");
+    
+    // Write truncated content back
+    std::fs::write(log_path, kept_content + "\n")?;
+    
+    Ok(())
 }
 
 pub fn setup_logging(app: &AppHandle, _store: Arc<Store<Wry>>) -> Result<()> {
@@ -39,6 +63,10 @@ pub fn setup_logging(app: &AppHandle, _store: Arc<Store<Wry>>) -> Result<()> {
     let file_filter = EnvFilter::new(&rust_log);
     
     let path = get_log_path(app)?;
+    
+    // Check and truncate log file if it's too large
+    truncate_log_if_needed(&path)?;
+    
     let file = OpenOptions::new()
         .create(true)
         .append(true)
