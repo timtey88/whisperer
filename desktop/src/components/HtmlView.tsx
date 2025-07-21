@@ -33,7 +33,7 @@ export default function HTMLView({ segments, file, preference, showParagraphs = 
 		return (
 			<div
 				autoCorrect="off"
-				contentEditable={true}
+				contentEditable
 				dir={preference.textAreaDirection}
 				className="html printable"
 				style={{ 

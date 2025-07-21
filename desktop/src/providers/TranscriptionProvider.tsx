@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext, useState, useEffect } from 'react'
+import { ReactNode, createContext, useContext, useEffect } from 'react'
 import { useLocalStorage } from 'usehooks-ts'
 import { listen } from '@tauri-apps/api/event'
 import { useHistory } from './HistoryProvider'
@@ -56,18 +56,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		error: undefined
 	})
 
-	// Also keep state in memory for immediate updates
-	const [memoryState, setMemoryState] = useState<TranscriptionState>(transcriptionState)
-
-	// Sync memory state with localStorage
-	useEffect(() => {
-		setMemoryState(transcriptionState)
-	}, [transcriptionState])
-
-	// Sync memory state changes back to localStorage (for segments and other updates)
-	useEffect(() => {
-		setTranscriptionState(memoryState)
-	}, [memoryState])
+	// Use transcriptionState directly - no separate memory state needed
 
 	// Set up Tauri event listeners for progress updates
 	useEffect(() => {
@@ -79,8 +68,8 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 			// Listen for transcription progress
 			progressUnlisten = await listen('transcribe_progress', (event) => {
 				const value = event.payload as number
-				if (value >= 0 && value <= 100 && memoryState.current) {
-					let phase = memoryState.current.phase
+				if (value >= 0 && value <= 100 && transcriptionState.current) {
+					let phase = transcriptionState.current.phase
 					// Update phase based on progress
 					if (value >= 10 && value < 95) {
 						phase = 'Transcribing'
@@ -98,7 +87,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				console.log('Received new segment:', payload)
 				
 				// Use functional state update to avoid stale closure
-				setMemoryState(currentState => {
+				setTranscriptionState(currentState => {
 					if (currentState.current) {
 						const existingSegments = currentState.current.segments || []
 						const updatedSegments = [...existingSegments, payload]
@@ -123,8 +112,8 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				
 				// Calculate processing duration if we have start time
 				let processingDuration: number | undefined
-				if (memoryState.current?.startTime) {
-					processingDuration = Math.round((Date.now() - memoryState.current.startTime) / 1000)
+				if (transcriptionState.current?.startTime) {
+					processingDuration = Math.round((Date.now() - transcriptionState.current.startTime) / 1000)
 				}
 				
 				// Automatically complete the transcription
@@ -134,7 +123,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 			})
 		}
 
-		if (memoryState.isActive) {
+		if (transcriptionState.isActive) {
 			setupListeners()
 		}
 
@@ -143,12 +132,12 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 			segmentUnlisten?.()
 			completionUnlisten?.()
 		}
-	}, [memoryState.isActive])
+	}, [transcriptionState.isActive])
 
 	// Check for orphaned processing entries on mount (browser refresh scenario)
 	useEffect(() => {
 		const processingEntry = getProcessingEntry()
-		if (processingEntry && !memoryState.isActive) {
+		if (processingEntry && !transcriptionState.isActive) {
 			// There's a processing entry but no active transcription - likely app was restarted
 			// Mark it as incomplete
 			updateHistoryEntry(processingEntry.id, {
@@ -171,13 +160,12 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				isCompleting: false,
 				error: undefined
 			}
-			setMemoryState(clearedState)
 			setTranscriptionState(clearedState)
 		}
 	}, [])
 
 	const updateState = (updates: Partial<TranscriptionState>) => {
-		const newState = { ...memoryState, ...updates }
+		const newState = { ...transcriptionState, ...updates }
 		
 		// Validate state before updating to prevent invalid combinations
 		const validatedState = { ...newState }
@@ -200,7 +188,6 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 			validatedState.current = null
 		}
 		
-		setMemoryState(validatedState)
 		setTranscriptionState(validatedState)
 	}
 
@@ -259,10 +246,10 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 	}
 
 	const updateProgress = (progress: number, phase: string) => {
-		if (!memoryState.current || memoryState.isCompleting) {
+		if (!transcriptionState.current || transcriptionState.isCompleting) {
 			console.log('Skipping progress update - no current transcription or completing:', { 
-				hasCurrent: !!memoryState.current, 
-				isCompleting: memoryState.isCompleting,
+				hasCurrent: !!transcriptionState.current, 
+				isCompleting: transcriptionState.isCompleting,
 				progress,
 				phase 
 			})
@@ -274,7 +261,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		// Update transcription state
 		updateState({
 			current: {
-				...memoryState.current,
+				...transcriptionState.current,
 				progress,
 				phase
 			}
@@ -293,11 +280,11 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 	}
 
 	const setSegments = (segments: any[]) => {
-		if (!memoryState.current) return
+		if (!transcriptionState.current) return
 
 		updateState({
 			current: {
-				...memoryState.current,
+				...transcriptionState.current,
 				segments
 			}
 		})
@@ -318,7 +305,6 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				isCompleting: false,
 				error: undefined
 			}
-			setMemoryState(clearedState)
 			setTranscriptionState(clearedState)
 		}
 
@@ -330,7 +316,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 			})
 
 			const processingEntry = getProcessingEntry()
-			if (processingEntry && memoryState.current) {
+			if (processingEntry && transcriptionState.current) {
 				const endTime = Date.now()
 				const duration = processingDuration || Math.round((endTime - processingEntry.startTime) / 1000)
 				
@@ -343,7 +329,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 					duration,
 					progress: 100,
 					phase: 'Completed',
-					segments: segments || memoryState.current.segments
+					segments: segments || transcriptionState.current.segments
 				})
 				
 				console.log('History entry updated successfully, clearing transcription state')
@@ -383,7 +369,6 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				isCompleting: false,
 				error
 			}
-			setMemoryState(clearedState)
 			setTranscriptionState(clearedState)
 		} catch (updateError) {
 			console.error('Failed to update failed transcription in history:', updateError)
@@ -395,7 +380,6 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				isCompleting: false,
 				error
 			}
-			setMemoryState(clearedState)
 			setTranscriptionState(clearedState)
 		}
 	}
@@ -422,7 +406,6 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				isCompleting: false,
 				error: undefined
 			}
-			setMemoryState(clearedState)
 			setTranscriptionState(clearedState)
 		} catch (updateError) {
 			console.error('Failed to update canceled transcription in history:', updateError)
@@ -434,7 +417,6 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				isCompleting: false,
 				error: undefined
 			}
-			setMemoryState(clearedState)
 			setTranscriptionState(clearedState)
 		}
 	}
@@ -448,12 +430,11 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 			isCompleting: false,
 			error: undefined
 		}
-		setMemoryState(clearedState)
 		setTranscriptionState(clearedState)
 	}
 
 	const contextValue: TranscriptionContextValue = {
-		transcription: memoryState,
+		transcription: transcriptionState,
 		startTranscription,
 		updateProgress,
 		setSegments,
