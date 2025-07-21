@@ -403,7 +403,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		})
 
 		// Update history entry with current progress - ensure it completes for critical updates
-		const processingEntry = getProcessingEntry()
+		const processingEntry = await getProcessingEntryFromStorage()
 		if (processingEntry) {
 			try {
 				await updateHistoryEntry(processingEntry.id, {

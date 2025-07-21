@@ -149,7 +149,7 @@ class HistoryStore {
 				return
 			}
 
-			const updatedSegments = [...currentSegments, segment]
+			const updatedSegments = [...currentSegments, segment].sort((a, b) => a.start - b.start)
 
 			// Update the entry with accumulated segments
 			const updatedEntry = {
