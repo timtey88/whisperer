@@ -140,9 +140,16 @@ export function viewModel() {
 	// Sync global transcription segments to local segments state for live UI updates
 	useEffect(() => {
 		if (transcription.current?.segments && transcription.current.segments.length > 0) {
+			console.log('Syncing global segments to local UI. Count:', transcription.current.segments.length)
 			setSegments(transcription.current.segments)
+		} else if (transcription.current?.segments && transcription.current.segments.length === 0) {
+			// Clear segments when transcription starts fresh
+			setSegments(null)
 		}
 	}, [transcription.current?.segments])
+
+	// Removed direct segment listener to avoid conflicts with TranscriptionProvider
+	// Now relying solely on global state sync for live UI updates
 
 
 
