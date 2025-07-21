@@ -1,6 +1,6 @@
 import { ReactNode, createContext, useContext, useEffect, useRef } from 'react'
 import { useLocalStorage } from 'usehooks-ts'
-import { listen } from '@tauri-apps/api/event'
+import { listen, emit } from '@tauri-apps/api/event'
 import { convertFileSrc } from '@tauri-apps/api/core'
 import { useHistory } from './HistoryProvider'
 
@@ -448,6 +448,11 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 			isAborting: true
 		})
 		
+		// Emit abort event to backend
+		emit('abort_transcribe').catch(error => {
+			console.error('Failed to emit abort_transcribe event:', error)
+		})
+		
 		// Immediately update history entry with canceled status to prevent timing issues
 		// This ensures the entry gets marked as canceled even if backend doesn't throw an error
 		const processingEntry = getProcessingEntry()
@@ -481,6 +486,11 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		// All checks passed, proceed with abort
 		updateState({
 			isAborting: true
+		})
+		
+		// Emit abort event to backend
+		emit('abort_transcribe').catch(error => {
+			console.error('Failed to emit abort_transcribe event:', error)
 		})
 		
 		// Immediately update history entry with canceled status to prevent timing issues

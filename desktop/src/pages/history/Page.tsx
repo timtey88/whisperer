@@ -5,7 +5,6 @@ import NavigationBar from '~/components/NavigationBar'
 import MainContent from '~/components/MainContent'
 import { useHistory } from '~/providers/HistoryProvider'
 import { useTranscription } from '~/providers/TranscriptionProvider'
-import { event } from '@tauri-apps/api'
 
 export default function HistoryPage() {
 	const { history, clearHistory } = useHistory()

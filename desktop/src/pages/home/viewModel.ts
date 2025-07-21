@@ -1,5 +1,5 @@
 import '@fontsource/roboto'
-import { event, path } from '@tauri-apps/api'
+import { path } from '@tauri-apps/api'
 import { convertFileSrc, invoke } from '@tauri-apps/api/core'
 import { emit, listen } from '@tauri-apps/api/event'
 import { basename } from '@tauri-apps/api/path'
