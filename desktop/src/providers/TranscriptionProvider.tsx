@@ -148,19 +148,23 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		}
 	}, [])
 
-	// Clear stale abort state on app startup
+	// Force clear any corrupted localStorage state on app startup
 	useEffect(() => {
-		if (transcriptionState.isAborting && !transcriptionState.isActive) {
-			console.log('Clearing stale abort state from localStorage')
-			// App was restarted while in abort state - clear it
-			const clearedState = {
+		// Nuclear option: clear any corrupted state
+		if (transcriptionState.isAborting || (transcriptionState.isActive && !transcriptionState.current)) {
+			console.log('Detected corrupted state, force clearing localStorage')
+			localStorage.removeItem('current_transcription')
+			localStorage.removeItem('transcription_history')
+			
+			// Force reset to clean state
+			const cleanState = {
 				isActive: false,
 				current: null,
 				isAborting: false,
 				isCompleting: false,
 				error: undefined
 			}
-			setTranscriptionState(clearedState)
+			setTranscriptionState(cleanState)
 		}
 	}, [])
 
