@@ -231,9 +231,8 @@ export function viewModel() {
 	}
 
 	async function onAbort() {
-		abortTranscription()
+		abortTranscription() // This now handles the event emission internally
 		abortRef.current = true
-		event.emit('abort_transcribe')
 	}
 
 	async function selectFiles() {

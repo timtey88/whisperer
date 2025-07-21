@@ -49,12 +49,8 @@ export default function HistoryPage() {
 	}
 
 	const handleCancelTranscription = async (entryId: string) => {
-		// Use the enhanced abort method which validates entry ID automatically
-		const success = abortTranscriptionByEntry(entryId)
-		if (success) {
-			// Only emit the abort event if the transcription was successfully marked for abort
-			await event.emit('abort_transcribe')
-		}
+		// Use the enhanced abort method which validates entry ID automatically and handles event emission
+		abortTranscriptionByEntry(entryId)
 	}
 
 	const showCancelConfirmation = (entryId: string, fileName: string) => {
