@@ -64,7 +64,6 @@ pub fn clean_old_files() -> Result<()> {
     Ok(())
 }
 
-
 pub fn clean_all_temp_folders() -> Result<()> {
     let temp_dir = std::env::temp_dir();
     let temp_dir = temp_dir.to_str().unwrap_or_default();
@@ -123,8 +122,8 @@ pub struct CleanupSettings {
 impl Default for CleanupSettings {
     fn default() -> Self {
         Self {
-            clean_logs: true,        // Default: clean old logs
-            clean_models: false,     // Default: preserve downloaded models
+            clean_logs: true,             // Default: clean old logs
+            clean_models: false,          // Default: preserve downloaded models
             clean_compiled_models: false, // Default: preserve compiled models
         }
     }
@@ -135,11 +134,11 @@ impl CleanupSettings {
     pub fn app_close_profile() -> Self {
         Self {
             clean_logs: true,
-            clean_models: false,         // Preserve models on normal close
+            clean_models: false,          // Preserve models on normal close
             clean_compiled_models: false, // Preserve compiled models on normal close
         }
     }
-    
+
     /// User-initiated uninstall preparation profile - cleans everything
     pub fn uninstall_profile() -> Self {
         Self {
@@ -164,7 +163,7 @@ pub fn clean_app_cache_selective() -> Result<()> {
     }
 
     let mut cleaned_items = 0;
-    
+
     // Clean WebKit cache (browser data)
     let webkit_cache = cache_dir.join("WebKit");
     if webkit_cache.exists() {
@@ -188,11 +187,11 @@ pub fn clean_app_cache_selective() -> Result<()> {
     }
 
     // Preserve E5RT cache (CoreML compilation cache) - expensive to regenerate
-    
+
     if cleaned_items > 0 {
         tracing::debug!("Cleaned {} cache items", cleaned_items);
     }
-    
+
     Ok(())
 }
 
@@ -214,15 +213,18 @@ pub fn clean_app_cache_complete() -> Result<()> {
         tracing::warn!("Failed to remove cache directory {}: {}", cache_dir.display(), e);
         return Err(e.into());
     }
-    
+
     tracing::debug!("Completely removed cache directory: {}", cache_dir.display());
     Ok(())
 }
 
 pub fn clean_app_support_configurable(app_handle: &tauri::AppHandle, settings: CleanupSettings) -> Result<()> {
     // Get the application support directory (app_config_dir)
-    let app_support_dir = app_handle.path().app_config_dir().wrap_err("Can't get app config directory")?;
-    
+    let app_support_dir = app_handle
+        .path()
+        .app_config_dir()
+        .wrap_err("Can't get app config directory")?;
+
     if !app_support_dir.exists() {
         tracing::debug!("App support directory does not exist: {}", app_support_dir.display());
         return Ok(());
@@ -237,7 +239,7 @@ pub fn clean_app_support_configurable(app_handle: &tauri::AppHandle, settings: C
         // Clean old log files (keep current day's log)
         let current_log_path = get_log_path(app_handle)?;
         let pattern = format!("{}/log_*.txt", app_support_dir.display());
-        
+
         for path in glob::glob(&pattern)? {
             let path = path?;
             if path != current_log_path {
@@ -254,7 +256,7 @@ pub fn clean_app_support_configurable(app_handle: &tauri::AppHandle, settings: C
     if settings.clean_models {
         // Clean downloaded AI models (.bin, .onnx files)
         let model_extensions = vec!["*.bin", "*.onnx"];
-        
+
         for ext in model_extensions {
             let pattern = format!("{}/{}", app_support_dir.display(), ext);
             for path in glob::glob(&pattern)? {
@@ -294,8 +296,11 @@ pub fn clean_app_support_configurable(app_handle: &tauri::AppHandle, settings: C
 
 pub fn clean_app_support_complete(app_handle: &tauri::AppHandle) -> Result<()> {
     // Get the application support directory (app_config_dir)
-    let app_support_dir = app_handle.path().app_config_dir().wrap_err("Can't get app config directory")?;
-    
+    let app_support_dir = app_handle
+        .path()
+        .app_config_dir()
+        .wrap_err("Can't get app config directory")?;
+
     if !app_support_dir.exists() {
         tracing::debug!("App support directory does not exist: {}", app_support_dir.display());
         return Ok(());
@@ -306,7 +311,7 @@ pub fn clean_app_support_complete(app_handle: &tauri::AppHandle) -> Result<()> {
         tracing::warn!("Failed to remove app support directory {}: {}", app_support_dir.display(), e);
         return Err(e.into());
     }
-    
+
     tracing::debug!("Completely removed app support directory: {}", app_support_dir.display());
     Ok(())
 }
@@ -314,14 +319,14 @@ pub fn clean_app_support_complete(app_handle: &tauri::AppHandle) -> Result<()> {
 pub fn clean_all_on_exit(app_handle: &tauri::AppHandle, cleanup_settings: Option<CleanupSettings>) -> Result<()> {
     // Always clean temp folders
     clean_all_temp_folders()?;
-    
+
     // Always clean cache selectively
     clean_app_cache_selective()?;
-    
+
     // Clean app support based on settings (use app_close_profile by default)
     let settings = cleanup_settings.unwrap_or_else(CleanupSettings::app_close_profile);
     clean_app_support_configurable(app_handle, settings)?;
-    
+
     tracing::debug!("Completed exit cleanup");
     Ok(())
 }
@@ -329,17 +334,17 @@ pub fn clean_all_on_exit(app_handle: &tauri::AppHandle, cleanup_settings: Option
 pub fn clean_for_uninstall(app_handle: &tauri::AppHandle) -> Result<()> {
     // Clean temp folders
     clean_all_temp_folders()?;
-    
+
     // Clean cache completely (including all subdirectories)
     clean_app_cache_complete()?;
-    
+
     // Clean app support completely using uninstall profile
     let settings = CleanupSettings::uninstall_profile();
     clean_app_support_configurable(app_handle, settings)?;
-    
+
     // Additional complete cleanup - remove entire Application Support directory
     clean_app_support_complete(app_handle)?;
-    
+
     tracing::debug!("Completed uninstall cleanup");
     Ok(())
 }

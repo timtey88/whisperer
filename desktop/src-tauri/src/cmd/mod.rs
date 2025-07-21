@@ -101,7 +101,7 @@ pub fn get_x86_features() -> Option<Value> {
     }
 }
 
-fn extract_zip(zip_path: &Path, extract_to: &Path) -> Result<()> {
+fn extract_zip(zip_path: &Path, extract_to: &Path, app_handle: Option<&tauri::AppHandle>) -> Result<()> {
     let file = std::fs::File::open(zip_path)?;
     let mut archive = zip::ZipArchive::new(file)?;
 
@@ -111,6 +111,13 @@ fn extract_zip(zip_path: &Path, extract_to: &Path) -> Result<()> {
         extract_to.display(),
         archive.len()
     );
+
+    // Emit extraction started event
+    if let Some(app_handle) = app_handle {
+        if let Some(window) = app_handle.get_webview_window("main") {
+            let _ = window.emit("extraction_started", archive.len());
+        }
+    }
 
     // Create the base extraction directory
     std::fs::create_dir_all(extract_to)?;
@@ -140,6 +147,21 @@ fn extract_zip(zip_path: &Path, extract_to: &Path) -> Result<()> {
             }
             let mut outfile = std::fs::File::create(&outpath)?;
             std::io::copy(&mut file, &mut outfile)?;
+        }
+
+        // Emit extraction progress event
+        if let Some(app_handle) = app_handle {
+            if let Some(window) = app_handle.get_webview_window("main") {
+                let progress = ((i + 1) as f64 / archive_len as f64) * 100.0;
+                let _ = window.emit("extraction_progress", (i + 1, archive_len, progress));
+            }
+        }
+    }
+
+    // Emit extraction completed event
+    if let Some(app_handle) = app_handle {
+        if let Some(window) = app_handle.get_webview_window("main") {
+            let _ = window.emit("extraction_completed", ());
         }
     }
 
@@ -231,7 +253,7 @@ pub async fn download_model(app_handle: tauri::AppHandle, url: String, path: Str
             std::fs::create_dir_all(&temp_extract_dir)?;
 
             // Extract the zip file to temporary directory
-            extract_zip(&download_path_buf, &temp_extract_dir)?;
+            extract_zip(&download_path_buf, &temp_extract_dir, Some(&app_handle_c))?;
 
             // Check what was actually extracted
             let entries: Vec<_> = std::fs::read_dir(&temp_extract_dir)?.collect::<Result<Vec<_>, _>>()?;
@@ -593,11 +615,11 @@ pub async fn transcribe(
         }
         Ok(transcribe_result) => {
             let transcript = transcribe_result.with_context(|| format!("options: {:?}", options))?;
-            
+
             // Emit completion event for frontend
             let _ = app_handle_c.emit("transcription_complete", &transcript);
             tracing::debug!("Emitted transcription_complete event");
-            
+
             Ok(transcript)
         }
     }
@@ -856,7 +878,6 @@ pub async fn copy_bundled_models(app_handle: tauri::AppHandle) -> Result<()> {
     Ok(())
 }
 
-
 #[tauri::command]
 pub fn is_diarization_available() -> bool {
     cfg!(feature = "diarization")
@@ -944,13 +965,13 @@ pub fn delete_model(models_folder: String, file_name: String) -> Result<()> {
 #[tauri::command]
 pub async fn prepare_for_uninstall(app_handle: tauri::AppHandle) -> Result<String> {
     tracing::info!("User initiated uninstall preparation");
-    
+
     // Run comprehensive cleanup for uninstall
     crate::cleaner::clean_for_uninstall(&app_handle)?;
-    
+
     let message = "App data cleaned successfully. You can now safely delete the application.";
     tracing::info!("Uninstall preparation completed successfully");
-    
+
     Ok(message.to_string())
 }
 
@@ -975,23 +996,23 @@ pub struct GpuInfo {
 #[tauri::command]
 pub async fn get_gpu_info() -> Result<GpuInfo> {
     tracing::debug!("Starting GPU detection");
-    
+
     // Get current build features
     let features = get_cargo_features();
-    
+
     // Enumerate GPUs using wgpu
     let mut devices = enumerate_gpu_devices().await?;
-    
+
     // Determine recommendations
     let has_discrete_gpu = devices.iter().any(|d| d.device_type == "Discrete");
     let recommended_device = find_recommended_device(&devices);
     let gpu_acceleration_available = !features.is_empty() && !devices.is_empty();
-    
+
     // Mark the recommended device
     for device in &mut devices {
         device.is_recommended = device.index == recommended_device;
     }
-    
+
     Ok(GpuInfo {
         devices,
         recommended_device,
@@ -1002,37 +1023,37 @@ pub async fn get_gpu_info() -> Result<GpuInfo> {
 }
 
 async fn enumerate_gpu_devices() -> Result<Vec<GpuDevice>> {
-    use wgpu::{Backends, Instance, DeviceType};
-    
+    use wgpu::{Backends, DeviceType, Instance};
+
     let instance = Instance::new(wgpu::InstanceDescriptor {
         backends: Backends::all(),
         dx12_shader_compiler: wgpu::Dx12Compiler::default(),
         flags: wgpu::InstanceFlags::default(),
         gles_minor_version: wgpu::Gles3MinorVersion::Automatic,
     });
-    
+
     let mut devices = Vec::new();
     let mut index = 0;
-    
+
     for adapter in instance.enumerate_adapters(Backends::all()) {
         let info = adapter.get_info();
-        
+
         let device_type = match info.device_type {
             DeviceType::IntegratedGpu => "Integrated",
-            DeviceType::DiscreteGpu => "Discrete", 
+            DeviceType::DiscreteGpu => "Discrete",
             DeviceType::VirtualGpu => "Virtual",
             DeviceType::Cpu => "CPU",
             DeviceType::Other => "Other",
         };
-        
+
         let vendor = match info.vendor {
-            0x10DE => "NVIDIA",  // NVIDIA vendor ID
-            0x1002 => "AMD",     // AMD vendor ID  
-            0x8086 => "Intel",   // Intel vendor ID
-            0x106B => "Apple",   // Apple vendor ID
+            0x10DE => "NVIDIA", // NVIDIA vendor ID
+            0x1002 => "AMD",    // AMD vendor ID
+            0x8086 => "Intel",  // Intel vendor ID
+            0x106B => "Apple",  // Apple vendor ID
             _ => "Unknown",
         };
-        
+
         devices.push(GpuDevice {
             index,
             name: info.name,
@@ -1040,10 +1061,10 @@ async fn enumerate_gpu_devices() -> Result<Vec<GpuDevice>> {
             vendor: vendor.to_string(),
             is_recommended: false, // Will be set later
         });
-        
+
         index += 1;
     }
-    
+
     tracing::debug!("Found {} GPU devices", devices.len());
     Ok(devices)
 }
@@ -1055,27 +1076,27 @@ fn find_recommended_device(devices: &[GpuDevice]) -> i32 {
     // 3. Apple Silicon GPU (unified memory, good performance)
     // 4. Other discrete GPUs
     // 5. Integrated GPUs
-    
+
     // First try to find discrete NVIDIA
     if let Some(device) = devices.iter().find(|d| d.device_type == "Discrete" && d.vendor == "NVIDIA") {
         return device.index;
     }
-    
+
     // Then discrete AMD
     if let Some(device) = devices.iter().find(|d| d.device_type == "Discrete" && d.vendor == "AMD") {
         return device.index;
     }
-    
+
     // Apple Silicon (good unified memory performance)
     if let Some(device) = devices.iter().find(|d| d.vendor == "Apple") {
         return device.index;
     }
-    
+
     // Any other discrete GPU
     if let Some(device) = devices.iter().find(|d| d.device_type == "Discrete") {
         return device.index;
     }
-    
+
     // Fallback to first device (usually index 0)
     0
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
+import { listen } from '@tauri-apps/api/event'
 import { ask } from '@tauri-apps/plugin-dialog'
 import modelsData from '~/lib/data/ggml_models.json'
 import encodersData from '~/lib/data/ggml_models_encoder.json'
@@ -21,6 +22,10 @@ interface DownloadProgress {
 	totalSize: string
 	downloadSpeed: string
 	timeRemaining: string
+	phase: 'downloading' | 'extracting' | 'completed'
+	extractionProgress?: number
+	filesExtracted?: number
+	totalFiles?: number
 }
 
 export function viewModel() {
@@ -183,58 +188,125 @@ export function viewModel() {
 				downloadedSize: '0 MB',
 				totalSize: model.file_size,
 				downloadSpeed: '0 MB',
-				timeRemaining: 'Calculating...'
+				timeRemaining: 'Calculating...',
+				phase: 'downloading'
 			}))
 			
-			const modelsFolder = await invoke<string>('get_models_folder')
-			const modelPath = `${modelsFolder}/${model.file_name}`
+			// Set up event listeners for download and extraction progress
+			let downloadUnlisten: (() => void) | undefined
+			let extractionStartedUnlisten: (() => void) | undefined  
+			let extractionProgressUnlisten: (() => void) | undefined
+			let extractionCompletedUnlisten: (() => void) | undefined
 			
-			// Simulate progress updates for now (in real implementation, this would come from the backend)
-			const progressInterval = setInterval(() => {
-				setDownloadProgress(prev => {
-					const current = prev.get(model.model)
-					if (!current || current.progress >= 100) {
-						clearInterval(progressInterval)
-						return prev
-					}
+			try {
+				// Listen for download progress
+				downloadUnlisten = await listen<[number, number]>('download_progress', (event) => {
+					const [current, total] = event.payload
+					const progress = (current / total) * 100
+					const downloadedSize = `${(current / 1024 / 1024).toFixed(1)} MB`
+					const totalSizeMB = `${(total / 1024 / 1024).toFixed(1)} MB`
 					
-					const newProgress = Math.min(current.progress + Math.random() * 10, 100)
-					const newMap = new Map(prev)
-					newMap.set(model.model, {
-						...current,
-						progress: newProgress,
-						downloadedSize: `${(newProgress * 0.01 * parseFloat(model.file_size)).toFixed(1)} MB`,
-						downloadSpeed: `${(Math.random() * 5 + 1).toFixed(1)} MB`,
-						timeRemaining: newProgress < 90 ? `${Math.max(1, Math.floor((100 - newProgress) / 10))} min` : 'Almost done...'
+					setDownloadProgress(prev => {
+						const currentProgress = prev.get(model.model)
+						if (!currentProgress) return prev
+						
+						const newMap = new Map(prev)
+						newMap.set(model.model, {
+							...currentProgress,
+							progress,
+							downloadedSize,
+							totalSize: totalSizeMB,
+							downloadSpeed: '-- MB/s', // Could calculate this based on time deltas
+							timeRemaining: progress < 90 ? 'Calculating...' : 'Almost done...',
+							phase: 'downloading'
+						})
+						return newMap
 					})
-					return newMap
 				})
-			}, 500)
-			
-			await invoke('download_model', {
-				url: model.url,
-				path: modelPath
-			})
-			
-			clearInterval(progressInterval)
-			
-			// Set final progress to 100%
-			setDownloadProgress(prev => {
-				const newMap = new Map(prev)
-				newMap.set(model.model, {
-					progress: 100,
-					downloadedSize: model.file_size,
-					totalSize: model.file_size,
-					downloadSpeed: '0 MB',
-					timeRemaining: 'Complete'
+				
+				// Listen for extraction started
+				extractionStartedUnlisten = await listen<number>('extraction_started', (event) => {
+					const totalFiles = event.payload
+					console.log('Extraction started, total files:', totalFiles)
+					
+					setDownloadProgress(prev => {
+						const currentProgress = prev.get(model.model)
+						if (!currentProgress) return prev
+						
+						const newMap = new Map(prev)
+						newMap.set(model.model, {
+							...currentProgress,
+							progress: 100, // Download completed
+							phase: 'extracting',
+							extractionProgress: 0,
+							filesExtracted: 0,
+							totalFiles,
+							timeRemaining: 'Extracting...'
+						})
+						return newMap
+					})
 				})
-				return newMap
-			})
-			
-			// Update the model status
-			setModels(prev => prev.map(m => 
-				m.model === model.model ? { ...m, isDownloaded: true } : m
-			))
+				
+				// Listen for extraction progress
+				extractionProgressUnlisten = await listen<[number, number, number]>('extraction_progress', (event) => {
+					const [filesExtracted, totalFiles, progress] = event.payload
+					console.log('Extraction progress:', filesExtracted, '/', totalFiles, `(${progress.toFixed(1)}%)`)
+					
+					setDownloadProgress(prev => {
+						const currentProgress = prev.get(model.model)
+						if (!currentProgress || currentProgress.phase !== 'extracting') return prev
+						
+						const newMap = new Map(prev)
+						newMap.set(model.model, {
+							...currentProgress,
+							extractionProgress: progress,
+							filesExtracted,
+							totalFiles,
+							timeRemaining: `Extracting ${filesExtracted}/${totalFiles}...`
+						})
+						return newMap
+					})
+				})
+				
+				// Listen for extraction completed
+				extractionCompletedUnlisten = await listen('extraction_completed', () => {
+					console.log('Extraction completed for model:', model.model)
+					
+					setDownloadProgress(prev => {
+						const currentProgress = prev.get(model.model)
+						if (!currentProgress) return prev
+						
+						const newMap = new Map(prev)
+						newMap.set(model.model, {
+							...currentProgress,
+							phase: 'completed',
+							extractionProgress: 100,
+							timeRemaining: 'Completed'
+						})
+						return newMap
+					})
+				})
+				
+				const modelsFolder = await invoke<string>('get_models_folder')
+				const modelPath = `${modelsFolder}/${model.file_name}`
+				
+				await invoke('download_model', {
+					url: model.url,
+					path: modelPath
+				})
+				
+				// Update the model status
+				setModels(prev => prev.map(m => 
+					m.model === model.model ? { ...m, isDownloaded: true } : m
+				))
+				
+			} finally {
+				// Clean up event listeners
+				downloadUnlisten?.()
+				extractionStartedUnlisten?.()
+				extractionProgressUnlisten?.()
+				extractionCompletedUnlisten?.()
+			}
 			
 		} catch (error) {
 			console.error('Failed to download model:', error)
@@ -251,7 +323,7 @@ export function viewModel() {
 					newMap.delete(model.model)
 					return newMap
 				})
-			}, 2000)
+			}, 3000) // Increased delay to show completion state
 		}
 	}
 
