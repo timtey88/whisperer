@@ -100,7 +100,10 @@ export async function resetApp() {
 		console.error(e)
 	} finally {
 		localStorage.clear()
-		location.href = '/setup'
+		// Redirect to home page instead of non-existent setup page
+		// Add a flag to show reset notification
+		localStorage.setItem('app_reset_complete', 'true')
+		location.href = '/'
 	}
 }
 

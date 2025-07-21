@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { webviewWindow } from '@tauri-apps/api';
+import { toast } from 'react-hot-toast';
 
 // Components
 import Layout from '~/components/Layout';
@@ -35,6 +36,18 @@ export default function Home() {
 
   useEffect(() => {
     showWindow();
+    
+    // Check for app reset completion and show notification
+    const resetCompleted = localStorage.getItem('app_reset_complete');
+    if (resetCompleted === 'true') {
+      // Remove the flag to prevent showing on every reload
+      localStorage.removeItem('app_reset_complete');
+      // Show success notification
+      toast.success('App has been reset successfully. All settings and data have been cleared.', {
+        duration: 5000,
+        position: 'bottom-center'
+      });
+    }
   }, []);
 
   return (
