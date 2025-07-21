@@ -66,7 +66,7 @@ export function viewModel() {
 		failTranscription,
 		cancelTranscription
 	} = useTranscription()
-	const { getHistoryEntry, getLiveSegments, getProcessingEntry } = useHistory()
+	const { getHistoryEntry, getProcessingEntry } = useHistory()
 	const preference = usePreferenceProvider()
 	const preferenceRef = useRef(preference)
 
@@ -140,39 +140,43 @@ export function viewModel() {
 
 	// Handle viewing history entries from navigation state
 	useEffect(() => {
-		const navigationState = location.state as any
-		if (navigationState?.viewHistoryEntry) {
-			const historyEntry = getHistoryEntry(navigationState.viewHistoryEntry)
-			if (historyEntry) {
-				console.log('Loading segments from history entry:', historyEntry.id)
-				
-				// Set the file info for the history entry
-				setFiles([{ name: historyEntry.fileName, path: historyEntry.filePath }])
-				
-				// Load segments based on status
-				if (historyEntry.status === 'processing') {
-					// Load live segments for ongoing transcription
-					const liveSegments = getLiveSegments(historyEntry.id) || []
-					setSegments(liveSegments.length > 0 ? liveSegments : null)
-				} else if (historyEntry.status === 'completed' && historyEntry.segments) {
-					// Load final segments for completed transcription
-					setSegments(historyEntry.segments)
+		const loadHistoryEntry = async () => {
+			const navigationState = location.state as any
+			if (navigationState?.viewHistoryEntry) {
+				const historyEntry = getHistoryEntry(navigationState.viewHistoryEntry)
+				if (historyEntry) {
+					console.log('Loading segments from history entry:', historyEntry.id)
+					
+					// Set the file info for the history entry
+					setFiles([{ name: historyEntry.fileName, path: historyEntry.filePath }])
+					
+					// Load segments from history entry (works for both processing and completed)
+					if (historyEntry.segments && historyEntry.segments.length > 0) {
+						setSegments(historyEntry.segments)
+					} else {
+						setSegments(null)
+					}
 				}
 			}
 		}
-	}, [location.state, getHistoryEntry, getLiveSegments])
+		
+		loadHistoryEntry()
+	}, [location.state, getHistoryEntry])
 
-	// Sync live segments during active transcription
+	// Sync segments during active transcription
 	useEffect(() => {
-		if (transcription.isActive) {
-			const processingEntry = getProcessingEntry()
-			if (processingEntry) {
-				const liveSegments = getLiveSegments(processingEntry.id) || []
-				console.log('Syncing live segments from history. Count:', liveSegments.length)
-				setSegments(liveSegments.length > 0 ? liveSegments : null)
+		const syncSegments = async () => {
+			if (transcription.isActive) {
+				const processingEntry = getProcessingEntry()
+				if (processingEntry) {
+					console.log('Syncing segments from history. Count:', processingEntry.segments?.length || 0)
+					setSegments(processingEntry.segments && processingEntry.segments.length > 0 ? processingEntry.segments : null)
+				}
 			}
 		}
-	}, [transcription.isActive, getProcessingEntry, getLiveSegments])
+		
+		syncSegments()
+	}, [transcription.isActive, getProcessingEntry])
 
 	// Real-time updates during transcription - poll for new segments
 	useEffect(() => {
@@ -181,12 +185,12 @@ export function viewModel() {
 		const interval = setInterval(() => {
 			const processingEntry = getProcessingEntry()
 			if (processingEntry) {
-				const liveSegments = getLiveSegments(processingEntry.id) || []
+				const segments = processingEntry.segments || []
 				setSegments(currentSegments => {
 					// Only update if segment count changed to avoid unnecessary re-renders
-					if (!currentSegments || currentSegments.length !== liveSegments.length) {
-						console.log('Real-time segment update. Count:', liveSegments.length)
-						return liveSegments.length > 0 ? liveSegments : null
+					if (!currentSegments || currentSegments.length !== segments.length) {
+						console.log('Real-time segment update. Count:', segments.length)
+						return segments.length > 0 ? segments : null
 					}
 					return currentSegments
 				})
@@ -194,7 +198,7 @@ export function viewModel() {
 		}, 500) // Poll every 500ms for real-time updates
 
 		return () => clearInterval(interval)
-	}, [transcription.isActive, getProcessingEntry, getLiveSegments])
+	}, [transcription.isActive, getProcessingEntry])
 
 	// Removed direct segment listener to avoid conflicts with TranscriptionProvider
 	// Now relying solely on global state sync for live UI updates

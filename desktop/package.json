@@ -24,6 +24,7 @@
     "@tauri-apps/plugin-store": "~2.1.0",
     "@tauri-apps/plugin-updater": "~2.0.0",
     "docx": "^9.0.3",
+    "eslint-plugin-react": "^7.37.5",
     "format-duration": "^3.0.2",
     "framer-motion": "^12.23.1",
     "lucide-react": "^0.525.0",

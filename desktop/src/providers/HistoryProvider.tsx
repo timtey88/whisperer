@@ -1,6 +1,13 @@
-import { ReactNode, createContext, useContext, useState, useEffect } from 'react'
+import { ReactNode, createContext, useContext, useState, useEffect, useRef } from 'react'
 import { historyStore } from '~/lib/historyStore'
 import { historyMigration } from '~/lib/historyMigration'
+
+// Queue item for sequential segment processing
+interface SegmentQueueItem {
+	segment: any
+	resolve: (value: void) => void
+	reject: (error: any) => void
+}
 
 // Extend the existing TranscriptionResult interface for history
 export interface HistoryEntry {
@@ -15,9 +22,8 @@ export interface HistoryEntry {
 	error?: string
 	modelPath?: string
 	useGpu?: boolean
-	// Store segments for re-opening transcripts
-	segments?: any[] // Final segments (on completion) - Will use proper Segment type later
-	liveSegments?: any[] // Real-time segments during transcription (streaming)
+	// Store segments - accumulates during processing and remains for final result
+	segments?: any[] // Segments array that builds during transcription and becomes final result
 	settings?: {
 		modelOptions?: any
 		language?: string
@@ -35,9 +41,10 @@ interface HistoryContextValue {
 	clearHistory: () => Promise<void>
 	getHistoryEntry: (id: string) => HistoryEntry | undefined
 	getProcessingEntry: () => HistoryEntry | undefined
-	// Real-time segment methods
-	addLiveSegment: (entryId: string, segment: any) => Promise<void>
-	getLiveSegments: (entryId: string) => any[] | undefined
+	// Direct storage access for critical operations (bypasses memory cache)
+	getProcessingEntryFromStorage: () => Promise<HistoryEntry | undefined>
+	// Real-time segment method - append segments to existing array
+	addSegment: (entryId: string, segment: any) => Promise<void>
 	isLoading: boolean
 	migrationStatus: 'pending' | 'success' | 'error' | null
 }
@@ -48,6 +55,10 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
 	const [history, setHistory] = useState<HistoryEntry[]>([])
 	const [isLoading, setIsLoading] = useState(true)
 	const [migrationStatus, setMigrationStatus] = useState<'pending' | 'success' | 'error' | null>(null)
+	
+	// Segment processing queue to prevent race conditions
+	const segmentQueue = useRef<Map<string, SegmentQueueItem[]>>(new Map())
+	const isProcessingQueue = useRef<Map<string, boolean>>(new Map())
 
 	// Initialize history store and handle migration
 	useEffect(() => {
@@ -141,35 +152,119 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
 	}
 
 	const getProcessingEntry = () => {
-		return history.find(entry => entry.status === 'processing')
+		const processingEntry = history.find(entry => entry.status === 'processing')
+		console.log('🔥 MEMORY DEBUG - getProcessingEntry called:', {
+			found: !!processingEntry,
+			entryId: processingEntry?.id,
+			segmentCount: processingEntry?.segments?.length || 0,
+			historyArrayLength: history.length,
+			allEntryIds: history.map(e => e.id)
+		})
+		return processingEntry
 	}
 
-	// Real-time segment methods
-	const addLiveSegment = async (entryId: string, segment: any) => {
+	// Direct storage access for critical operations - bypasses memory cache issues
+	const getProcessingEntryFromStorage = async () => {
 		try {
-			// Get current entry
-			const currentEntry = getHistoryEntry(entryId)
-			if (!currentEntry) {
-				throw new Error(`History entry with id ${entryId} not found`)
-			}
-
-			// Add segment to live segments array
-			const currentLiveSegments = currentEntry.liveSegments || []
-			const updatedLiveSegments = [...currentLiveSegments, segment]
-
-			// Update history entry with new live segment
-			await updateHistoryEntry(entryId, {
-				liveSegments: updatedLiveSegments
+			const processingEntry = await historyStore.getProcessingEntry()
+			console.log('🔥 STORAGE DEBUG - getProcessingEntryFromStorage called:', {
+				found: !!processingEntry,
+				entryId: processingEntry?.id,
+				segmentCount: processingEntry?.segments?.length || 0
 			})
+			return processingEntry
 		} catch (error) {
-			console.error('Failed to add live segment:', error)
-			throw error
+			console.error('🔥 STORAGE DEBUG - Failed to get processing entry from storage:', error)
+			return undefined
 		}
 	}
 
-	const getLiveSegments = (entryId: string) => {
-		const entry = getHistoryEntry(entryId)
-		return entry?.liveSegments || []
+	// Sequential queue processor to prevent race conditions
+	const processQueue = async (entryId: string) => {
+		// Skip if already processing this entry
+		if (isProcessingQueue.current.get(entryId)) {
+			console.log('🔥 QUEUE DEBUG - Already processing queue for entryId:', entryId)
+			return
+		}
+
+		// Mark as processing
+		isProcessingQueue.current.set(entryId, true)
+		console.log('🔥 QUEUE DEBUG - Starting queue processing for entryId:', entryId)
+
+		try {
+			// Process all queued segments for this entry
+			const queue = segmentQueue.current.get(entryId) || []
+			
+			while (queue.length > 0) {
+				const item = queue.shift()
+				if (!item) break
+
+				console.log('🔥 QUEUE DEBUG - Processing segment:', {
+					entryId,
+					remainingInQueue: queue.length,
+					segment: { start: item.segment.start, stop: item.segment.stop }
+				})
+
+				try {
+					// Process the segment using atomic storage operation
+					await historyStore.addSegmentAtomic(entryId, item.segment)
+					
+					// Refresh memory state after each segment
+					const updatedEntries = await historyStore.getEntries()
+					setHistory(updatedEntries)
+					
+					// Resolve the promise for this segment
+					item.resolve()
+					
+					console.log('🔥 QUEUE DEBUG - Segment processed successfully:', {
+						entryId,
+						currentSegmentCount: updatedEntries.find(e => e.id === entryId)?.segments?.length || 0
+					})
+				} catch (error) {
+					console.error('🔥 QUEUE DEBUG - Failed to process segment:', error)
+					item.reject(error)
+				}
+			}
+		} finally {
+			// Mark as not processing
+			isProcessingQueue.current.set(entryId, false)
+			console.log('🔥 QUEUE DEBUG - Queue processing completed for entryId:', entryId)
+		}
+	}
+
+	// Real-time segment method - queue segments for sequential processing
+	const addSegment = async (entryId: string, segment: any): Promise<void> => {
+		return new Promise((resolve, reject) => {
+			console.log('🔥 PROVIDER DEBUG - Queueing segment:', {
+				entryId,
+				segment: { start: segment.start, stop: segment.stop, text: segment.text?.substring(0, 30) + '...' }
+			})
+
+			// Initialize queue for this entry if it doesn't exist
+			if (!segmentQueue.current.has(entryId)) {
+				segmentQueue.current.set(entryId, [])
+			}
+
+			// Add segment to queue
+			const queue = segmentQueue.current.get(entryId)!
+			queue.push({ segment, resolve, reject })
+
+			console.log('🔥 PROVIDER DEBUG - Segment queued:', {
+				entryId,
+				queueLength: queue.length,
+				isCurrentlyProcessing: isProcessingQueue.current.get(entryId) || false
+			})
+
+			// Start processing the queue (if not already processing)
+			processQueue(entryId).catch(error => {
+				console.error('🔥 PROVIDER DEBUG - Queue processing failed:', error)
+				// If queue processing fails, reject all pending segments
+				while (queue.length > 0) {
+					const item = queue.shift()
+					if (item) item.reject(error)
+				}
+			})
+		})
 	}
 
 	const contextValue: HistoryContextValue = {
@@ -180,8 +275,8 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
 		clearHistory,
 		getHistoryEntry,
 		getProcessingEntry,
-		addLiveSegment,
-		getLiveSegments,
+		getProcessingEntryFromStorage,
+		addSegment,
 		isLoading,
 		migrationStatus,
 	}

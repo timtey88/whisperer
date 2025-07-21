@@ -1,4 +1,4 @@
-import { ReactNode, createContext, useContext, useEffect } from 'react'
+import { ReactNode, createContext, useContext, useEffect, useRef } from 'react'
 import { useLocalStorage } from 'usehooks-ts'
 import { listen } from '@tauri-apps/api/event'
 import { useHistory } from './HistoryProvider'
@@ -33,7 +33,7 @@ interface TranscriptionContextValue {
 		useGpu?: boolean
 		settings?: any
 	}) => Promise<string>
-	updateProgress: (progress: number, phase: string) => void
+	updateProgress: (progress: number, phase: string) => Promise<void>
 	setSegments: (segments: any[]) => void
 	abortTranscription: () => void
 	completeTranscription: (segments?: any[], processingDuration?: number) => Promise<void>
@@ -45,7 +45,7 @@ interface TranscriptionContextValue {
 const TranscriptionContext = createContext<TranscriptionContextValue | null>(null)
 
 export function TranscriptionProvider({ children }: { children: ReactNode }) {
-	const { addHistoryEntry, updateHistoryEntry, getProcessingEntry, addLiveSegment } = useHistory()
+	const { addHistoryEntry, updateHistoryEntry, getProcessingEntry, getProcessingEntryFromStorage, addSegment } = useHistory()
 	
 	// Use localStorage to persist transcription state across page navigation
 	const [transcriptionState, setTranscriptionState] = useLocalStorage<TranscriptionState>('current_transcription', {
@@ -58,15 +58,119 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 
 	// Use transcriptionState directly - no separate memory state needed
 
-	// Set up Tauri event listeners for progress updates
-	useEffect(() => {
-		let progressUnlisten: (() => void) | undefined
-		let segmentUnlisten: (() => void) | undefined
-		let completionUnlisten: (() => void) | undefined
+	// Store listener cleanup functions for proper cleanup
+	const listenerCleanupRef = useRef<{
+		progressUnlisten?: () => void
+		segmentUnlisten?: () => void  
+		completionUnlisten?: () => void
+	}>({})
 
-		const setupListeners = async () => {
+	// Store audio duration cache for progress estimation
+	const audioDurationRef = useRef<number | null>(null)
+
+	// Progress estimation based on segment timestamps since backend doesn't emit progress events
+	const estimateProgressFromSegment = async (segment: any) => {
+		if (!transcriptionState.current || transcriptionState.isCompleting) {
+			return
+		}
+
+		try {
+			// Get audio duration if not cached
+			if (!audioDurationRef.current && transcriptionState.current.filePath) {
+				audioDurationRef.current = await getAudioDuration(transcriptionState.current.filePath)
+			}
+
+			const segmentEndTime = segment.stop || segment.end || 0 // in milliseconds
+			let audioDuration = audioDurationRef.current || 0 // in milliseconds
+
+			// Dynamic estimation refinement: if segment extends beyond our estimated duration,
+			// adjust the duration estimate upward (conservative approach)
+			if (segmentEndTime > audioDuration * 0.8) {
+				const newEstimate = segmentEndTime * 1.2 // Add 20% buffer for remaining audio
+				if (newEstimate > audioDuration) {
+					audioDuration = newEstimate
+					audioDurationRef.current = newEstimate
+					console.log('🔥 PROGRESS ESTIMATION - Refined duration estimate:', {
+						oldEstimate: audioDurationRef.current,
+						newEstimate,
+						segmentEndTime
+					})
+				}
+			}
+
+			if (audioDuration > 0 && segmentEndTime > 0) {
+				// Calculate progress percentage based on segment timing
+				const rawProgress = Math.min(95, (segmentEndTime / audioDuration) * 100)
+				const estimatedProgress = Math.floor(rawProgress)
+
+				// Determine phase based on progress and segment activity
+				let phase = transcriptionState.current.phase
+				if (estimatedProgress >= 1 && phase === 'Loading Model') {
+					phase = 'Transcribing'
+				} else if (estimatedProgress >= 90) {
+					phase = 'Post-Processing'
+				}
+
+				// Only update if progress has meaningfully changed (at least 1% or phase change)
+				if (estimatedProgress > transcriptionState.current.progress || phase !== transcriptionState.current.phase) {
+					console.log('🔥 PROGRESS ESTIMATION - Updating based on segment timing:', {
+						segmentEndTime,
+						audioDuration,
+						estimatedProgress,
+						currentProgress: transcriptionState.current.progress,
+						newPhase: phase,
+						currentPhase: transcriptionState.current.phase
+					})
+					
+					await updateProgress(estimatedProgress, phase)
+				}
+			}
+		} catch (error) {
+			console.error('🔥 PROGRESS ESTIMATION - Failed to estimate progress from segment:', error)
+		}
+	}
+
+	// Get audio file duration using Web Audio API or fallback estimation
+	const getAudioDuration = async (filePath: string): Promise<number> => {
+		try {
+			// First try using HTML5 audio element for better Tauri compatibility
+			const audio = new Audio()
+			
+			const loadAudio = () => new Promise<number>((resolve, reject) => {
+				audio.onloadedmetadata = () => {
+					const durationMs = audio.duration * 1000
+					console.log('🔥 AUDIO DURATION - Detected using HTML5 Audio:', { filePath, durationMs })
+					resolve(durationMs)
+				}
+				audio.onerror = () => reject(new Error('Failed to load audio metadata'))
+				audio.src = `file://${filePath}`
+			})
+
+			const duration = await Promise.race([
+				loadAudio(),
+				new Promise<number>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+			])
+
+			return duration
+		} catch (error) {
+			console.warn('🔥 AUDIO DURATION - HTML5 Audio failed, using dynamic estimation:', error)
+			
+			// Fallback: Dynamic estimation based on segment progression
+			// Start with a conservative estimate and adjust as segments arrive
+			return 60000 // Default 60 seconds - will be refined dynamically
+		}
+	}
+
+	// Standalone function to set up listeners - called before transcription starts
+	const setupListeners = async () => {
+		console.log('🔥 LISTENER DEBUG - Setting up event listeners BEFORE transcription starts')
+		
+		// Clean up existing listeners first
+		cleanupListeners()
+
+		try {
 			// Listen for transcription progress
-			progressUnlisten = await listen('transcribe_progress', (event) => {
+			listenerCleanupRef.current.progressUnlisten = await listen('transcribe_progress', async (event) => {
 				const value = event.payload as number
 				if (value >= 0 && value <= 100 && transcriptionState.current) {
 					let phase = transcriptionState.current.phase
@@ -77,30 +181,44 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 						phase = 'Post-Processing'
 					}
 					
-					updateProgress(value, phase)
+					await updateProgress(value, phase)
 				}
 			})
 
-			// Listen for new segments - store directly in history for real-time streaming
-			segmentUnlisten = await listen<any>('new_segment', (event) => {
+			// Listen for new segments - append directly to segments array in history
+			listenerCleanupRef.current.segmentUnlisten = await listen<any>('new_segment', async (event) => {
 				const { payload } = event
-				console.log('Received new segment:', payload)
+				console.log('🔥 SEGMENT DEBUG - Received new segment event:', {
+					payload,
+					timestamp: new Date().toISOString(),
+					payloadType: typeof payload,
+					isArray: Array.isArray(payload)
+				})
 				
-				// Find the current processing entry to get the history ID
-				const processingEntry = getProcessingEntry()
+				// Find the current processing entry using storage-based method for fresh data
+				const processingEntry = await getProcessingEntryFromStorage()
 				if (processingEntry) {
-					// Store segment directly in history for real-time streaming
-					addLiveSegment(processingEntry.id, payload).catch(error => {
-						console.error('Failed to add live segment to history:', error)
+					console.log('🔥 SEGMENT DEBUG - Processing entry found from storage:', {
+						entryId: processingEntry.id,
+						currentSegmentCount: processingEntry.segments?.length || 0,
+						currentSegments: processingEntry.segments?.map(s => ({ start: s.start, stop: s.stop, text: s.text.substring(0, 30) + '...' }))
 					})
-					console.log('Stored live segment in history for entry:', processingEntry.id)
+					
+					// Append segment directly to segments array in history
+					addSegment(processingEntry.id, payload).catch(error => {
+						console.error('🔥 SEGMENT DEBUG - Failed to add segment to history:', error)
+					})
+					console.log('🔥 SEGMENT DEBUG - Initiated addSegment for entry:', processingEntry.id)
+					
+					// Estimate progress based on segment timing since backend doesn't emit progress events
+					await estimateProgressFromSegment(payload)
 				} else {
-					console.warn('No processing entry found for new segment')
+					console.warn('🔥 SEGMENT DEBUG - No processing entry found for new segment (from storage)')
 				}
 			})
 
 			// Listen for transcription completion
-			completionUnlisten = await listen<any>('transcription_complete', (event) => {
+			listenerCleanupRef.current.completionUnlisten = await listen<any>('transcription_complete', (event) => {
 				const transcript = event.payload
 				console.log('Received transcription_complete event:', transcript)
 				
@@ -115,16 +233,27 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 					console.error('Failed to auto-complete transcription from event:', error)
 				})
 			})
-		}
 
-		if (transcriptionState.isActive) {
-			setupListeners()
+			console.log('🔥 LISTENER DEBUG - All event listeners set up successfully')
+		} catch (error) {
+			console.error('🔥 LISTENER DEBUG - Failed to set up listeners:', error)
+			throw error
 		}
+	}
 
-		return () => {
-			progressUnlisten?.()
-			segmentUnlisten?.()
-			completionUnlisten?.()
+	// Function to clean up listeners
+	const cleanupListeners = () => {
+		console.log('🔥 LISTENER DEBUG - Cleaning up event listeners')
+		listenerCleanupRef.current.progressUnlisten?.()
+		listenerCleanupRef.current.segmentUnlisten?.()
+		listenerCleanupRef.current.completionUnlisten?.()
+		listenerCleanupRef.current = {}
+	}
+
+	// Clean up listeners when transcription becomes inactive  
+	useEffect(() => {
+		if (!transcriptionState.isActive) {
+			cleanupListeners()
 		}
 	}, [transcriptionState.isActive])
 
@@ -213,6 +342,9 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		}
 
 		try {
+			// Clear cached audio duration for new transcription
+			audioDurationRef.current = null
+			
 			// Add processing entry to history immediately
 			await addHistoryEntry({
 				fileName: file.fileName,
@@ -228,6 +360,10 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				settings: options?.settings
 			})
 
+			// Set up event listeners BEFORE activating transcription to catch all segments
+			console.log('🔥 TIMING DEBUG - Setting up listeners before activating transcription')
+			await setupListeners()
+
 			updateState({
 				isActive: true,
 				current: newTranscription,
@@ -236,6 +372,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				error: undefined
 			})
 
+			console.log('🔥 TIMING DEBUG - Transcription activated, listeners are ready')
 			return id
 		} catch (error) {
 			console.error('Failed to start transcription:', error)
@@ -243,7 +380,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		}
 	}
 
-	const updateProgress = (progress: number, phase: string) => {
+	const updateProgress = async (progress: number, phase: string) => {
 		if (!transcriptionState.current || transcriptionState.isCompleting) {
 			console.log('Skipping progress update - no current transcription or completing:', { 
 				hasCurrent: !!transcriptionState.current, 
@@ -265,15 +402,22 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 			}
 		})
 
-		// Update history entry with current progress (async, but don't block)
+		// Update history entry with current progress - ensure it completes for critical updates
 		const processingEntry = getProcessingEntry()
 		if (processingEntry) {
-			updateHistoryEntry(processingEntry.id, {
-				progress,
-				phase
-			}).catch(error => {
-				console.error('Failed to update progress in history:', error)
-			})
+			try {
+				await updateHistoryEntry(processingEntry.id, {
+					progress,
+					phase
+				})
+				console.log('🔥 PROGRESS SYNC - Successfully updated history entry:', {
+					entryId: processingEntry.id,
+					progress,
+					phase
+				})
+			} catch (error) {
+				console.error('🔥 PROGRESS SYNC - Failed to update progress in history:', error)
+			}
 		}
 	}
 
@@ -303,7 +447,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 
 		try {
 			// Set completing flag to prevent progress updates from overriding completion
-			console.log('Setting completion flag to prevent progress update races')
+			console.log('🔥 COMPLETION SYNC - Setting completion flag to prevent progress update races')
 			updateState({
 				isCompleting: true
 			})
@@ -313,10 +457,18 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				const endTime = Date.now()
 				const duration = processingDuration || Math.round((endTime - processingEntry.startTime) / 1000)
 				
-				console.log('Completing transcription for:', processingEntry.fileName, 'with status: completed, progress: 100')
+				console.log('🔥 COMPLETION SYNC - Completing transcription for:', processingEntry.fileName, 'with status: completed, progress: 100')
 				
-				// Copy live segments to final segments and mark as completed
-				const finalSegments = segments || processingEntry.liveSegments || []
+				// Ensure final progress is set to 100% before completion
+				if (transcriptionState.current.progress < 100) {
+					console.log('🔥 COMPLETION SYNC - Setting final progress to 100% before completion')
+					await updateProgress(100, 'Completed')
+				}
+				
+				// Use provided segments or current segments from the entry
+				const finalSegments = segments || processingEntry.segments || []
+				
+				console.log('🔥 COMPLETION SYNC - Final segments count:', finalSegments.length)
 				
 				// Wait for history update to complete before clearing state
 				await updateHistoryEntry(processingEntry.id, {
@@ -328,13 +480,13 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 					segments: finalSegments
 				})
 				
-				console.log('History entry updated successfully, clearing transcription state')
+				console.log('🔥 COMPLETION SYNC - History entry updated successfully, clearing transcription state')
 			}
 
 			// Only clear state after successful history update
 			clearState()
 		} catch (error) {
-			console.error('Failed to complete transcription:', error)
+			console.error('🔥 COMPLETION SYNC - Failed to complete transcription:', error)
 			// Still clear state but log the error for debugging
 			clearState()
 		}
@@ -342,10 +494,14 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 
 	const failTranscription = async (error: string, processingDuration?: number) => {
 		try {
+			console.log('🔥 FAILURE SYNC - Processing failure for transcription:', error)
+			
 			const processingEntry = getProcessingEntry()
 			if (processingEntry) {
 				const endTime = Date.now()
 				const duration = processingDuration || Math.round((endTime - processingEntry.startTime) / 1000)
+				
+				console.log('🔥 FAILURE SYNC - Updating history entry with failed status')
 				
 				await updateHistoryEntry(processingEntry.id, {
 					status: 'failed',
@@ -355,6 +511,8 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 					phase: 'Failed',
 					error
 				})
+				
+				console.log('🔥 FAILURE SYNC - History entry updated successfully')
 			}
 
 			// Clear both memory and localStorage state immediately
@@ -367,7 +525,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 			}
 			setTranscriptionState(clearedState)
 		} catch (updateError) {
-			console.error('Failed to update failed transcription in history:', updateError)
+			console.error('🔥 FAILURE SYNC - Failed to update failed transcription in history:', updateError)
 			// Still clear the state even if history update fails
 			const clearedState = {
 				isActive: false,
@@ -382,16 +540,23 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 
 	const cancelTranscription = async (processingDuration?: number) => {
 		try {
+			console.log('🔥 CANCEL SYNC - Processing cancellation for transcription')
+			
 			const processingEntry = getProcessingEntry()
 			if (processingEntry) {
 				const endTime = Date.now()
 				const duration = processingDuration || Math.round((endTime - processingEntry.startTime) / 1000)
 				
+				console.log('🔥 CANCEL SYNC - Updating history entry with canceled status')
+				
 				await updateHistoryEntry(processingEntry.id, {
 					status: 'canceled',
 					endTime,
-					duration
+					duration,
+					phase: 'Canceled'
 				})
+				
+				console.log('🔥 CANCEL SYNC - History entry updated successfully')
 			}
 
 			// Clear both memory and localStorage state immediately
@@ -404,7 +569,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 			}
 			setTranscriptionState(clearedState)
 		} catch (updateError) {
-			console.error('Failed to update canceled transcription in history:', updateError)
+			console.error('🔥 CANCEL SYNC - Failed to update canceled transcription in history:', updateError)
 			// Still clear the state even if history update fails
 			const clearedState = {
 				isActive: false,
