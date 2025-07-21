@@ -32,8 +32,9 @@ pub fn get_log_path(app: &AppHandle) -> Result<PathBuf> {
 pub fn setup_logging(app: &AppHandle, _store: Arc<Store<Wry>>) -> Result<()> {
     let rust_log = env::var("RUST_LOG").unwrap_or_else(|_| config::DEFAULT_LOG_DIRECTIVE.to_owned());
     
-    // Create shared filter for both console and file
-    let filter = EnvFilter::new(rust_log.clone());
+    // Create separate filter instances for console and file (EnvFilter doesn't implement Clone)
+    let console_filter = EnvFilter::new(rust_log.clone());
+    let file_filter = EnvFilter::new(rust_log.clone());
     
     let path = get_log_path(app)?;
     let file = OpenOptions::new()
@@ -48,13 +49,13 @@ pub fn setup_logging(app: &AppHandle, _store: Arc<Store<Wry>>) -> Result<()> {
                 .with_file(true)
                 .with_line_number(true)
                 .with_ansi(true)
-                .with_filter(filter.clone()),
+                .with_filter(console_filter),
         )
         .with(
             tracing_subscriber::fmt::layer()
                 .json()
                 .with_writer(file)
-                .with_filter(filter),
+                .with_filter(file_filter),
         );
 
     tracing::subscriber::set_global_default(sub)?;
