@@ -310,6 +310,8 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 					status: 'failed',
 					endTime,
 					duration,
+					progress: 0,
+					phase: 'Failed',
 					error
 				})
 			}

@@ -692,23 +692,39 @@ pub async fn load_model(
         if model_path != state.path || gpu_device != state.gpu_device || use_gpu != state.use_gpu {
             tracing::debug!("model path or gpu device changed. reloading");
             // reload
-            let context = whisperer_core::transcribe::create_context(Path::new(&model_path), gpu_device, use_gpu)?;
-            *state_guard = Some(ModelContext {
-                path: model_path.clone(),
-                handle: context,
-                gpu_device,
-                use_gpu,
-            });
+            match whisperer_core::transcribe::create_context(Path::new(&model_path), gpu_device, use_gpu) {
+                Ok(context) => {
+                    *state_guard = Some(ModelContext {
+                        path: model_path.clone(),
+                        handle: context,
+                        gpu_device,
+                        use_gpu,
+                    });
+                }
+                Err(e) => {
+                    // Clear progress bar on model loading error
+                    let _ = set_progress_bar(&app_handle, None);
+                    return Err(e);
+                }
+            }
         }
     } else {
         tracing::debug!("loading model first time");
-        let context = whisperer_core::transcribe::create_context(Path::new(&model_path), gpu_device, use_gpu)?;
-        *state_guard = Some(ModelContext {
-            path: model_path.clone(),
-            handle: context,
-            gpu_device,
-            use_gpu,
-        });
+        match whisperer_core::transcribe::create_context(Path::new(&model_path), gpu_device, use_gpu) {
+            Ok(context) => {
+                *state_guard = Some(ModelContext {
+                    path: model_path.clone(),
+                    handle: context,
+                    gpu_device,
+                    use_gpu,
+                });
+            }
+            Err(e) => {
+                // Clear progress bar on model loading error
+                let _ = set_progress_bar(&app_handle, None);
+                return Err(e);
+            }
+        }
     }
     Ok(model_path)
 }
