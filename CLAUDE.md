@@ -48,8 +48,8 @@ cargo test -- --nocapture
 cargo fmt
 cargo clippy
 
-# TypeScript linting
-bun run lint
+# TypeScript linting and error checking
+bun run build  # Comprehensive check for lint and compilation errors
 ```
 
 ### Setup & Building

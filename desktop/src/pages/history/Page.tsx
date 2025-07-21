@@ -1,12 +1,19 @@
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Layout from '~/components/Layout'
 import NavigationBar from '~/components/NavigationBar'
 import MainContent from '~/components/MainContent'
 import { useHistory } from '~/providers/HistoryProvider'
+import { useTranscription } from '~/providers/TranscriptionProvider'
+import { event } from '@tauri-apps/api'
 
 export default function HistoryPage() {
 	const { history, clearHistory } = useHistory()
+	const { transcription, abortTranscriptionByEntry } = useTranscription()
 	const navigate = useNavigate()
+	const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+	const [cancelEntryId, setCancelEntryId] = useState<string | null>(null)
+	const [cancelFileName, setCancelFileName] = useState<string>('')
 	
 	const formatDate = (timestamp: number) => {
 		return new Date(timestamp).toLocaleString()
@@ -40,6 +47,54 @@ export default function HistoryPage() {
 			default: return '?'
 		}
 	}
+
+	const handleCancelTranscription = async (entryId: string) => {
+		// Use the enhanced abort method which validates entry ID automatically
+		const success = abortTranscriptionByEntry(entryId)
+		if (success) {
+			// Only emit the abort event if the transcription was successfully marked for abort
+			await event.emit('abort_transcribe')
+		}
+	}
+
+	const showCancelConfirmation = (entryId: string, fileName: string) => {
+		setCancelEntryId(entryId)
+		setCancelFileName(fileName)
+		setShowCancelConfirm(true)
+	}
+
+	const confirmCancel = async () => {
+		if (cancelEntryId) {
+			await handleCancelTranscription(cancelEntryId)
+		}
+		setShowCancelConfirm(false)
+		setCancelEntryId(null)
+		setCancelFileName('')
+	}
+
+	const cancelConfirm = () => {
+		setShowCancelConfirm(false)
+		setCancelEntryId(null)
+		setCancelFileName('')
+	}
+
+	// Handle keyboard shortcuts for the confirmation modal
+	useEffect(() => {
+		if (!showCancelConfirm) return
+
+		const handleKeyPress = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') {
+				e.preventDefault()
+				cancelConfirm()
+			} else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+				e.preventDefault()
+				confirmCancel()
+			}
+		}
+
+		document.addEventListener('keydown', handleKeyPress)
+		return () => document.removeEventListener('keydown', handleKeyPress)
+	}, [showCancelConfirm])
 
 	if (history.length === 0) {
 		return (
@@ -134,6 +189,22 @@ export default function HistoryPage() {
 												) : (
 													<div className="loading loading-spinner loading-sm text-info"></div>
 												)}
+												{/* Cancel button for processing entries */}
+												{transcription.isActive && transcription.current?.id === entry.id ? (
+													<button 
+														onClick={() => showCancelConfirmation(entry.id, entry.fileName)}
+														disabled={transcription.isAborting}
+														className="btn btn-xs btn-outline btn-error gap-1 hover:scale-105 transition-all duration-200"
+														title={transcription.isAborting ? "Aborting..." : "Cancel transcription"}
+													>
+														<svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+															<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+														</svg>
+														{transcription.isAborting ? 'Aborting' : 'Cancel'}
+													</button>
+												) : (
+													<div className="text-xs text-base-content/40">Processing...</div>
+												)}
 											</div>
 										)}
 										
@@ -177,6 +248,39 @@ export default function HistoryPage() {
 					</div>
 				</div>
 			</MainContent>
+
+			{/* Cancel Confirmation Modal */}
+			{showCancelConfirm && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+					<div className="bg-base-100 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+						<div className="flex items-center gap-3 mb-4">
+							<div className="text-warning">
+								<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+								</svg>
+							</div>
+							<h3 className="text-lg font-bold">Cancel Transcription</h3>
+						</div>
+						<p className="mb-6 text-base-content/80">
+							Are you sure you want to cancel the transcription of &ldquo;{cancelFileName}&rdquo;? This action cannot be undone and any progress will be lost.
+						</p>
+						<div className="flex gap-3 justify-end">
+							<button 
+								onClick={cancelConfirm}
+								className="btn btn-outline"
+							>
+								Keep Transcribing
+							</button>
+							<button 
+								onClick={confirmCancel}
+								className="btn btn-error"
+							>
+								Cancel Transcription
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 		</Layout>
 	)
 }

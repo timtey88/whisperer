@@ -1,6 +1,7 @@
 import { ReactNode, createContext, useContext, useEffect, useRef } from 'react'
 import { useLocalStorage } from 'usehooks-ts'
 import { listen } from '@tauri-apps/api/event'
+import { convertFileSrc } from '@tauri-apps/api/core'
 import { useHistory } from './HistoryProvider'
 
 export interface CurrentTranscription {
@@ -36,6 +37,7 @@ interface TranscriptionContextValue {
 	updateProgress: (progress: number, phase: string) => Promise<void>
 	setSegments: (segments: any[]) => void
 	abortTranscription: () => void
+	abortTranscriptionByEntry: (entryId?: string) => boolean
 	completeTranscription: (segments?: any[], processingDuration?: number) => Promise<void>
 	failTranscription: (error: string, processingDuration?: number) => Promise<void>
 	cancelTranscription: (processingDuration?: number) => Promise<void>
@@ -149,7 +151,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 					resolve(durationMs)
 				}
 				audio.onerror = () => reject(new Error('Failed to load audio metadata'))
-				audio.src = `file://${filePath}`
+				audio.src = convertFileSrc(filePath)
 			})
 
 			const duration = await Promise.race([
@@ -212,8 +214,8 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 					// })
 					
 					// We await the segment addition to prevent race conditions with the progress update that follows.
-					await addSegment(processingEntry.id, payload).catch(error => {
-						// console.error('🔥 SEGMENT DEBUG - Failed to add segment to history:', error)
+					await addSegment(processingEntry.id, payload).catch(_error => {
+						// console.error('🔥 SEGMENT DEBUG - Failed to add segment to history:', _error)
 					})
 					// console.log('🔥 SEGMENT DEBUG - Initiated addSegment for entry:', processingEntry.id)
 					
@@ -445,6 +447,53 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		updateState({
 			isAborting: true
 		})
+		
+		// Immediately update history entry with canceled status to prevent timing issues
+		// This ensures the entry gets marked as canceled even if backend doesn't throw an error
+		const processingEntry = getProcessingEntry()
+		if (processingEntry) {
+			const cancelDuration = Math.round((Date.now() - processingEntry.startTime) / 1000)
+			cancelTranscription(cancelDuration).catch(error => {
+				console.error('Failed to update canceled transcription in history immediately:', error)
+			})
+		}
+	}
+
+	// Enhanced abort function that can be called from anywhere with optional entry validation
+	const abortTranscriptionByEntry = (entryId?: string) => {
+		const currentState = stateRef.current
+		
+		// If entry ID is provided, validate it matches current transcription
+		if (entryId && currentState.current && currentState.current.id !== entryId) {
+			console.warn('Cannot abort - entry ID mismatch:', { 
+				providedId: entryId, 
+				currentId: currentState.current?.id 
+			})
+			return false
+		}
+		
+		// If no active transcription, cannot abort
+		if (!currentState.isActive || !currentState.current) {
+			console.warn('Cannot abort - no active transcription')
+			return false
+		}
+		
+		// All checks passed, proceed with abort
+		updateState({
+			isAborting: true
+		})
+		
+		// Immediately update history entry with canceled status to prevent timing issues
+		// This ensures the entry gets marked as canceled even if backend doesn't throw an error
+		const processingEntry = getProcessingEntry()
+		if (processingEntry) {
+			const cancelDuration = Math.round((Date.now() - processingEntry.startTime) / 1000)
+			cancelTranscription(cancelDuration).catch(error => {
+				console.error('Failed to update canceled transcription in history immediately:', error)
+			})
+		}
+		
+		return true
 	}
 
 	const completeTranscription = async (segments?: any[], processingDuration?: number) => {
@@ -600,6 +649,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		updateProgress,
 		setSegments,
 		abortTranscription,
+		abortTranscriptionByEntry,
 		completeTranscription,
 		failTranscription,
 		cancelTranscription,
