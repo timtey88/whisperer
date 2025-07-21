@@ -182,10 +182,10 @@ export default function HistoryPage() {
 					<div className="space-y-3">
 						{history.map((entry) => (
 							<div key={entry.id} className="bg-base-200 rounded-lg p-4">
-								<div className="flex items-center justify-between">
-									<div className="flex items-center gap-3 flex-1 min-w-0">
-										{/* Status Badge */}
-										<span className={`badge badge-sm ${
+								<div className="flex items-center gap-4">
+									{/* Status Badge - Fixed Width */}
+									<div className="flex-shrink-0">
+										<span className={`badge badge-sm min-w-[80px] justify-center ${
 											entry.status === 'completed' ? 'badge-success' :
 											entry.status === 'failed' ? 'badge-error' :
 											entry.status === 'processing' ? 'badge-info' :
@@ -194,49 +194,49 @@ export default function HistoryPage() {
 										}`}>
 											{entry.status}
 										</span>
-										
-										{/* File Info */}
-										<div className="flex-1 min-w-0">
-											<p className="font-medium truncate">{entry.fileName}</p>
-											<p className="text-sm text-base-content/60">
-												{entry.status === 'processing' ? (
-													<span>
-														Started {formatDate(entry.timestamp)}
-														{entry.phase && <span> • {entry.phase}</span>}
-													</span>
-												) : (
-													<span>
-														{formatDate(entry.timestamp)} • {formatDuration(entry.duration)} • 
-														{getModelName(entry.modelPath)} • {getGpuStatus(entry.useGpu)} • 
-														{getLanguage(entry.settings)}
-													</span>
-												)}
-											</p>
-										</div>
 									</div>
 									
-									{/* Progress for processing entries */}
+									{/* File Info - Flexible */}
+									<div className="flex-1 min-w-0">
+										<p className="font-medium truncate">{entry.fileName}</p>
+										<p className="text-sm text-base-content/60">
+											{entry.status === 'processing' ? (
+												<span>
+													Started {formatDate(entry.timestamp)}
+													{entry.phase && <span> • {entry.phase}</span>}
+												</span>
+											) : (
+												<span>
+													{formatDate(entry.timestamp)} • {formatDuration(entry.duration)} • 
+													{getModelName(entry.modelPath)} • {getGpuStatus(entry.useGpu)} • 
+													{getLanguage(entry.settings)}
+												</span>
+											)}
+										</p>
+									</div>
+									
+									{/* Progress for processing entries - Fixed Width */}
 									{entry.status === 'processing' && (
-										<div className="flex items-center gap-2 mr-2">
+										<div className="flex items-center gap-2 flex-shrink-0 w-20">
 											{entry.progress !== undefined ? (
 												<>
-													<div className="text-xs text-base-content/60">
+													<div className="text-xs text-base-content/60 w-8">
 														{entry.progress}%
 													</div>
 													<progress 
-														className="progress progress-info w-16" 
+														className="progress progress-info w-12" 
 														value={entry.progress} 
 														max="100"
 													></progress>
 												</>
 											) : (
-												<div className="loading loading-spinner loading-sm text-info"></div>
+												<div className="loading loading-spinner loading-sm text-info mx-auto"></div>
 											)}
 										</div>
 									)}
 									
-									{/* Action Buttons */}
-									<div className="flex items-center gap-2">
+									{/* Action Buttons - Fixed Width */}
+									<div className="flex items-center gap-2 flex-shrink-0">
 										{/* Cancel button for active processing entries */}
 										{entry.status === 'processing' && transcription.isActive && transcription.current?.id === entry.id && (
 											<button 
