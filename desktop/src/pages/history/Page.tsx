@@ -215,22 +215,42 @@ export default function HistoryPage() {
 										</p>
 									</div>
 									
-									{/* Progress for processing entries - Fixed Width */}
-									{entry.status === 'processing' && (
-										<div className="flex items-center gap-2 flex-shrink-0 w-20">
-											{entry.progress !== undefined ? (
-												<>
-													<div className="text-xs text-base-content/60 w-8">
-														{entry.progress}%
-													</div>
-													<progress 
-														className="progress progress-info w-12" 
-														value={entry.progress} 
-														max="100"
-													></progress>
-												</>
+									{/* Progress for processing and canceled entries - Fixed Width */}
+									{(entry.status === 'processing' || entry.status === 'canceled') && (
+										<div className="flex items-center gap-2 flex-shrink-0 w-24">
+											{entry.status === 'processing' ? (
+												entry.progress !== undefined ? (
+													<>
+														<div className="text-xs text-base-content/60 w-8">
+															{entry.progress}%
+														</div>
+														<progress 
+															className="progress progress-info w-12" 
+															value={entry.progress} 
+															max="100"
+														></progress>
+													</>
+												) : (
+													<div className="loading loading-spinner loading-sm text-info mx-auto"></div>
+												)
 											) : (
-												<div className="loading loading-spinner loading-sm text-info mx-auto"></div>
+												// Canceled entries
+												entry.progress !== undefined ? (
+													<>
+														<div className="text-xs text-warning text-center w-full">
+															Canceled at {entry.progress}%
+														</div>
+														<progress 
+															className="progress progress-warning w-12" 
+															value={entry.progress} 
+															max="100"
+														></progress>
+													</>
+												) : (
+													<div className="text-xs text-warning text-center w-full">
+														Canceled
+													</div>
+												)
 											)}
 										</div>
 									)}
@@ -253,7 +273,7 @@ export default function HistoryPage() {
 										)}
 										
 										{/* View button with eye icon */}
-										{(entry.status === 'processing' || entry.status === 'completed') && (
+										{(entry.status === 'processing' || entry.status === 'completed' || entry.status === 'canceled') && (
 											<button 
 												onClick={() => navigate('/', { 
 													state: { 
@@ -261,8 +281,10 @@ export default function HistoryPage() {
 														fileName: entry.fileName 
 													} 
 												})}
-												className="btn btn-xs btn-primary hover:scale-105 transition-all duration-200"
-												title="View transcription"
+												className={`btn btn-xs hover:scale-105 transition-all duration-200 ${
+													entry.status === 'canceled' ? 'btn-warning' : 'btn-primary'
+												}`}
+												title={entry.status === 'canceled' ? 'View partial transcription' : 'View transcription'}
 											>
 												<svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
