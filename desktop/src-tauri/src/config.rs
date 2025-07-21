@@ -1,6 +1,6 @@
 pub const LOG_FILENAME_PREFIX: &str = "log";
 pub const LOG_FILENAME_SUFFIX: &str = ".txt";
-pub const DEFAULT_LOG_DIRECTIVE: &str = "whisperer=INFO,whisperer_core=INFO,whisper_rs=ERROR";
+pub const DEFAULT_LOG_DIRECTIVE: &str = "whisperer=DEBUG,whisperer_core=DEBUG,whisper_rs=ERROR";
 pub const STORE_FILENAME: &str = "app_config.json";
 // Diarization
 pub const SEGMENT_MODEL_FILENAME: &str = "segmentation-3.0.onnx";

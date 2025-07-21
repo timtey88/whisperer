@@ -32,9 +32,11 @@ pub fn get_log_path(app: &AppHandle) -> Result<PathBuf> {
 pub fn setup_logging(app: &AppHandle, _store: Arc<Store<Wry>>) -> Result<()> {
     let rust_log = env::var("RUST_LOG").unwrap_or_else(|_| config::DEFAULT_LOG_DIRECTIVE.to_owned());
     
-    // Create separate filter instances for console and file (EnvFilter doesn't implement Clone)
-    let console_filter = EnvFilter::new(rust_log.clone());
-    let file_filter = EnvFilter::new(rust_log.clone());
+    // Create separate filter instances for console and file
+    // Console: ERROR only to keep terminal clean for production
+    let console_filter = EnvFilter::new("ERROR");
+    // File: Comprehensive logging for debugging
+    let file_filter = EnvFilter::new(&rust_log);
     
     let path = get_log_path(app)?;
     let file = OpenOptions::new()

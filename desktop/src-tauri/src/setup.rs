@@ -86,8 +86,8 @@ pub fn setup(app: &App) -> Result<(), Box<dyn std::error::Error>> {
     });
 
     // Log essential app info
-    tracing::debug!("Whisperer v{} ({})", app.package_info().version, env!("COMMIT_HASH"));
-    tracing::debug!(
+    tracing::info!("Whisperer v{} ({})", app.package_info().version, env!("COMMIT_HASH"));
+    tracing::info!(
         "Features: {} | Arch: {}",
         crate::cmd::get_cargo_features().join(", "),
         std::env::consts::ARCH
@@ -107,7 +107,7 @@ pub fn setup(app: &App) -> Result<(), Box<dyn std::error::Error>> {
 
     let app_handle = app.app_handle().clone();
     if is_cli_detected() {
-        tracing::debug!("CLI mode");
+        tracing::info!("CLI mode");
         tauri::async_runtime::spawn(async move {
             cli::run(&app_handle).await.map_err(|e| eyre!("{:?}", e)).log_error();
         });
