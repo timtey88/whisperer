@@ -64,10 +64,16 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		setMemoryState(transcriptionState)
 	}, [transcriptionState])
 
+	// Sync memory state changes back to localStorage (for segments and other updates)
+	useEffect(() => {
+		setTranscriptionState(memoryState)
+	}, [memoryState])
+
 	// Set up Tauri event listeners for progress updates
 	useEffect(() => {
 		let progressUnlisten: (() => void) | undefined
 		let segmentUnlisten: (() => void) | undefined
+		let completionUnlisten: (() => void) | undefined
 
 		const setupListeners = async () => {
 			// Listen for transcription progress
@@ -98,19 +104,32 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 						const updatedSegments = [...existingSegments, payload]
 						console.log('Accumulating segments. Total:', updatedSegments.length)
 						
-						const newState = {
+						return {
 							...currentState,
 							current: {
 								...currentState.current,
 								segments: updatedSegments
 							}
 						}
-						
-						// Also update localStorage
-						setTranscriptionState(newState)
-						return newState
 					}
 					return currentState
+				})
+			})
+
+			// Listen for transcription completion
+			completionUnlisten = await listen<any>('transcription_complete', (event) => {
+				const transcript = event.payload
+				console.log('Received transcription_complete event:', transcript)
+				
+				// Calculate processing duration if we have start time
+				let processingDuration: number | undefined
+				if (memoryState.current?.startTime) {
+					processingDuration = Math.round((Date.now() - memoryState.current.startTime) / 1000)
+				}
+				
+				// Automatically complete the transcription
+				completeTranscription(transcript.segments, processingDuration).catch(error => {
+					console.error('Failed to auto-complete transcription from event:', error)
 				})
 			})
 		}
@@ -122,6 +141,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		return () => {
 			progressUnlisten?.()
 			segmentUnlisten?.()
+			completionUnlisten?.()
 		}
 	}, [memoryState.isActive])
 

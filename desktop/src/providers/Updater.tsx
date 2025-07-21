@@ -54,7 +54,9 @@ export function UpdaterProvider({ children }: { children: React.ReactNode }) {
 					setUpdate(newUpdate)
 				}
 			} catch (error) {
-				console.error(error)
+				console.warn('Could not check for updates:', error)
+				// Silently fail - updater errors shouldn't disrupt user experience
+				setAvailableUpdate(false)
 			}
 		}
 		checkForUpdates()

@@ -496,11 +496,16 @@ Original error: ${errorString}`
 • The audio file contains spoken content
 • The audio volume is sufficient
 • The file is not corrupted`
-				} else if (errorString.includes('failed to load model')) {
-					userFriendlyError = `Model loading failed. Please check if:
-• The model file exists and is not corrupted
-• You have sufficient memory available
-• Try restarting the application`
+				} else if (errorString.includes('failed to load model') || errorString.includes('not all tensors loaded')) {
+					userFriendlyError = `Model is corrupted or incomplete. To fix this:
+• Go to the Models page in the app
+• Re-download the corrupted model
+• Try transcription again
+
+If this persists:
+• Check available disk space
+• Restart the application
+• Contact support if the issue continues`
 				}
 				
 				const transcriptionResult = {
