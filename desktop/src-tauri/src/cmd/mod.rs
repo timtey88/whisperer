@@ -595,7 +595,7 @@ pub async fn transcribe(
             let transcript = transcribe_result.with_context(|| format!("options: {:?}", options))?;
             
             // Emit completion event for frontend
-            let _ = app_handle_c.emit_all("transcription_complete", &transcript);
+            let _ = app_handle_c.emit("transcription_complete", &transcript);
             tracing::debug!("Emitted transcription_complete event");
             
             Ok(transcript)
