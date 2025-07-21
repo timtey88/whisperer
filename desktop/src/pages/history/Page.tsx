@@ -7,12 +7,17 @@ import { useHistory } from '~/providers/HistoryProvider'
 import { useTranscription } from '~/providers/TranscriptionProvider'
 
 export default function HistoryPage() {
-	const { history, clearHistory } = useHistory()
+	const { history, clearHistory, removeHistoryEntry } = useHistory()
 	const { transcription, abortTranscriptionByEntry } = useTranscription()
 	const navigate = useNavigate()
 	const [showCancelConfirm, setShowCancelConfirm] = useState(false)
 	const [cancelEntryId, setCancelEntryId] = useState<string | null>(null)
 	const [cancelFileName, setCancelFileName] = useState<string>('')
+	
+	// Delete confirmation states
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+	const [deleteEntryId, setDeleteEntryId] = useState<string | null>(null)
+	const [deleteFileName, setDeleteFileName] = useState<string>('')
 	
 	const formatDate = (timestamp: number) => {
 		return new Date(timestamp).toLocaleString()
@@ -73,23 +78,53 @@ export default function HistoryPage() {
 		setCancelFileName('')
 	}
 
-	// Handle keyboard shortcuts for the confirmation modal
+	// Delete functionality
+	const showDeleteConfirmation = (entryId: string, fileName: string) => {
+		setDeleteEntryId(entryId)
+		setDeleteFileName(fileName)
+		setShowDeleteConfirm(true)
+	}
+
+	const handleDeleteEntry = async () => {
+		if (deleteEntryId) {
+			await removeHistoryEntry(deleteEntryId)
+		}
+		setShowDeleteConfirm(false)
+		setDeleteEntryId(null)
+		setDeleteFileName('')
+	}
+
+	const cancelDelete = () => {
+		setShowDeleteConfirm(false)
+		setDeleteEntryId(null)
+		setDeleteFileName('')
+	}
+
+	// Handle keyboard shortcuts for confirmation modals
 	useEffect(() => {
-		if (!showCancelConfirm) return
+		if (!showCancelConfirm && !showDeleteConfirm) return
 
 		const handleKeyPress = (e: KeyboardEvent) => {
 			if (e.key === 'Escape') {
 				e.preventDefault()
-				cancelConfirm()
+				if (showCancelConfirm) {
+					cancelConfirm()
+				} else if (showDeleteConfirm) {
+					cancelDelete()
+				}
 			} else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
 				e.preventDefault()
-				confirmCancel()
+				if (showCancelConfirm) {
+					confirmCancel()
+				} else if (showDeleteConfirm) {
+					handleDeleteEntry()
+				}
 			}
 		}
 
 		document.addEventListener('keydown', handleKeyPress)
 		return () => document.removeEventListener('keydown', handleKeyPress)
-	}, [showCancelConfirm])
+	}, [showCancelConfirm, showDeleteConfirm])
 
 	if (history.length === 0) {
 		return (
@@ -217,6 +252,20 @@ export default function HistoryPage() {
 												View
 											</button>
 										)}
+										
+										{/* Delete button for all entries except currently processing */}
+										{!(entry.status === 'processing' && transcription.isActive && transcription.current?.id === entry.id) && (
+											<button 
+												onClick={() => showDeleteConfirmation(entry.id, entry.fileName)}
+												className="btn btn-xs btn-outline btn-error hover:scale-105 transition-all duration-200"
+												title="Delete entry"
+											>
+												<svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+												</svg>
+											</button>
+										)}
+										
 										<span className={`badge badge-sm ${
 											entry.status === 'completed' ? 'badge-success' :
 											entry.status === 'failed' ? 'badge-error' :
@@ -271,6 +320,39 @@ export default function HistoryPage() {
 								className="btn btn-error"
 							>
 								Cancel Transcription
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Delete Confirmation Modal */}
+			{showDeleteConfirm && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+					<div className="bg-base-100 rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+						<div className="flex items-center gap-3 mb-4">
+							<div className="text-error">
+								<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+								</svg>
+							</div>
+							<h3 className="text-lg font-bold">Delete Entry</h3>
+						</div>
+						<p className="mb-6 text-base-content/80">
+							Are you sure you want to delete &ldquo;{deleteFileName}&rdquo; from your history? This action cannot be undone.
+						</p>
+						<div className="flex gap-3 justify-end">
+							<button 
+								onClick={cancelDelete}
+								className="btn btn-outline"
+							>
+								Cancel
+							</button>
+							<button 
+								onClick={handleDeleteEntry}
+								className="btn btn-error"
+							>
+								Delete
 							</button>
 						</div>
 					</div>
