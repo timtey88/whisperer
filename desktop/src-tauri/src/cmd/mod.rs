@@ -563,7 +563,6 @@ pub async fn transcribe(
     // allow abort transcription
     let app_handle_c = app_handle.clone();
     app_handle.listen("abort_transcribe", move |_| {
-        tracing::info!("🚫 CANCELLATION: User requested transcription cancellation - whisper errors below are EXPECTED");
         let _ = set_progress_bar(&app_handle_c, None);
         abort_atomic_c.store(true, Ordering::Relaxed);
     });
@@ -619,9 +618,7 @@ pub async fn transcribe(
     
     match unwind_result {
         Err(error) => {
-            if was_cancelled {
-                tracing::info!("✅ CANCELLATION: Transcription successfully cancelled by user");
-            } else {
+            if !was_cancelled {
                 tracing::error!("💥 Transcription crashed unexpectedly: {:?}", error);
             }
             bail!("transcribe crash: {:?}", error)
@@ -629,11 +626,6 @@ pub async fn transcribe(
         Ok(transcribe_result) => {
             match transcribe_result {
                 Ok(transcript) => {
-                    if was_cancelled {
-                        // This shouldn't happen normally, but just in case
-                        tracing::warn!("⚠️ Transcription completed despite cancellation request");
-                    }
-                    
                     // Emit completion event for frontend
                     let _ = app_handle_c.emit("transcription_complete", &transcript);
                     tracing::debug!("Emitted transcription_complete event");
@@ -641,9 +633,7 @@ pub async fn transcribe(
                     Ok(transcript)
                 }
                 Err(err) => {
-                    if was_cancelled {
-                        tracing::info!("✅ CANCELLATION: Transcription successfully cancelled by user (whisper errors above are EXPECTED)");
-                    } else {
+                    if !was_cancelled {
                         tracing::error!("❌ Transcription failed with error: {}", err);
                     }
                     Err(err).with_context(|| format!("options: {:?}", options))

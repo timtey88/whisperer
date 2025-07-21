@@ -310,19 +310,16 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 	
 			// Rule: isAborting should be false when isActive is false
 			if (!validatedState.isActive && validatedState.isAborting) {
-				// console.log('Clearing isAborting flag because transcription is not active')
 				validatedState.isAborting = false
 			}
 	
 			// Rule: isCompleting should be false when isActive is false
 			if (!validatedState.isActive && validatedState.isCompleting) {
-				// console.log('Clearing isCompleting flag because transcription is not active')
 				validatedState.isCompleting = false
 			}
 	
 			// Rule: current should be null when isActive is false
 			if (!validatedState.isActive && validatedState.current) {
-				// console.log('Clearing current transcription because isActive is false')
 				validatedState.current = null
 			}
 	
@@ -602,14 +599,10 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 
 	const cancelTranscription = async (processingDuration?: number) => {
 		try {
-			// console.log('🔥 CANCEL SYNC - Processing cancellation for transcription')
-			
 			const processingEntry = getProcessingEntry()
 			if (processingEntry) {
 				const endTime = Date.now()
 				const duration = processingDuration || Math.round((endTime - processingEntry.startTime) / 1000)
-				
-				// console.log('🔥 CANCEL SYNC - Updating history entry with canceled status')
 				
 				await updateHistoryEntry(processingEntry.id, {
 					status: 'canceled',
@@ -617,8 +610,6 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 					duration,
 					phase: 'Canceled'
 				})
-				
-				// console.log('🔥 CANCEL SYNC - History entry updated successfully')
 			}
 
 			// Clear both memory and localStorage state immediately
