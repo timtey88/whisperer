@@ -558,6 +558,7 @@ pub async fn transcribe(
     };
     let abort_atomic = Arc::new(AtomicBool::new(false));
     let abort_atomic_c = abort_atomic.clone();
+    let abort_atomic_check = abort_atomic.clone(); // Clone for status checking
 
     // allow abort transcription
     let app_handle_c = app_handle.clone();
@@ -614,7 +615,7 @@ pub async fn transcribe(
     let _ = set_progress_bar(&app_handle_c, None);
     
     // Check if cancellation was requested to provide appropriate logging
-    let was_cancelled = abort_atomic.load(Ordering::Relaxed);
+    let was_cancelled = abort_atomic_check.load(Ordering::Relaxed);
     
     match unwind_result {
         Err(error) => {
