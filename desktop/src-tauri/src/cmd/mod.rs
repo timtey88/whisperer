@@ -179,9 +179,10 @@ pub async fn download_model(app_handle: tauri::AppHandle, url: String, path: Str
 
     let app_handle_c = app_handle.clone();
 
-    // allow abort transcription
+    // allow abort download
     let app_handle_d = app_handle_c.clone();
     app_handle.listen("abort_download", move |_| {
+        tracing::info!("🚫 Model download cancellation requested by user");
         set_progress_bar(&app_handle_d, None).log_error();
         abort_atomic_c.store(true, Ordering::Relaxed);
     });
@@ -417,16 +418,17 @@ pub fn get_ffmpeg_path() -> String {
 #[tauri::command]
 pub async fn download_file(app_handle: tauri::AppHandle, url: String, path: String) -> Result<()> {
     let mut downloader = whisperer_core::downloader::Downloader::new();
-    tracing::debug!("Download model invoked! with path {}", path);
+    tracing::debug!("Download file invoked! with path {}", path);
 
     let abort_atomic = Arc::new(AtomicBool::new(false));
     let abort_atomic_c = abort_atomic.clone();
 
     let app_handle_c = app_handle.clone();
 
-    // allow abort transcription
+    // allow abort download
     let app_handle_d = app_handle_c.clone();
     app_handle.listen("abort_download", move |_| {
+        tracing::info!("🚫 File download cancellation requested by user");
         set_progress_bar(&app_handle_d, None).log_error();
         abort_atomic_c.store(true, Ordering::Relaxed);
     });
@@ -560,6 +562,7 @@ pub async fn transcribe(
     // allow abort transcription
     let app_handle_c = app_handle.clone();
     app_handle.listen("abort_transcribe", move |_| {
+        tracing::info!("🚫 Transcription cancellation requested by user - whisper errors below are expected");
         let _ = set_progress_bar(&app_handle_c, None);
         abort_atomic_c.store(true, Ordering::Relaxed);
     });
@@ -609,18 +612,42 @@ pub async fn transcribe(
     }));
 
     let _ = set_progress_bar(&app_handle_c, None);
+    
+    // Check if cancellation was requested to provide appropriate logging
+    let was_cancelled = abort_atomic.load(Ordering::Relaxed);
+    
     match unwind_result {
         Err(error) => {
+            if was_cancelled {
+                tracing::info!("✅ Transcription successfully cancelled by user");
+            } else {
+                tracing::error!("💥 Transcription crashed unexpectedly: {:?}", error);
+            }
             bail!("transcribe crash: {:?}", error)
         }
         Ok(transcribe_result) => {
-            let transcript = transcribe_result.with_context(|| format!("options: {:?}", options))?;
+            match transcribe_result {
+                Ok(transcript) => {
+                    if was_cancelled {
+                        // This shouldn't happen normally, but just in case
+                        tracing::warn!("⚠️ Transcription completed despite cancellation request");
+                    }
+                    
+                    // Emit completion event for frontend
+                    let _ = app_handle_c.emit("transcription_complete", &transcript);
+                    tracing::debug!("Emitted transcription_complete event");
 
-            // Emit completion event for frontend
-            let _ = app_handle_c.emit("transcription_complete", &transcript);
-            tracing::debug!("Emitted transcription_complete event");
-
-            Ok(transcript)
+                    Ok(transcript)
+                }
+                Err(err) => {
+                    if was_cancelled {
+                        tracing::info!("✅ Transcription successfully cancelled by user (whisper errors above are expected)");
+                    } else {
+                        tracing::error!("❌ Transcription failed with error: {}", err);
+                    }
+                    Err(err).with_context(|| format!("options: {:?}", options))
+                }
+            }
         }
     }
 }
