@@ -21,6 +21,7 @@ import { getX86Features } from '~/lib/x86Features'
 import { ErrorModalContext } from '~/providers/ErrorModal'
 import { useFilesContext } from '~/providers/FilesProvider'
 import { useTranscription } from '~/providers/TranscriptionProvider'
+import { useHistory } from '~/providers/HistoryProvider'
 import { ModelOptions, usePreferenceProvider } from '~/providers/Preference'
 import { UpdaterContext } from '~/providers/Updater'
 
@@ -60,12 +61,12 @@ export function viewModel() {
 	const { 
 		transcription, 
 		startTranscription, 
-		setSegments: setGlobalSegments,
 		abortTranscription,
 		completeTranscription,
 		failTranscription,
 		cancelTranscription
 	} = useTranscription()
+	const { getHistoryEntry, getLiveSegments, getProcessingEntry } = useHistory()
 	const preference = usePreferenceProvider()
 	const preferenceRef = useRef(preference)
 
@@ -137,16 +138,63 @@ export function viewModel() {
 		preferenceRef.current = preference
 	}, [preference])
 
-	// Sync global transcription segments to local segments state for live UI updates
+	// Handle viewing history entries from navigation state
 	useEffect(() => {
-		if (transcription.current?.segments && transcription.current.segments.length > 0) {
-			console.log('Syncing global segments to local UI. Count:', transcription.current.segments.length)
-			setSegments(transcription.current.segments)
-		} else if (transcription.current?.segments && transcription.current.segments.length === 0) {
-			// Clear segments when transcription starts fresh
-			setSegments(null)
+		const navigationState = location.state as any
+		if (navigationState?.viewHistoryEntry) {
+			const historyEntry = getHistoryEntry(navigationState.viewHistoryEntry)
+			if (historyEntry) {
+				console.log('Loading segments from history entry:', historyEntry.id)
+				
+				// Set the file info for the history entry
+				setFiles([{ name: historyEntry.fileName, path: historyEntry.filePath }])
+				
+				// Load segments based on status
+				if (historyEntry.status === 'processing') {
+					// Load live segments for ongoing transcription
+					const liveSegments = getLiveSegments(historyEntry.id) || []
+					setSegments(liveSegments.length > 0 ? liveSegments : null)
+				} else if (historyEntry.status === 'completed' && historyEntry.segments) {
+					// Load final segments for completed transcription
+					setSegments(historyEntry.segments)
+				}
+			}
 		}
-	}, [transcription.current?.segments])
+	}, [location.state, getHistoryEntry, getLiveSegments])
+
+	// Sync live segments during active transcription
+	useEffect(() => {
+		if (transcription.isActive) {
+			const processingEntry = getProcessingEntry()
+			if (processingEntry) {
+				const liveSegments = getLiveSegments(processingEntry.id) || []
+				console.log('Syncing live segments from history. Count:', liveSegments.length)
+				setSegments(liveSegments.length > 0 ? liveSegments : null)
+			}
+		}
+	}, [transcription.isActive, getProcessingEntry, getLiveSegments])
+
+	// Real-time updates during transcription - poll for new segments
+	useEffect(() => {
+		if (!transcription.isActive) return
+		
+		const interval = setInterval(() => {
+			const processingEntry = getProcessingEntry()
+			if (processingEntry) {
+				const liveSegments = getLiveSegments(processingEntry.id) || []
+				setSegments(currentSegments => {
+					// Only update if segment count changed to avoid unnecessary re-renders
+					if (!currentSegments || currentSegments.length !== liveSegments.length) {
+						console.log('Real-time segment update. Count:', liveSegments.length)
+						return liveSegments.length > 0 ? liveSegments : null
+					}
+					return currentSegments
+				})
+			}
+		}, 500) // Poll every 500ms for real-time updates
+
+		return () => clearInterval(interval)
+	}, [transcription.isActive, getProcessingEntry, getLiveSegments])
 
 	// Removed direct segment listener to avoid conflicts with TranscriptionProvider
 	// Now relying solely on global state sync for live UI updates
@@ -485,7 +533,7 @@ If this persists:
 			console.info(`Transcribe took ${processingDuration} seconds.`)
 
 			setSegments(res.segments)
-			setGlobalSegments(res.segments)
+			// Note: segments are now automatically stored in history by TranscriptionProvider
 			
 			// Set successful transcription result for local display
 			const transcriptionEndTime = Date.now()

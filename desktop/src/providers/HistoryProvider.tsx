@@ -16,7 +16,8 @@ export interface HistoryEntry {
 	modelPath?: string
 	useGpu?: boolean
 	// Store segments for re-opening transcripts
-	segments?: any[] // Will use proper Segment type later
+	segments?: any[] // Final segments (on completion) - Will use proper Segment type later
+	liveSegments?: any[] // Real-time segments during transcription (streaming)
 	settings?: {
 		modelOptions?: any
 		language?: string
@@ -34,6 +35,9 @@ interface HistoryContextValue {
 	clearHistory: () => Promise<void>
 	getHistoryEntry: (id: string) => HistoryEntry | undefined
 	getProcessingEntry: () => HistoryEntry | undefined
+	// Real-time segment methods
+	addLiveSegment: (entryId: string, segment: any) => Promise<void>
+	getLiveSegments: (entryId: string) => any[] | undefined
 	isLoading: boolean
 	migrationStatus: 'pending' | 'success' | 'error' | null
 }
@@ -140,6 +144,34 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
 		return history.find(entry => entry.status === 'processing')
 	}
 
+	// Real-time segment methods
+	const addLiveSegment = async (entryId: string, segment: any) => {
+		try {
+			// Get current entry
+			const currentEntry = getHistoryEntry(entryId)
+			if (!currentEntry) {
+				throw new Error(`History entry with id ${entryId} not found`)
+			}
+
+			// Add segment to live segments array
+			const currentLiveSegments = currentEntry.liveSegments || []
+			const updatedLiveSegments = [...currentLiveSegments, segment]
+
+			// Update history entry with new live segment
+			await updateHistoryEntry(entryId, {
+				liveSegments: updatedLiveSegments
+			})
+		} catch (error) {
+			console.error('Failed to add live segment:', error)
+			throw error
+		}
+	}
+
+	const getLiveSegments = (entryId: string) => {
+		const entry = getHistoryEntry(entryId)
+		return entry?.liveSegments || []
+	}
+
 	const contextValue: HistoryContextValue = {
 		history,
 		addHistoryEntry,
@@ -148,6 +180,8 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
 		clearHistory,
 		getHistoryEntry,
 		getProcessingEntry,
+		addLiveSegment,
+		getLiveSegments,
 		isLoading,
 		migrationStatus,
 	}

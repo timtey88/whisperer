@@ -15,7 +15,7 @@ export interface CurrentTranscription {
 	settings?: {
 		modelOptions?: any
 	}
-	segments?: any[]
+	// Note: segments are now stored in history, not here
 }
 
 interface TranscriptionState {
@@ -45,7 +45,7 @@ interface TranscriptionContextValue {
 const TranscriptionContext = createContext<TranscriptionContextValue | null>(null)
 
 export function TranscriptionProvider({ children }: { children: ReactNode }) {
-	const { addHistoryEntry, updateHistoryEntry, getProcessingEntry } = useHistory()
+	const { addHistoryEntry, updateHistoryEntry, getProcessingEntry, addLiveSegment } = useHistory()
 	
 	// Use localStorage to persist transcription state across page navigation
 	const [transcriptionState, setTranscriptionState] = useLocalStorage<TranscriptionState>('current_transcription', {
@@ -81,28 +81,22 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				}
 			})
 
-			// Listen for new segments
+			// Listen for new segments - store directly in history for real-time streaming
 			segmentUnlisten = await listen<any>('new_segment', (event) => {
 				const { payload } = event
 				console.log('Received new segment:', payload)
 				
-				// Use functional state update to avoid stale closure
-				setTranscriptionState(currentState => {
-					if (currentState.current) {
-						const existingSegments = currentState.current.segments || []
-						const updatedSegments = [...existingSegments, payload]
-						console.log('Accumulating segments. Total:', updatedSegments.length)
-						
-						return {
-							...currentState,
-							current: {
-								...currentState.current,
-								segments: updatedSegments
-							}
-						}
-					}
-					return currentState
-				})
+				// Find the current processing entry to get the history ID
+				const processingEntry = getProcessingEntry()
+				if (processingEntry) {
+					// Store segment directly in history for real-time streaming
+					addLiveSegment(processingEntry.id, payload).catch(error => {
+						console.error('Failed to add live segment to history:', error)
+					})
+					console.log('Stored live segment in history for entry:', processingEntry.id)
+				} else {
+					console.warn('No processing entry found for new segment')
+				}
 			})
 
 			// Listen for transcription completion
@@ -283,15 +277,10 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		}
 	}
 
-	const setSegments = (segments: any[]) => {
-		if (!transcriptionState.current) return
-
-		updateState({
-			current: {
-				...transcriptionState.current,
-				segments
-			}
-		})
+	const setSegments = (_segments: any[]) => {
+		// Legacy method - segments are now stored in history automatically
+		// This method is kept for compatibility but is a no-op
+		console.log('setSegments called - segments are now stored in history automatically')
 	}
 
 	const abortTranscription = () => {
@@ -326,6 +315,9 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				
 				console.log('Completing transcription for:', processingEntry.fileName, 'with status: completed, progress: 100')
 				
+				// Copy live segments to final segments and mark as completed
+				const finalSegments = segments || processingEntry.liveSegments || []
+				
 				// Wait for history update to complete before clearing state
 				await updateHistoryEntry(processingEntry.id, {
 					status: 'completed',
@@ -333,7 +325,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 					duration,
 					progress: 100,
 					phase: 'Completed',
-					segments: segments || transcriptionState.current.segments
+					segments: finalSegments
 				})
 				
 				console.log('History entry updated successfully, clearing transcription state')

@@ -134,13 +134,22 @@ export default function HistoryPage() {
 												) : (
 													<div className="loading loading-spinner loading-sm text-info"></div>
 												)}
-												<button 
-													onClick={() => navigate('/')}
-													className="btn btn-xs btn-primary"
-												>
-													View
-												</button>
 											</div>
+										)}
+										
+										{/* View button for all entries (processing, completed, etc.) */}
+										{(entry.status === 'processing' || entry.status === 'completed') && (
+											<button 
+												onClick={() => navigate('/', { 
+													state: { 
+														viewHistoryEntry: entry.id,
+														fileName: entry.fileName 
+													} 
+												})}
+												className="btn btn-xs btn-primary"
+											>
+												View
+											</button>
 										)}
 										<span className={`badge badge-sm ${
 											entry.status === 'completed' ? 'badge-success' :
