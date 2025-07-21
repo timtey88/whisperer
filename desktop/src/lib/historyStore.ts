@@ -114,11 +114,11 @@ class HistoryStore {
 		if (!this.store) throw new Error('Store not initialized')
 
 		try {
-			console.log('🔥 STORAGE DEBUG - Starting addSegmentAtomic:', {
-				entryId,
-				newSegment: { start: segment.start, stop: segment.stop, text: segment.text?.substring(0, 30) + '...' },
-				timestamp: new Date().toISOString()
-			})
+			// console.log('🔥 STORAGE DEBUG - Starting addSegmentAtomic:', {
+			// 	entryId,
+			// 	newSegment: { start: segment.start, stop: segment.stop, text: segment.text?.substring(0, 30) + '...' },
+			// 	timestamp: new Date().toISOString()
+			// })
 
 			// Read latest data directly from storage (not memory cache)
 			const entries = await this.getEntries()
@@ -132,20 +132,20 @@ class HistoryStore {
 			const currentEntry = entries[entryIndex]
 			const currentSegments = currentEntry.segments || []
 			
-			console.log('🔥 STORAGE DEBUG - Current state before adding:', {
-				currentSegmentCount: currentSegments.length,
-				currentSegments: currentSegments.map(s => ({ start: s.start, stop: s.stop, text: s.text?.substring(0, 30) + '...' })),
-				newSegmentStart: segment.start,
-				newSegmentStop: segment.stop
-			})
+			// console.log('🔥 STORAGE DEBUG - Current state before adding:', {
+			// 	currentSegmentCount: currentSegments.length,
+			// 	currentSegments: currentSegments.map(s => ({ start: s.start, stop: s.stop, text: s.text?.substring(0, 30) + '...' })),
+			// 	newSegmentStart: segment.start,
+			// 	newSegmentStop: segment.stop
+			// })
 
 			// Check for duplicate segment (same start/stop times)
 			const isDuplicate = currentSegments.some(s => s.start === segment.start && s.stop === segment.stop)
 			if (isDuplicate) {
-				console.log('🔥 STORAGE DEBUG - Duplicate segment detected, skipping:', {
-					start: segment.start,
-					stop: segment.stop
-				})
+				// console.log('🔥 STORAGE DEBUG - Duplicate segment detected, skipping:', {
+				// 	start: segment.start,
+				// 	stop: segment.stop
+				// })
 				return
 			}
 
@@ -164,11 +164,11 @@ class HistoryStore {
 			// Write back to storage atomically
 			await this.setEntries(updatedEntries)
 			
-			console.log('🔥 STORAGE DEBUG - Successfully added segment:', {
-				previousCount: currentSegments.length,
-				newCount: updatedSegments.length,
-				addedSegment: { start: segment.start, stop: segment.stop, text: segment.text?.substring(0, 30) + '...' }
-			})
+			// console.log('🔥 STORAGE DEBUG - Successfully added segment:', {
+			// 	previousCount: currentSegments.length,
+			// 	newCount: updatedSegments.length,
+			// 	addedSegment: { start: segment.start, stop: segment.stop, text: segment.text?.substring(0, 30) + '...' }
+			// })
 		} catch (error) {
 			console.error('🔥 STORAGE DEBUG - Failed to add segment atomically:', error)
 			throw error

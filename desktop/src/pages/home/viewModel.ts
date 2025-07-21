@@ -145,7 +145,7 @@ export function viewModel() {
 			if (navigationState?.viewHistoryEntry) {
 				const historyEntry = getHistoryEntry(navigationState.viewHistoryEntry)
 				if (historyEntry) {
-					console.log('Loading segments from history entry:', historyEntry.id)
+					// console.log('Loading segments from history entry:', historyEntry.id)
 					
 					// Set the file info for the history entry
 					setFiles([{ name: historyEntry.fileName, path: historyEntry.filePath }])
@@ -169,7 +169,7 @@ export function viewModel() {
 			if (transcription.isActive) {
 				const processingEntry = getProcessingEntry()
 				if (processingEntry) {
-					console.log('Syncing segments from history. Count:', processingEntry.segments?.length || 0)
+					// console.log('Syncing segments from history. Count:', processingEntry.segments?.length || 0)
 					setSegments(processingEntry.segments && processingEntry.segments.length > 0 ? processingEntry.segments : null)
 				}
 			}
@@ -189,7 +189,7 @@ export function viewModel() {
 				setSegments(currentSegments => {
 					// Only update if segment count changed to avoid unnecessary re-renders
 					if (!currentSegments || currentSegments.length !== segments.length) {
-						console.log('Real-time segment update. Count:', segments.length)
+						// console.log('Real-time segment update. Count:', segments.length)
 						return segments.length > 0 ? segments : null
 					}
 					return currentSegments
@@ -267,7 +267,7 @@ export function viewModel() {
 			const filtered = entries.filter((e) => e.name?.endsWith('.bin'))
 			if (filtered.length === 0) {
 				// No models found - user needs to manually download models
-				console.log('No models found. Please download a model manually from settings.')
+				// console.log('No models found. Please download a model manually from settings.')
 				setHasModels(false)
 			} else {
 				// Models found - update state
