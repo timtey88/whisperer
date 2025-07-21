@@ -69,7 +69,13 @@ export function viewModel() {
 	const listenersRef = useRef<UnlistenFn[]>([])
 
 	async function askAndReset() {
-		const yes = await ask('Are you sure you want to reset all settings? This action cannot be undone.', { kind: 'info' })
+		const yes = await ask(
+			'This will reset the app to its initial state for troubleshooting:\n\n• All app settings and preferences will be cleared\n• Downloaded models will be removed\n• Transcription history will be deleted\n• The app will restart at the home page\n\nSystem files, logs, and cache will remain untouched.\nThis action cannot be undone.\n\nAre you sure you want to reset the app?',
+			{ 
+				title: 'Confirm App Reset',
+				kind: 'warning' 
+			}
+		)
 		if (yes) {
 			resetApp()
 		}
