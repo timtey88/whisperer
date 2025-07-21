@@ -30,40 +30,36 @@ pub fn get_log_path(app: &AppHandle) -> Result<PathBuf> {
 }
 
 pub fn setup_logging(app: &AppHandle, _store: Arc<Store<Wry>>) -> Result<()> {
-    let sub = Registry::default().with(
-        tracing_subscriber::fmt::layer()
-            .with_file(true)
-            .with_line_number(true)
-            .with_ansi(true)
-            .with_filter(EnvFilter::from_default_env()),
-    );
-
-    // if store
-    //     .get("prefs_log_to_file")
-    //     .unwrap_or(Value::Bool(false))
-    //     .as_bool()
-    //     .unwrap_or_default()
-
-    // Enable logs by default. TODO: remove?
     let rust_log = env::var("RUST_LOG").unwrap_or_else(|_| config::DEFAULT_LOG_DIRECTIVE.to_owned());
-
+    
+    // Create shared filter for both console and file
+    let filter = EnvFilter::new(rust_log.clone());
+    
     let path = get_log_path(app)?;
     let file = OpenOptions::new()
         .create(true)
         .append(true)
         .open(path.clone())
         .context(format!("failed to open file at {}", path.display()))?;
-    tracing::subscriber::set_global_default(
-        sub.with(
+
+    let sub = Registry::default()
+        .with(
+            tracing_subscriber::fmt::layer()
+                .with_file(true)
+                .with_line_number(true)
+                .with_ansi(true)
+                .with_filter(filter.clone()),
+        )
+        .with(
             tracing_subscriber::fmt::layer()
                 .json()
                 .with_writer(file)
-                .with_filter(EnvFilter::new(rust_log.clone())),
-        ),
-    )?;
+                .with_filter(filter),
+        );
 
-    tracing::debug!("LEVEL {}", rust_log);
-    tracing::debug!("Setup logging to file at {}", path.display());
-    // tracing::subscriber::set_global_default(sub)?;
+    tracing::subscriber::set_global_default(sub)?;
+
+    tracing::info!("Logging initialized - Level: {}", rust_log);
+    tracing::info!("Log file: {}", path.display());
     Ok(())
 }

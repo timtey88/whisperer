@@ -443,15 +443,20 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		// console.log('setSegments called - segments are now stored in history automatically')
 	}
 
+	// Shared function to emit abort event - prevents duplicates
+	const emitAbortEvent = () => {
+		emit('abort_transcribe').catch(error => {
+			console.error('Failed to emit abort_transcribe event:', error)
+		})
+	}
+
 	const abortTranscription = () => {
 		updateState({
 			isAborting: true
 		})
 		
 		// Emit abort event to backend
-		emit('abort_transcribe').catch(error => {
-			console.error('Failed to emit abort_transcribe event:', error)
-		})
+		emitAbortEvent()
 		
 		// Immediately update history entry with canceled status to prevent timing issues
 		// This ensures the entry gets marked as canceled even if backend doesn't throw an error
@@ -489,9 +494,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		})
 		
 		// Emit abort event to backend
-		emit('abort_transcribe').catch(error => {
-			console.error('Failed to emit abort_transcribe event:', error)
-		})
+		emitAbortEvent()
 		
 		// Immediately update history entry with canceled status to prevent timing issues
 		// This ensures the entry gets marked as canceled even if backend doesn't throw an error
