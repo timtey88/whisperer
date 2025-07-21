@@ -56,6 +56,11 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		error: undefined
 	})
 
+	const stateRef = useRef(transcriptionState)
+	useEffect(() => {
+		stateRef.current = transcriptionState
+	}, [transcriptionState])
+
 	// Use transcriptionState directly - no separate memory state needed
 
 	// Store listener cleanup functions for proper cleanup
@@ -70,14 +75,15 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 
 	// Progress estimation based on segment timestamps since backend doesn't emit progress events
 	const estimateProgressFromSegment = async (segment: any) => {
-		if (!transcriptionState.current || transcriptionState.isCompleting) {
+		const currentState = stateRef.current
+		if (!currentState.current || currentState.isCompleting) {
 			return
 		}
 
 		try {
 			// Get audio duration if not cached
-			if (!audioDurationRef.current && transcriptionState.current.filePath) {
-				audioDurationRef.current = await getAudioDuration(transcriptionState.current.filePath)
+			if (!audioDurationRef.current && currentState.current.filePath) {
+				audioDurationRef.current = await getAudioDuration(currentState.current.filePath)
 			}
 
 			const segmentEndTime = segment.stop || segment.end || 0 // in milliseconds
@@ -104,7 +110,7 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				const estimatedProgress = Math.floor(rawProgress)
 
 				// Determine phase based on progress and segment activity
-				let phase = transcriptionState.current.phase
+				let phase = currentState.current.phase
 				if (estimatedProgress >= 1 && phase === 'Loading Model') {
 					phase = 'Transcribing'
 				} else if (estimatedProgress >= 90) {
@@ -112,14 +118,14 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				}
 
 				// Only update if progress has meaningfully changed (at least 1% or phase change)
-				if (estimatedProgress > transcriptionState.current.progress || phase !== transcriptionState.current.phase) {
+				if (estimatedProgress > currentState.current.progress || phase !== currentState.current.phase) {
 					console.log('🔥 PROGRESS ESTIMATION - Updating based on segment timing:', {
 						segmentEndTime,
 						audioDuration,
 						estimatedProgress,
-						currentProgress: transcriptionState.current.progress,
+						currentProgress: currentState.current.progress,
 						newPhase: phase,
-						currentPhase: transcriptionState.current.phase
+						currentPhase: currentState.current.phase
 					})
 					
 					await updateProgress(estimatedProgress, phase)
@@ -172,8 +178,9 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 			// Listen for transcription progress
 			listenerCleanupRef.current.progressUnlisten = await listen('transcribe_progress', async (event) => {
 				const value = event.payload as number
-				if (value >= 0 && value <= 100 && transcriptionState.current) {
-					let phase = transcriptionState.current.phase
+				const currentState = stateRef.current
+				if (value >= 0 && value <= 100 && currentState.current) {
+					let phase = currentState.current.phase
 					// Update phase based on progress
 					if (value >= 10 && value < 95) {
 						phase = 'Transcribing'
@@ -204,8 +211,8 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 						currentSegments: processingEntry.segments?.map(s => ({ start: s.start, stop: s.stop, text: s.text.substring(0, 30) + '...' }))
 					})
 					
-					// Append segment directly to segments array in history
-					addSegment(processingEntry.id, payload).catch(error => {
+					// We await the segment addition to prevent race conditions with the progress update that follows.
+					await addSegment(processingEntry.id, payload).catch(error => {
 						console.error('🔥 SEGMENT DEBUG - Failed to add segment to history:', error)
 					})
 					console.log('🔥 SEGMENT DEBUG - Initiated addSegment for entry:', processingEntry.id)
@@ -222,10 +229,11 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 				const transcript = event.payload
 				console.log('Received transcription_complete event:', transcript)
 				
+				const currentState = stateRef.current
 				// Calculate processing duration if we have start time
 				let processingDuration: number | undefined
-				if (transcriptionState.current?.startTime) {
-					processingDuration = Math.round((Date.now() - transcriptionState.current.startTime) / 1000)
+				if (currentState.current?.startTime) {
+					processingDuration = Math.round((Date.now() - currentState.current.startTime) / 1000)
 				}
 				
 				// Automatically complete the transcription
@@ -383,28 +391,32 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 	}
 
 	const updateProgress = async (progress: number, phase: string) => {
-		if (!transcriptionState.current || transcriptionState.isCompleting) {
-			console.log('Skipping progress update - no current transcription or completing:', { 
-				hasCurrent: !!transcriptionState.current, 
-				isCompleting: transcriptionState.isCompleting,
-				progress,
-				phase 
-			})
-			return
-		}
+		// Use functional setState to get the latest state and prevent race conditions
+		setTranscriptionState(prevState => {
+			if (!prevState.current || prevState.isCompleting) {
+				console.log('Skipping progress update - no current transcription or completing:', { 
+					hasCurrent: !!prevState.current, 
+					isCompleting: prevState.isCompleting,
+					progress,
+					phase 
+				})
+				return prevState // Return previous state without changes
+			}
 
-		console.log('Updating progress:', { progress, phase })
+			console.log('Updating progress:', { progress, phase })
 
-		// Update transcription state
-		updateState({
-			current: {
-				...transcriptionState.current,
-				progress,
-				phase
+			// Return the new state
+			return {
+				...prevState,
+				current: {
+					...prevState.current,
+					progress,
+					phase
+				}
 			}
 		})
 
-		// Update history entry with current progress - ensure it completes for critical updates
+		// Now, update the history entry. This part is outside the state update to keep it clean.
 		const processingEntry = await getProcessingEntryFromStorage()
 		if (processingEntry) {
 			try {
