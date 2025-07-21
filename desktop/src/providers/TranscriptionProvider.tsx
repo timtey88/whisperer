@@ -292,30 +292,32 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 	}, [])
 
 	const updateState = (updates: Partial<TranscriptionState>) => {
-		const newState = { ...transcriptionState, ...updates }
-		
-		// Validate state before updating to prevent invalid combinations
-		const validatedState = { ...newState }
-		
-		// Rule: isAborting should be false when isActive is false
-		if (!validatedState.isActive && validatedState.isAborting) {
-			console.log('Clearing isAborting flag because transcription is not active')
-			validatedState.isAborting = false
-		}
-		
-		// Rule: isCompleting should be false when isActive is false  
-		if (!validatedState.isActive && validatedState.isCompleting) {
-			console.log('Clearing isCompleting flag because transcription is not active')
-			validatedState.isCompleting = false
-		}
-		
-		// Rule: current should be null when isActive is false
-		if (!validatedState.isActive && validatedState.current) {
-			console.log('Clearing current transcription because isActive is false')
-			validatedState.current = null
-		}
-		
-		setTranscriptionState(validatedState)
+		setTranscriptionState(prevState => {
+			const newState = { ...prevState, ...updates }
+	
+			// Validate state before updating to prevent invalid combinations
+			const validatedState = { ...newState }
+	
+			// Rule: isAborting should be false when isActive is false
+			if (!validatedState.isActive && validatedState.isAborting) {
+				console.log('Clearing isAborting flag because transcription is not active')
+				validatedState.isAborting = false
+			}
+	
+			// Rule: isCompleting should be false when isActive is false
+			if (!validatedState.isActive && validatedState.isCompleting) {
+				console.log('Clearing isCompleting flag because transcription is not active')
+				validatedState.isCompleting = false
+			}
+	
+			// Rule: current should be null when isActive is false
+			if (!validatedState.isActive && validatedState.current) {
+				console.log('Clearing current transcription because isActive is false')
+				validatedState.current = null
+			}
+	
+			return validatedState
+		})
 	}
 
 	const startTranscription = async (
@@ -435,42 +437,28 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 
 	const completeTranscription = async (segments?: any[], processingDuration?: number) => {
 		const clearState = () => {
-			const clearedState = {
+			setTranscriptionState({
 				isActive: false,
 				current: null,
 				isAborting: false,
 				isCompleting: false,
 				error: undefined
-			}
-			setTranscriptionState(clearedState)
+			})
 		}
 
-		try {
-			// Set completing flag to prevent progress updates from overriding completion
-			console.log('🔥 COMPLETION SYNC - Setting completion flag to prevent progress update races')
-			updateState({
-				isCompleting: true
-			})
+		// Set isCompleting flag immediately to prevent other updates
+		updateState({ isCompleting: true })
 
-			const processingEntry = getProcessingEntry()
-			if (processingEntry && transcriptionState.current) {
+		try {
+			const processingEntry = await getProcessingEntryFromStorage()
+
+			if (processingEntry) {
 				const endTime = Date.now()
 				const duration = processingDuration || Math.round((endTime - processingEntry.startTime) / 1000)
-				
-				console.log('🔥 COMPLETION SYNC - Completing transcription for:', processingEntry.fileName, 'with status: completed, progress: 100')
-				
-				// Ensure final progress is set to 100% before completion
-				if (transcriptionState.current.progress < 100) {
-					console.log('🔥 COMPLETION SYNC - Setting final progress to 100% before completion')
-					await updateProgress(100, 'Completed')
-				}
-				
-				// Use provided segments or current segments from the entry
 				const finalSegments = segments || processingEntry.segments || []
-				
-				console.log('🔥 COMPLETION SYNC - Final segments count:', finalSegments.length)
-				
-				// Wait for history update to complete before clearing state
+
+				console.log('🔥 COMPLETION SYNC - Completing transcription for:', processingEntry.fileName)
+
 				await updateHistoryEntry(processingEntry.id, {
 					status: 'completed',
 					endTime,
@@ -480,14 +468,14 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 					segments: finalSegments
 				})
 				
-				console.log('🔥 COMPLETION SYNC - History entry updated successfully, clearing transcription state')
+				console.log('🔥 COMPLETION SYNC - History entry updated successfully.')
+			} else {
+				console.warn('🔥 COMPLETION SYNC - No processing entry found to complete.')
 			}
-
-			// Only clear state after successful history update
-			clearState()
 		} catch (error) {
 			console.error('🔥 COMPLETION SYNC - Failed to complete transcription:', error)
-			// Still clear state but log the error for debugging
+		} finally {
+			// Always clear the state
 			clearState()
 		}
 	}
