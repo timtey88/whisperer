@@ -410,9 +410,56 @@ export function viewModel() {
 		}
 
 		const modelPath = preferenceRef.current.modelPath
+		
+		// First, try to load the model - handle this error separately
 		try {
 			await invoke('load_model', { modelPath, gpuDevice: preferenceRef.current.gpuDevice, useGpu: preferenceRef.current.useGpu })
+		} catch (modelError) {
+			console.error('Model loading failed:', modelError)
+			const errorString = String(modelError)
+			const transcriptionEndTime = Date.now()
+			const processingDuration = Math.round((transcriptionEndTime - processStartTime) / 1000)
 			
+			// Immediately fail the transcription with specific model error
+			let userFriendlyError: string
+			if (errorString.includes('not all tensors loaded') || errorString.includes('failed to load model')) {
+				userFriendlyError = `Model is corrupted or incomplete. To fix this:
+• Go to the Models page in the app
+• Re-download the corrupted model
+• Try transcription again
+
+If this persists:
+• Check available disk space
+• Restart the application
+• Contact support if the issue continues`
+			} else {
+				userFriendlyError = `Model loading failed: ${errorString}`
+			}
+			
+			const transcriptionResult = {
+				fileName,
+				status: 'failed' as const,
+				duration: processingDuration,
+				startTime: transcriptionEndTime - (processingDuration * 1000),
+				endTime: transcriptionEndTime,
+				error: userFriendlyError,
+				modelPath: modelPath || undefined,
+				useGpu: preferenceRef.current.useGpu || undefined
+			}
+			setTranscriptionResult(transcriptionResult)
+			setShowTranscriptionResult(true)
+			
+			// Fail global transcription (this will update history and clear abort state)
+			failTranscription(userFriendlyError, processingDuration).catch(error => {
+				console.error('Failed to update failed transcription in history:', error)
+			})
+			
+			stopKeepAwake()
+			return
+		}
+
+		// Model loaded successfully, now proceed with transcription
+		try {
 			const options = {
 				path,
 				...preferenceRef.current.modelOptions,

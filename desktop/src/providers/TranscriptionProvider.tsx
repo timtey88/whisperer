@@ -159,10 +159,49 @@ export function TranscriptionProvider({ children }: { children: ReactNode }) {
 		}
 	}, [])
 
+	// Clear stale abort state on app startup
+	useEffect(() => {
+		if (transcriptionState.isAborting && !transcriptionState.isActive) {
+			console.log('Clearing stale abort state from localStorage')
+			// App was restarted while in abort state - clear it
+			const clearedState = {
+				isActive: false,
+				current: null,
+				isAborting: false,
+				isCompleting: false,
+				error: undefined
+			}
+			setMemoryState(clearedState)
+			setTranscriptionState(clearedState)
+		}
+	}, [])
+
 	const updateState = (updates: Partial<TranscriptionState>) => {
 		const newState = { ...memoryState, ...updates }
-		setMemoryState(newState)
-		setTranscriptionState(newState)
+		
+		// Validate state before updating to prevent invalid combinations
+		const validatedState = { ...newState }
+		
+		// Rule: isAborting should be false when isActive is false
+		if (!validatedState.isActive && validatedState.isAborting) {
+			console.log('Clearing isAborting flag because transcription is not active')
+			validatedState.isAborting = false
+		}
+		
+		// Rule: isCompleting should be false when isActive is false  
+		if (!validatedState.isActive && validatedState.isCompleting) {
+			console.log('Clearing isCompleting flag because transcription is not active')
+			validatedState.isCompleting = false
+		}
+		
+		// Rule: current should be null when isActive is false
+		if (!validatedState.isActive && validatedState.current) {
+			console.log('Clearing current transcription because isActive is false')
+			validatedState.current = null
+		}
+		
+		setMemoryState(validatedState)
+		setTranscriptionState(validatedState)
 	}
 
 	const startTranscription = async (
