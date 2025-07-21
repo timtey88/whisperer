@@ -29,28 +29,27 @@ export default function HistoryPage() {
 		const remainingSeconds = seconds % 60
 		return `${minutes}m ${remainingSeconds}s`
 	}
-	
-	const getStatusColor = (status: string) => {
-		switch (status) {
-			case 'completed': return 'text-success'
-			case 'failed': return 'text-error'
-			case 'canceled': return 'text-warning'
-			case 'processing': return 'text-info'
-			case 'incomplete': return 'text-base-content/60'
-			default: return 'text-base-content'
-		}
+
+	// Extract model name from path
+	const getModelName = (modelPath?: string): string => {
+		if (!modelPath) return 'Unknown'
+		const filename = modelPath.split('/').pop() || modelPath
+		// Remove ggml prefix and file extension, capitalize
+		const name = filename.replace(/^ggml-/, '').replace(/\.(bin|gguf)$/, '')
+		return name.charAt(0).toUpperCase() + name.slice(1)
+	}
+
+	// Format GPU status
+	const getGpuStatus = (useGpu?: boolean): string => {
+		return useGpu ? 'GPU' : 'CPU'
+	}
+
+	// Format language
+	const getLanguage = (settings?: { language?: string }): string => {
+		if (!settings?.language) return 'Auto'
+		return settings.language.charAt(0).toUpperCase() + settings.language.slice(1)
 	}
 	
-	const getStatusIcon = (status: string) => {
-		switch (status) {
-			case 'completed': return '✓'
-			case 'failed': return '✗'
-			case 'canceled': return '○'
-			case 'processing': return '⟳'
-			case 'incomplete': return '⏸'
-			default: return '?'
-		}
-	}
 
 	const handleCancelTranscription = async (entryId: string) => {
 		// Use the enhanced abort method which validates entry ID automatically and handles event emission
@@ -185,9 +184,18 @@ export default function HistoryPage() {
 							<div key={entry.id} className="bg-base-200 rounded-lg p-4">
 								<div className="flex items-center justify-between">
 									<div className="flex items-center gap-3 flex-1 min-w-0">
-										<span className={`text-lg font-mono ${getStatusColor(entry.status)}`}>
-											{getStatusIcon(entry.status)}
+										{/* Status Badge */}
+										<span className={`badge badge-sm ${
+											entry.status === 'completed' ? 'badge-success' :
+											entry.status === 'failed' ? 'badge-error' :
+											entry.status === 'processing' ? 'badge-info' :
+											entry.status === 'incomplete' ? 'badge-neutral' :
+											'badge-warning'
+										}`}>
+											{entry.status}
 										</span>
+										
+										{/* File Info */}
 										<div className="flex-1 min-w-0">
 											<p className="font-medium truncate">{entry.fileName}</p>
 											<p className="text-sm text-base-content/60">
@@ -197,48 +205,54 @@ export default function HistoryPage() {
 														{entry.phase && <span> • {entry.phase}</span>}
 													</span>
 												) : (
-													<span>{formatDate(entry.timestamp)} • {formatDuration(entry.duration)}</span>
+													<span>
+														{formatDate(entry.timestamp)} • {formatDuration(entry.duration)} • 
+														{getModelName(entry.modelPath)} • {getGpuStatus(entry.useGpu)} • 
+														{getLanguage(entry.settings)}
+													</span>
 												)}
 											</p>
 										</div>
 									</div>
+									
+									{/* Progress for processing entries */}
+									{entry.status === 'processing' && (
+										<div className="flex items-center gap-2 mr-2">
+											{entry.progress !== undefined ? (
+												<>
+													<div className="text-xs text-base-content/60">
+														{entry.progress}%
+													</div>
+													<progress 
+														className="progress progress-info w-16" 
+														value={entry.progress} 
+														max="100"
+													></progress>
+												</>
+											) : (
+												<div className="loading loading-spinner loading-sm text-info"></div>
+											)}
+										</div>
+									)}
+									
+									{/* Action Buttons */}
 									<div className="flex items-center gap-2">
-										{entry.status === 'processing' && (
-											<div className="flex items-center gap-2">
-												{entry.progress !== undefined ? (
-													<>
-														<div className="text-xs text-base-content/60">
-															{entry.progress}%
-														</div>
-														<progress 
-															className="progress progress-info w-16" 
-															value={entry.progress} 
-															max="100"
-														></progress>
-													</>
-												) : (
-													<div className="loading loading-spinner loading-sm text-info"></div>
-												)}
-												{/* Cancel button for processing entries */}
-												{transcription.isActive && transcription.current?.id === entry.id ? (
-													<button 
-														onClick={() => showCancelConfirmation(entry.id, entry.fileName)}
-														disabled={transcription.isAborting}
-														className="btn btn-xs btn-outline btn-error gap-1 hover:scale-105 transition-all duration-200"
-														title={transcription.isAborting ? "Aborting..." : "Cancel transcription"}
-													>
-														<svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-															<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-														</svg>
-														{transcription.isAborting ? 'Aborting' : 'Cancel'}
-													</button>
-												) : (
-													<div className="text-xs text-base-content/40">Processing...</div>
-												)}
-											</div>
+										{/* Cancel button for active processing entries */}
+										{entry.status === 'processing' && transcription.isActive && transcription.current?.id === entry.id && (
+											<button 
+												onClick={() => showCancelConfirmation(entry.id, entry.fileName)}
+												disabled={transcription.isAborting}
+												className="btn btn-xs btn-outline btn-error gap-1 hover:scale-105 transition-all duration-200"
+												title={transcription.isAborting ? "Aborting..." : "Cancel transcription"}
+											>
+												<svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+												</svg>
+												{transcription.isAborting ? 'Aborting' : 'Cancel'}
+											</button>
 										)}
 										
-										{/* View button for all entries (processing, completed, etc.) */}
+										{/* View button with eye icon */}
 										{(entry.status === 'processing' || entry.status === 'completed') && (
 											<button 
 												onClick={() => navigate('/', { 
@@ -247,9 +261,13 @@ export default function HistoryPage() {
 														fileName: entry.fileName 
 													} 
 												})}
-												className="btn btn-xs btn-primary"
+												className="btn btn-xs btn-primary hover:scale-105 transition-all duration-200"
+												title="View transcription"
 											>
-												View
+												<svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+													<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+												</svg>
 											</button>
 										)}
 										
@@ -265,16 +283,6 @@ export default function HistoryPage() {
 												</svg>
 											</button>
 										)}
-										
-										<span className={`badge badge-sm ${
-											entry.status === 'completed' ? 'badge-success' :
-											entry.status === 'failed' ? 'badge-error' :
-											entry.status === 'processing' ? 'badge-info' :
-											entry.status === 'incomplete' ? 'badge-neutral' :
-											'badge-warning'
-										}`}>
-											{entry.status}
-										</span>
 									</div>
 								</div>
 								{entry.error && (
