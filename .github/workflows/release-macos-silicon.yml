@@ -1,0 +1,50 @@
+name: Release macOS Apple Silicon
+
+on:
+    workflow_dispatch:
+        inputs:
+            tag:
+                description: 'Release tag (e.g., v1.0.0)'
+                required: true
+                type: string
+
+jobs:
+    build-macos-silicon:
+        permissions:
+            contents: write
+        runs-on: macos-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: setup Bun
+              uses: oven-sh/setup-bun@v1
+
+            - name: Rust cache
+              uses: swatinem/rust-cache@v2
+
+            - name: Install Rust stable
+              uses: dtolnay/rust-toolchain@stable
+              with:
+                  targets: aarch64-apple-darwin
+
+            - name: Install frontend dependencies
+              run: bun install
+              working-directory: ./desktop
+
+            - name: Run pre_build.js
+              run: bun scripts/pre_build.js
+
+            - name: Build
+              uses: tauri-apps/tauri-action@v0
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+                  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+                  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+              with:
+                  tagName: ${{ inputs.tag }}
+                  releaseName: "${{ inputs.tag }}"
+                  releaseBody: "macOS Apple Silicon release for ${{ inputs.tag }} 🍎"
+                  prerelease: true
+                  args: '--target aarch64-apple-darwin --features "server"'
+                  projectPath: "./desktop"
+                  tauriScript: bunx tauri
