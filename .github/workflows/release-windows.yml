@@ -33,7 +33,7 @@ jobs:
               run: bun scripts/pre_build.js --vulkan
 
             - name: Import Windows certificate
-              if: secrets.WINDOWS_CERTIFICATE != '' && secrets.WINDOWS_CERTIFICATE_PASSWORD != ''
+              if: ${{ secrets.WINDOWS_CERTIFICATE && secrets.WINDOWS_CERTIFICATE_PASSWORD }}
               env:
                 WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
                 WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
@@ -56,7 +56,7 @@ jobs:
                 }
 
             - name: Build (with certificate)
-              if: secrets.WINDOWS_CERTIFICATE != '' && secrets.WINDOWS_CERTIFICATE_PASSWORD != ''
+              if: ${{ secrets.WINDOWS_CERTIFICATE && secrets.WINDOWS_CERTIFICATE_PASSWORD }}
               uses: tauri-apps/tauri-action@v0
               env:
                   GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -74,7 +74,7 @@ jobs:
                   tauriScript: bunx tauri
 
             - name: Build (without certificate)
-              if: secrets.WINDOWS_CERTIFICATE == '' || secrets.WINDOWS_CERTIFICATE_PASSWORD == ''
+              if: ${{ !secrets.WINDOWS_CERTIFICATE || !secrets.WINDOWS_CERTIFICATE_PASSWORD }}
               uses: tauri-apps/tauri-action@v0
               env:
                   GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
