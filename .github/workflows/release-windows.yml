@@ -33,10 +33,10 @@ jobs:
               run: bun scripts/pre_build.js --vulkan
 
             - name: Import Windows certificate
-              if: ${{ secrets.WINDOWS_CERTIFICATE && secrets.WINDOWS_CERTIFICATE_PASSWORD }}
               env:
                 WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
                 WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+              if: ${{ env.WINDOWS_CERTIFICATE != '' && env.WINDOWS_CERTIFICATE_PASSWORD != '' }}
               run: |
                 # Import certificate
                 [IO.File]::WriteAllBytes('cert.pfx', [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
@@ -56,14 +56,14 @@ jobs:
                 }
 
             - name: Build (with certificate)
-              if: ${{ secrets.WINDOWS_CERTIFICATE && secrets.WINDOWS_CERTIFICATE_PASSWORD }}
-              uses: tauri-apps/tauri-action@v0
               env:
                   GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
                   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
                   TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
                   WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
                   WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+              if: ${{ env.WINDOWS_CERTIFICATE != '' && env.WINDOWS_CERTIFICATE_PASSWORD != '' }}
+              uses: tauri-apps/tauri-action@v0
               with:
                   tagName: ${{ inputs.tag }}
                   releaseName: "${{ inputs.tag }}"
@@ -74,12 +74,12 @@ jobs:
                   tauriScript: bunx tauri
 
             - name: Build (without certificate)
-              if: ${{ !secrets.WINDOWS_CERTIFICATE || !secrets.WINDOWS_CERTIFICATE_PASSWORD }}
-              uses: tauri-apps/tauri-action@v0
               env:
                   GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
                   WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
                   WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+              if: ${{ env.WINDOWS_CERTIFICATE == '' || env.WINDOWS_CERTIFICATE_PASSWORD == '' }}
+              uses: tauri-apps/tauri-action@v0
               with:
                   tagName: ${{ inputs.tag }}
                   releaseName: "${{ inputs.tag }}"
