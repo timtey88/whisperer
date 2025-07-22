@@ -73,11 +73,25 @@ jobs:
                   projectPath: "./desktop"
                   tauriScript: bunx tauri
 
+            - name: Debug certificate check
+              env:
+                  WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+                  WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+              run: |
+                echo "WINDOWS_CERTIFICATE length: ${#WINDOWS_CERTIFICATE}"
+                echo "WINDOWS_CERTIFICATE_PASSWORD length: ${#WINDOWS_CERTIFICATE_PASSWORD}"
+                if [ -z "$WINDOWS_CERTIFICATE" ] || [ -z "$WINDOWS_CERTIFICATE_PASSWORD" ]; then
+                  echo "✅ Certificates missing - will use unsigned build"
+                else
+                  echo "❌ Certificates present - will use signed build"
+                fi
+              shell: bash
+
             - name: Build (without certificate)
               env:
                   GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-                  WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
-                  WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+                  TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+                  TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
               if: ${{ env.WINDOWS_CERTIFICATE == '' || env.WINDOWS_CERTIFICATE_PASSWORD == '' }}
               uses: tauri-apps/tauri-action@v0
               with:
@@ -88,3 +102,11 @@ jobs:
                   args: '--target x86_64-pc-windows-msvc --features "vulkan,server"'
                   projectPath: "./desktop"
                   tauriScript: bunx tauri
+                  bundlerOptions: |
+                    {
+                      "windows": {
+                        "certificateThumbprint": null,
+                        "timestampUrl": null,
+                        "signCommand": null
+                      }
+                    }
