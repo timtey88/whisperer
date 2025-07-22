@@ -16,11 +16,11 @@
 </p>
 
 <p align="center">
-  <a target="_blank" href="https://timtey88.github.io/whisperer/">
+  <a target="_blank" href="https://github.com/timtey88/whisperer/releases/latest">
     🔗 Download Whisperer
   </a>
     &nbsp; | &nbsp; Give it a Star ⭐ | &nbsp;
-    <a target="_blank" href="https://timtey88.github.io/whisperer/?action=support-whisperer">Support the project 🤝</a>
+    <a target="_blank" href="https://github.com/sponsors/timtey88">Support the project 🤝</a>
 </p>
 
 <hr />
@@ -28,7 +28,7 @@
 ## Screenshots
 
 <p align="center">
-	<a target="_blank" href="https://timtey88.github.io/whisperer/">
+	<a target="_blank" href="https://github.com/timtey88/whisperer/releases/latest">
     	<img width=600 src="https://github.com/timtey88/whisperer/assets/61390950/22779ac6-9e49-4c21-b528-29647f039da2">
 	</a>
 </p>
@@ -63,9 +63,11 @@
 
 # Supported platforms 🖥️
 
-`MacOS`
-`Windows`
-`Linux`
+- **macOS** - Universal binaries (Intel & Apple Silicon)
+- **Windows** - x64 installer with automatic updates  
+- **Linux** - AppImage, DEB, and RPM packages
+
+Download the latest version from [GitHub Releases](https://github.com/timtey88/whisperer/releases/latest).
 
 # Contribute 🤝
 
@@ -92,7 +94,6 @@ You can see the roadmap in [Whisperer-Roadmap](https://github.com/users/timtey88
 2. Change every value in the files there, to the new language and keep the keys as is
 3. create PR / issue in Github
 
-In addition you can add translation to [Whisperer website](https://timtey88.github.io/whisperer/) by creating new files in the `landing/static/locales`.
 
 # Docs 📄
 
@@ -108,7 +109,7 @@ You can open [new issue](https://github.com/timtey88/whisperer/issues/new?assign
 
 # Privacy Policy 🔒
 
-Your privacy is important to us. Please review our [Privacy Policy](http://timtey88.github.io/whisperer/?action=open-privacy-policy) to understand how we handle your data.
+Your privacy is important to us. Whisperer is designed with privacy as a core principle - all transcription happens completely offline on your device, and no data ever leaves your machine.
 
 # Credits
 
