@@ -49,7 +49,7 @@
 	},
 	"plugins": {
 		"updater": {
-			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEZFNTJENkIxNTM4NTQxODgKUldTSVFZVlRzZFpTL21VWTBzak1IMTA1ZjdNVHA0MXQ3Y20wa2F2U24zVGl6WUUvTGVoQi8wN1kK",
+			"pubkey": "ZFc1MGNuVnpkR1ZrSUdOdmJXMWxiblE2SUcxcGJtbHphV2R1SUhCMVlteHBZeUJyWlhrNklFUkJNRVZHTXpSQk16WkROVVV4TERRES1VsZFJSRFJqVlRKVGRrMVBNblpWT1Zsc2JWWm5jREVyUW5aNU5tOWtUazQzVUhWd1JFSkVNelpzYzJ4NU5rRjBOVlkzWkRoQlYwRUs=",
 			"endpoints": [
 				"https://github.com/timtey88/whisperer/releases/latest/download/latest.json"
 			]
