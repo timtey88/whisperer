@@ -55,12 +55,31 @@ jobs:
                   &$signtoolPath sign /f cert.pfx /p $env:WINDOWS_CERTIFICATE_PASSWORD /tr http://timestamp.digicert.com /td sha256 /fd sha256 $_.FullName
                 }
 
-            - name: Build
+            - name: Build (with certificate)
+              if: env.WINDOWS_CERTIFICATE != '' && env.WINDOWS_CERTIFICATE_PASSWORD != ''
               uses: tauri-apps/tauri-action@v0
               env:
                   GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
                   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
                   TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+                  WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+                  WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+              with:
+                  tagName: ${{ inputs.tag }}
+                  releaseName: "${{ inputs.tag }}"
+                  releaseBody: "Windows release for ${{ inputs.tag }} 🪟"
+                  prerelease: true
+                  args: '--target x86_64-pc-windows-msvc --features "vulkan,server"'
+                  projectPath: "./desktop"
+                  tauriScript: bunx tauri
+
+            - name: Build (without certificate)
+              if: env.WINDOWS_CERTIFICATE == '' || env.WINDOWS_CERTIFICATE_PASSWORD == ''
+              uses: tauri-apps/tauri-action@v0
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+                  WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+                  WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
               with:
                   tagName: ${{ inputs.tag }}
                   releaseName: "${{ inputs.tag }}"
