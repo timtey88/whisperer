@@ -31,12 +31,20 @@ jobs:
                 Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
                 bun install --force
                 Write-Host "✅ Bun install completed"
+              working-directory: ./desktop
+
+            - name: Install Windows-specific Tauri CLI manually
+              run: |
+                Write-Host "🔧 Installing Windows-specific Tauri CLI binary..."
+                bun add -D @tauri-apps/cli-win32-x64-msvc
+                Write-Host "✅ Platform-specific CLI installed"
                 
-                # Verify Tauri CLI platform binary exists
+                # Verify installation
                 if (Test-Path "node_modules/@tauri-apps/cli-win32-x64-msvc/cli.win32-x64-msvc.exe") {
-                    Write-Host "✅ Windows platform binary found"
+                    Write-Host "✅ Windows platform binary verified"
+                    Get-ChildItem node_modules/@tauri-apps/cli-win32-x64-msvc/
                 } else {
-                    Write-Host "❌ Windows platform binary missing"
+                    Write-Host "❌ Windows platform binary still missing after manual install"
                     Get-ChildItem node_modules/@tauri-apps/cli*/ -ErrorAction SilentlyContinue
                 }
               working-directory: ./desktop

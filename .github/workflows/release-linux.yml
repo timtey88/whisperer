@@ -31,12 +31,20 @@ jobs:
                 rm -rf node_modules
                 bun install --force
                 echo "✅ Bun install completed"
+              working-directory: ./desktop
+
+            - name: Install Linux-specific Tauri CLI manually
+              run: |
+                echo "🔧 Installing Linux-specific Tauri CLI binary..."
+                bun add -D @tauri-apps/cli-linux-x64-gnu
+                echo "✅ Platform-specific CLI installed"
                 
-                # Verify Tauri CLI platform binary exists
+                # Verify installation
                 if [ -f "node_modules/@tauri-apps/cli-linux-x64-gnu/cli.linux-x64-gnu.node" ]; then
-                    echo "✅ Linux platform binary found"
+                    echo "✅ Linux platform binary verified"
+                    ls -la node_modules/@tauri-apps/cli-linux-x64-gnu/
                 else
-                    echo "❌ Linux platform binary missing"
+                    echo "❌ Linux platform binary still missing after manual install"
                     ls -la node_modules/@tauri-apps/cli*/
                 fi
               working-directory: ./desktop
