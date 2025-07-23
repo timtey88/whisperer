@@ -33,19 +33,31 @@ jobs:
                 echo "✅ Bun install completed"
               working-directory: ./desktop
 
-            - name: Install Linux-specific Tauri CLI manually
+            - name: Install platform-specific binaries manually
               run: |
                 echo "🔧 Installing Linux-specific Tauri CLI binary..."
                 bun add -D @tauri-apps/cli-linux-x64-gnu
                 echo "✅ Platform-specific CLI installed"
                 
-                # Verify installation
+                echo "🔧 Installing Linux-specific Rollup binary..."
+                bun add -D @rollup/rollup-linux-x64-gnu
+                echo "✅ Platform-specific Rollup installed"
+                
+                # Verify installations
                 if [ -f "node_modules/@tauri-apps/cli-linux-x64-gnu/cli.linux-x64-gnu.node" ]; then
-                    echo "✅ Linux platform binary verified"
+                    echo "✅ Linux Tauri CLI binary verified"
                     ls -la node_modules/@tauri-apps/cli-linux-x64-gnu/
                 else
-                    echo "❌ Linux platform binary still missing after manual install"
+                    echo "❌ Linux Tauri CLI binary still missing after manual install"
                     ls -la node_modules/@tauri-apps/cli*/
+                fi
+                
+                if [ -f "node_modules/@rollup/rollup-linux-x64-gnu/rollup.linux-x64-gnu.node" ]; then
+                    echo "✅ Linux Rollup binary verified"
+                    ls -la node_modules/@rollup/rollup-linux-x64-gnu/
+                else
+                    echo "❌ Linux Rollup binary still missing after manual install"
+                    ls -la node_modules/@rollup/rollup*/ || echo "No Rollup binaries found"
                 fi
               working-directory: ./desktop
 
