@@ -51,6 +51,6 @@ jobs:
                   releaseName: "${{ inputs.tag }}"
                   releaseBody: "Linux release for ${{ inputs.tag }} 🐧"
                   prerelease: true
-                  args: '--features "vulkan,server"'
+                  args: '--features "vulkan,server" --bundles deb,rpm,appimage'
                   projectPath: "./desktop"
                   tauriScript: bunx tauri
