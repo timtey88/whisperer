@@ -67,36 +67,6 @@ jobs:
               run: bun install
               working-directory: ./desktop
 
-            - name: Install platform-specific binaries manually
-              run: |
-                case "${{ matrix.platform }}" in
-                  "linux")
-                    echo "🔧 Installing Linux-specific binaries..."
-                    bun add -D @tauri-apps/cli-linux-x64-gnu
-                    bun add -D @rollup/rollup-linux-x64-gnu
-                    echo "✅ Linux platform binaries installed"
-                    ;;
-                  "macos-intel")
-                    echo "🔧 Installing macOS Intel-specific binaries..."
-                    bun add -D @tauri-apps/cli-darwin-x64
-                    bun add -D @rollup/rollup-darwin-x64
-                    echo "✅ macOS Intel platform binaries installed"
-                    ;;
-                  "macos-silicon")
-                    echo "🔧 Installing macOS Apple Silicon-specific binaries..."
-                    bun add -D @tauri-apps/cli-darwin-arm64
-                    bun add -D @rollup/rollup-darwin-arm64
-                    echo "✅ macOS Apple Silicon platform binaries installed"
-                    ;;
-                  "windows")
-                    echo "🔧 Installing Windows-specific binaries..."
-                    bun add -D @tauri-apps/cli-win32-x64-msvc
-                    bun add -D @rollup/rollup-win32-x64-msvc
-                    echo "✅ Windows platform binaries installed"
-                    ;;
-                esac
-              working-directory: ./desktop
-              shell: bash
 
             # Linux-specific setup
             - name: Prepare Vulkan SDK for Ubuntu 22.04
@@ -160,3 +130,4 @@ jobs:
                   args: ${{ matrix.args }}
                   projectPath: "./desktop"
                   tauriScript: bunx tauri
+                  buildScript: npm run build

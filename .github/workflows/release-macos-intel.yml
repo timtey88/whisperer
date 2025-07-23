@@ -31,33 +31,6 @@ jobs:
               run: bun install
               working-directory: ./desktop
 
-            - name: Install platform-specific binaries manually
-              run: |
-                echo "🔧 Installing macOS Intel-specific Tauri CLI binary..."
-                bun add -D @tauri-apps/cli-darwin-x64
-                echo "✅ Platform-specific CLI installed"
-                
-                echo "🔧 Installing macOS Intel-specific Rollup binary..."
-                bun add -D @rollup/rollup-darwin-x64
-                echo "✅ Platform-specific Rollup installed"
-                
-                # Verify installations
-                if [ -f "node_modules/@tauri-apps/cli-darwin-x64/cli.darwin-x64.node" ]; then
-                    echo "✅ macOS Intel Tauri CLI binary verified"
-                    ls -la node_modules/@tauri-apps/cli-darwin-x64/
-                else
-                    echo "❌ macOS Intel Tauri CLI binary still missing after manual install"
-                    ls -la node_modules/@tauri-apps/cli*/
-                fi
-                
-                if [ -f "node_modules/@rollup/rollup-darwin-x64/rollup.darwin-x64.node" ]; then
-                    echo "✅ macOS Intel Rollup binary verified"
-                    ls -la node_modules/@rollup/rollup-darwin-x64/
-                else
-                    echo "❌ macOS Intel Rollup binary still missing after manual install"
-                    ls -la node_modules/@rollup*/ || echo "No Rollup binaries found"
-                fi
-              working-directory: ./desktop
 
             - name: Run pre_build.js
               run: bun scripts/pre_build.js
@@ -76,3 +49,4 @@ jobs:
                   args: '--target x86_64-apple-darwin --features "server"'
                   projectPath: "./desktop"
                   tauriScript: bunx tauri
+                  buildScript: npm run build

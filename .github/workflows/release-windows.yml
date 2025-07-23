@@ -33,34 +33,6 @@ jobs:
                 Write-Host "✅ Bun install completed"
               working-directory: ./desktop
 
-            - name: Install platform-specific binaries manually
-              run: |
-                Write-Host "🔧 Installing Windows-specific Tauri CLI binary..."
-                bun add -D @tauri-apps/cli-win32-x64-msvc
-                Write-Host "✅ Platform-specific CLI installed"
-                
-                Write-Host "🔧 Installing Windows-specific Rollup binary..."
-                bun add -D @rollup/rollup-win32-x64-msvc
-                Write-Host "✅ Platform-specific Rollup installed"
-                
-                # Verify installations
-                if (Test-Path "node_modules/@tauri-apps/cli-win32-x64-msvc/cli.win32-x64-msvc.exe") {
-                    Write-Host "✅ Windows Tauri CLI binary verified"
-                    Get-ChildItem node_modules/@tauri-apps/cli-win32-x64-msvc/
-                } else {
-                    Write-Host "❌ Windows Tauri CLI binary still missing after manual install"
-                    Get-ChildItem node_modules/@tauri-apps/cli*/ -ErrorAction SilentlyContinue
-                }
-                
-                if (Test-Path "node_modules/@rollup/rollup-win32-x64-msvc/rollup.win32-x64-msvc.node") {
-                    Write-Host "✅ Windows Rollup binary verified"
-                    Get-ChildItem node_modules/@rollup/rollup-win32-x64-msvc/
-                } else {
-                    Write-Host "❌ Windows Rollup binary still missing after manual install"
-                    Get-ChildItem node_modules/@rollup*/ -ErrorAction SilentlyContinue
-                    if (-not $?) { Write-Host "No Rollup binaries found" }
-                }
-              working-directory: ./desktop
 
             - name: Run pre_build.js
               run: bun scripts/pre_build.js --vulkan
@@ -105,6 +77,7 @@ jobs:
                   args: '--target x86_64-pc-windows-msvc --features "vulkan,server"'
                   projectPath: "./desktop"
                   tauriScript: bunx tauri
+                  buildScript: npm run build
 
             - name: Build (without certificate)
               if: env.WINDOWS_CERTIFICATE == '' || env.WINDOWS_CERTIFICATE_PASSWORD == ''
@@ -121,3 +94,4 @@ jobs:
                   args: '--target x86_64-pc-windows-msvc --features "vulkan,server"'
                   projectPath: "./desktop"
                   tauriScript: bunx tauri
+                  buildScript: npm run build
