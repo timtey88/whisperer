@@ -25,25 +25,19 @@ jobs:
             - name: Install Rust stable
               uses: dtolnay/rust-toolchain@stable
 
-            - name: Clear dependency caches
+            - name: Install frontend dependencies
               run: |
-                Write-Host "🧹 Clearing dependency caches..."
-                Remove-Item -Recurse -Force ./desktop/node_modules -ErrorAction SilentlyContinue
-                bun cache clear
-                npm cache clean --force
-              
-            - name: Install frontend dependencies (with force)
-              run: |
-                Write-Host "📦 Installing frontend dependencies with force..."
+                Write-Host "📦 Installing frontend dependencies (clean)..."
+                Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
                 bun install --force
                 Write-Host "✅ Bun install completed"
                 
-                # Verify Tauri CLI platform binary
-                if (!(Test-Path "node_modules/@tauri-apps/cli-win32-x64-msvc/cli.win32-x64-msvc.exe")) {
-                    Write-Host "❌ Windows platform binary missing, trying npm fallback..."
-                    npm ci --prefer-offline
-                } else {
+                # Verify Tauri CLI platform binary exists
+                if (Test-Path "node_modules/@tauri-apps/cli-win32-x64-msvc/cli.win32-x64-msvc.exe") {
                     Write-Host "✅ Windows platform binary found"
+                } else {
+                    Write-Host "❌ Windows platform binary missing"
+                    Get-ChildItem node_modules/@tauri-apps/cli*/ -ErrorAction SilentlyContinue
                 }
               working-directory: ./desktop
 

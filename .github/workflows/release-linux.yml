@@ -25,25 +25,19 @@ jobs:
             - name: Install Rust stable
               uses: dtolnay/rust-toolchain@stable
 
-            - name: Clear dependency caches
+            - name: Install frontend dependencies
               run: |
-                echo "🧹 Clearing dependency caches..."
-                rm -rf ./desktop/node_modules
-                bun cache clear || true
-                npm cache clean --force || true
-              
-            - name: Install frontend dependencies (with force)
-              run: |
-                echo "📦 Installing frontend dependencies with force..."
+                echo "📦 Installing frontend dependencies (clean)..."
+                rm -rf node_modules
                 bun install --force
                 echo "✅ Bun install completed"
                 
-                # Verify Tauri CLI platform binary
-                if [ ! -f "node_modules/@tauri-apps/cli-linux-x64-gnu/cli.linux-x64-gnu.node" ]; then
-                    echo "❌ Linux platform binary missing, trying npm fallback..."
-                    npm ci --prefer-offline
-                else
+                # Verify Tauri CLI platform binary exists
+                if [ -f "node_modules/@tauri-apps/cli-linux-x64-gnu/cli.linux-x64-gnu.node" ]; then
                     echo "✅ Linux platform binary found"
+                else
+                    echo "❌ Linux platform binary missing"
+                    ls -la node_modules/@tauri-apps/cli*/
                 fi
               working-directory: ./desktop
 
