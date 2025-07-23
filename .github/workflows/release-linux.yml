@@ -27,26 +27,10 @@ jobs:
 
             - name: Install frontend dependencies
               run: |
-                echo "📦 Installing frontend dependencies (clean)..."
-                rm -rf node_modules
-                bun install --force
-                echo "✅ Bun install completed"
-              working-directory: ./desktop
-
-            - name: Install Linux-specific Tauri CLI binary
-              run: |
-                echo "🔧 Installing Linux-specific Tauri CLI binary..."
-                bun add -D @tauri-apps/cli-linux-x64-gnu
-                echo "✅ Platform-specific Tauri CLI installed"
-                
-                # Verify installation
-                if [ -f "node_modules/@tauri-apps/cli-linux-x64-gnu/cli.linux-x64-gnu.node" ]; then
-                    echo "✅ Linux Tauri CLI binary verified"
-                    ls -la node_modules/@tauri-apps/cli-linux-x64-gnu/
-                else
-                    echo "❌ Linux Tauri CLI binary still missing after manual install"
-                    ls -la node_modules/@tauri-apps/cli*/
-                fi
+                echo "📦 Installing frontend dependencies with npm..."
+                rm -rf node_modules package-lock.json
+                npm install
+                echo "✅ npm install completed"
               working-directory: ./desktop
 
             - name: Prepare Vulkan SDK for Ubuntu 22.04
@@ -73,5 +57,3 @@ jobs:
                   prerelease: true
                   args: '--features "vulkan,server" --bundles deb,rpm,appimage'
                   projectPath: "./desktop"
-                  tauriScript: bunx tauri
-                  beforeBuildCommand: "npm run build"

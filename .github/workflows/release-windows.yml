@@ -27,26 +27,11 @@ jobs:
 
             - name: Install frontend dependencies
               run: |
-                Write-Host "📦 Installing frontend dependencies (clean)..."
+                Write-Host "📦 Installing frontend dependencies with npm..."
                 Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
-                bun install --force
-                Write-Host "✅ Bun install completed"
-              working-directory: ./desktop
-
-            - name: Install Windows-specific Tauri CLI binary
-              run: |
-                Write-Host "🔧 Installing Windows-specific Tauri CLI binary..."
-                bun add -D @tauri-apps/cli-win32-x64-msvc
-                Write-Host "✅ Platform-specific Tauri CLI installed"
-                
-                # Verify installation
-                if (Test-Path "node_modules/@tauri-apps/cli-win32-x64-msvc/cli.win32-x64-msvc.exe") {
-                    Write-Host "✅ Windows Tauri CLI binary verified"
-                    Get-ChildItem node_modules/@tauri-apps/cli-win32-x64-msvc/
-                } else {
-                    Write-Host "❌ Windows Tauri CLI binary still missing after manual install"
-                    Get-ChildItem node_modules/@tauri-apps/cli*/ -ErrorAction SilentlyContinue
-                }
+                Remove-Item -Force package-lock.json -ErrorAction SilentlyContinue
+                npm install
+                Write-Host "✅ npm install completed"
               working-directory: ./desktop
 
             - name: Run pre_build.js
@@ -91,8 +76,6 @@ jobs:
                   prerelease: true
                   args: '--target x86_64-pc-windows-msvc --features "vulkan,server"'
                   projectPath: "./desktop"
-                  tauriScript: bunx tauri
-                  beforeBuildCommand: "npm run build"
 
             - name: Build (without certificate)
               if: env.WINDOWS_CERTIFICATE == '' || env.WINDOWS_CERTIFICATE_PASSWORD == ''
@@ -108,5 +91,3 @@ jobs:
                   prerelease: true
                   args: '--target x86_64-pc-windows-msvc --features "vulkan,server"'
                   projectPath: "./desktop"
-                  tauriScript: bunx tauri
-                  beforeBuildCommand: "npm run build"

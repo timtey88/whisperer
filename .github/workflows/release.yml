@@ -64,26 +64,11 @@ jobs:
                 targets: ${{ matrix.target }}
 
             - name: Install frontend dependencies
-              run: bun install
-              working-directory: ./desktop
-
-            - name: Install platform-specific Tauri CLI binary
               run: |
-                case "${{ matrix.platform }}" in
-                  "linux")
-                    echo "🔧 Installing Linux-specific Tauri CLI binary..."
-                    bun add -D @tauri-apps/cli-linux-x64-gnu
-                    echo "✅ Linux Tauri CLI binary installed"
-                    ;;
-                  "windows")
-                    echo "🔧 Installing Windows-specific Tauri CLI binary..."
-                    bun add -D @tauri-apps/cli-win32-x64-msvc
-                    echo "✅ Windows Tauri CLI binary installed"
-                    ;;
-                  "macos-intel"|"macos-silicon")
-                    echo "ℹ️ macOS Tauri CLI binaries work out of the box - skipping manual installation"
-                    ;;
-                esac
+                echo "📦 Installing frontend dependencies with npm..."
+                rm -rf node_modules package-lock.json
+                npm install
+                echo "✅ npm install completed"
               working-directory: ./desktop
               shell: bash
 
@@ -148,5 +133,3 @@ jobs:
                   prerelease: true
                   args: ${{ matrix.args }}
                   projectPath: "./desktop"
-                  tauriScript: bunx tauri
-                  beforeBuildCommand: "npm run build"
