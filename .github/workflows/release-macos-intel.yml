@@ -49,4 +49,4 @@ jobs:
                   args: '--target x86_64-apple-darwin --features "server"'
                   projectPath: "./desktop"
                   tauriScript: bunx tauri
-                  buildScript: npm run build
+                  beforeBuildCommand: "npm run build"

@@ -33,6 +33,21 @@ jobs:
                 echo "✅ Bun install completed"
               working-directory: ./desktop
 
+            - name: Install Linux-specific Tauri CLI binary
+              run: |
+                echo "🔧 Installing Linux-specific Tauri CLI binary..."
+                bun add -D @tauri-apps/cli-linux-x64-gnu
+                echo "✅ Platform-specific Tauri CLI installed"
+                
+                # Verify installation
+                if [ -f "node_modules/@tauri-apps/cli-linux-x64-gnu/cli.linux-x64-gnu.node" ]; then
+                    echo "✅ Linux Tauri CLI binary verified"
+                    ls -la node_modules/@tauri-apps/cli-linux-x64-gnu/
+                else
+                    echo "❌ Linux Tauri CLI binary still missing after manual install"
+                    ls -la node_modules/@tauri-apps/cli*/
+                fi
+              working-directory: ./desktop
 
             - name: Prepare Vulkan SDK for Ubuntu 22.04
               run: |
@@ -59,4 +74,4 @@ jobs:
                   args: '--features "vulkan,server" --bundles deb,rpm,appimage'
                   projectPath: "./desktop"
                   tauriScript: bunx tauri
-                  buildScript: npm run build
+                  beforeBuildCommand: "npm run build"
