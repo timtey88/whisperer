@@ -42,7 +42,7 @@ export default function SettingsPage() {
 
 	async function checkForUpdates() {
 		try {
-			const { checkUpdate } = await import('@tauri-apps/plugin-updater')
+			const { check: checkUpdate } = await import('@tauri-apps/plugin-updater')
 			const newUpdate = await checkUpdate()
 			if (newUpdate) {
 				// The UpdaterProvider will handle updating the context state
