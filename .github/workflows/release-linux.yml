@@ -26,7 +26,11 @@ jobs:
               uses: dtolnay/rust-toolchain@stable
 
             - name: Install frontend dependencies
-              run: bun install
+              run: |
+                echo "📦 Installing frontend dependencies with npm..."
+                rm -rf node_modules package-lock.json
+                npm install
+                echo "✅ npm install completed"
               working-directory: ./desktop
 
             - name: Prepare Vulkan SDK for Ubuntu 22.04
@@ -53,4 +57,3 @@ jobs:
                   prerelease: true
                   args: '--features "vulkan,server" --bundles deb,rpm,appimage'
                   projectPath: "./desktop"
-                  tauriScript: bunx tauri

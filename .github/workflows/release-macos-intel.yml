@@ -28,8 +28,13 @@ jobs:
                   targets: x86_64-apple-darwin
 
             - name: Install frontend dependencies
-              run: bun install
+              run: |
+                echo "📦 Installing frontend dependencies with npm..."
+                rm -rf node_modules package-lock.json
+                npm install
+                echo "✅ npm install completed"
               working-directory: ./desktop
+
 
             - name: Run pre_build.js
               run: bun scripts/pre_build.js
@@ -47,4 +52,3 @@ jobs:
                   prerelease: true
                   args: '--target x86_64-apple-darwin --features "server"'
                   projectPath: "./desktop"
-                  tauriScript: bunx tauri

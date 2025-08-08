@@ -64,8 +64,13 @@ jobs:
                 targets: ${{ matrix.target }}
 
             - name: Install frontend dependencies
-              run: bun install
+              run: |
+                echo "📦 Installing frontend dependencies with npm..."
+                rm -rf node_modules package-lock.json
+                npm install
+                echo "✅ npm install completed"
               working-directory: ./desktop
+              shell: bash
 
             # Linux-specific setup
             - name: Prepare Vulkan SDK for Ubuntu 22.04
@@ -121,6 +126,8 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
                   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
                   TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+                  WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+                  WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
               with:
                   tagName: ${{ inputs.tag }}
                   releaseName: "${{ inputs.tag }}"
@@ -128,4 +135,3 @@ jobs:
                   prerelease: true
                   args: ${{ matrix.args }}
                   projectPath: "./desktop"
-                  tauriScript: bunx tauri
