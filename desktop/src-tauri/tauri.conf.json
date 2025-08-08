@@ -1,7 +1,7 @@
 {
 	"$schema": "./gen/schemas/desktop-schema.json",
 	"productName": "Whisperer",
-	"version": "1.0.0",
+	"version": "1.0.9",
 	"identifier": "whisperer",
 	"app": {
 		"windows": [],
@@ -49,9 +49,9 @@
 	},
 	"plugins": {
 		"updater": {
-			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IERBMEVGMzRBMzZDNUUxMDMKUldRRDRjVTJTdk1PMnZVOVlsbVZncDErQnZ5Nm9kTk43UHVwREJEMzZsc2x5NkF0NVY3ZDhBV0EK",
+			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE3NjMyN0Y4RjVFRjU1MzQKUldRMFZlLzErQ2RqcDI0ejcxRUpHb25EU0p5Vk9uazU2UzlxR0FJQ1R5cTVraS8wVzFCSFF5ZjcK",
 			"endpoints": [
-				"https://github.com/timtey88/whisperer/releases/download/v1.1.0/latest.json"
+				"https://github.com/timtey88/whisperer/releases/latest/download/latest.json"
 			]
 		},
 		"deep-link": {

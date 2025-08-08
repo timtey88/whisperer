@@ -1058,3 +1058,4 @@ fn find_recommended_device(devices: &[GpuDevice]) -> i32 {
     // Fallback to first device (usually index 0)
     0
 }
+
