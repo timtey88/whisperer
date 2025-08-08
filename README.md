@@ -22,4 +22,6 @@ Thanks for [openai.com](https://openai.com/) for their amazing [Whisper model](h
 
 Thanks for [github.com](https://github.com/) for their support in open source projects, providing infastructure completely free.
 
+This is a fork of [vibe](https://github.com/thewh1teagle/vibe) with added transcription features.
+
 And for all the amazing open source frameworks and libraries which this project uses...
