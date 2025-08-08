@@ -49,10 +49,15 @@ export function UpdaterProvider({ children }: { children: React.ReactNode }) {
 		async function checkForUpdates() {
 			try {
 				console.log('🔄 Checking for updates...')
+				console.log('🖥️ Current platform:', navigator.platform, 'User agent:', navigator.userAgent)
+				console.log('📍 Updater endpoint: https://github.com/timtey88/whisperer/releases/download/v1.1.0/latest.json')
+				
 				const newUpdate = await checkUpdate()
 				console.log('📡 Update check result:', newUpdate)
+				
 				if (newUpdate) {
 					console.log('✅ Update available:', newUpdate.available, 'Version:', newUpdate.version)
+					console.log('📦 Update manifest:', JSON.stringify(newUpdate, null, 2))
 					setAvailableUpdate(newUpdate?.available)
 					setUpdate(newUpdate)
 				} else {
@@ -61,6 +66,12 @@ export function UpdaterProvider({ children }: { children: React.ReactNode }) {
 				}
 			} catch (error) {
 				console.error('❌ Could not check for updates:', error)
+				const errorInfo = error instanceof Error ? {
+					name: error.name,
+					message: error.message,
+					stack: error.stack
+				} : { error: String(error) }
+				console.error('🔍 Error details:', errorInfo)
 				// Silently fail - updater errors shouldn't disrupt user experience
 				setAvailableUpdate(false)
 			}
