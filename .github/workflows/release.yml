@@ -123,7 +123,7 @@ jobs:
             - name: Build ${{ matrix.name }}
               uses: tauri-apps/tauri-action@v0
               env:
-                  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
                   TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
                   WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
