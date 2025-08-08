@@ -48,13 +48,19 @@ export function UpdaterProvider({ children }: { children: React.ReactNode }) {
 		// Check for new updates
 		async function checkForUpdates() {
 			try {
+				console.log('🔄 Checking for updates...')
 				const newUpdate = await checkUpdate()
+				console.log('📡 Update check result:', newUpdate)
 				if (newUpdate) {
+					console.log('✅ Update available:', newUpdate.available, 'Version:', newUpdate.version)
 					setAvailableUpdate(newUpdate?.available)
 					setUpdate(newUpdate)
+				} else {
+					console.log('ℹ️ No update available (returned null)')
+					setAvailableUpdate(false)
 				}
 			} catch (error) {
-				console.error(error)
+				console.error('❌ Could not check for updates:', error)
 			}
 		}
 		checkForUpdates()
