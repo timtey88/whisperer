@@ -23,7 +23,6 @@ import { useFilesContext } from '~/providers/FilesProvider'
 import { useTranscription } from '~/providers/TranscriptionProvider'
 import { useHistory } from '~/providers/HistoryProvider'
 import { ModelOptions, usePreferenceProvider } from '~/providers/Preference'
-import { UpdaterContext } from '~/providers/Updater'
 
 export interface BatchOptions {
 	files: NamedPath[]
@@ -82,7 +81,6 @@ export function viewModel() {
 	const [outputDevice, setOutputDevice] = useState<AudioDevice | null>(null)
 	const [hasModels, setHasModels] = useState<boolean>(false)
 
-	const { updateApp, availableUpdate } = useContext(UpdaterContext)
 	const { setState: setErrorModal } = useContext(ErrorModalContext)
 
 	async function onFilesChanged() {
@@ -682,8 +680,6 @@ If this persists:
 		setAudio,
 		files,
 		setFiles,
-		availableUpdate,
-		updateApp,
 		segments,
 		setSegments,
 		transcribe,
