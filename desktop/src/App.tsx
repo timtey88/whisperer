@@ -27,8 +27,7 @@ export default function App() {
 			</div>
 			<ErrorModalProvider>
 				<PreferenceProvider>
-					<UpdaterProvider>
-						<FilesProvider>
+					<FilesProvider>
 							<HistoryProvider>
 								<TranscriptionProvider>
 									<ToastProvider>
@@ -43,8 +42,7 @@ export default function App() {
 									</ToastProvider>
 								</TranscriptionProvider>
 							</HistoryProvider>
-						</FilesProvider>
-					</UpdaterProvider>
+					</FilesProvider>
 				</PreferenceProvider>
 			</ErrorModalProvider>
 		</ErrorBoundary>
