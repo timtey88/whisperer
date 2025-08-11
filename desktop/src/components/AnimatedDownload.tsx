@@ -1,5 +1,5 @@
 import { motion, useReducedMotion, type Variants } from 'framer-motion'
-import { Download, Check, Zap } from 'lucide-react'
+import { Download, Check, Zap, Archive } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 interface DownloadProps {
@@ -11,6 +11,10 @@ interface DownloadProps {
   totalSize: string
   downloadSpeed: string
   timeRemaining: string
+  phase?: 'downloading' | 'extracting' | 'completed'
+  extractionProgress?: number
+  filesExtracted?: number
+  totalFiles?: number
 }
 
 export function AnimatedDownload({
@@ -22,20 +26,24 @@ export function AnimatedDownload({
   totalSize,
   downloadSpeed,
   timeRemaining,
+  phase = 'downloading',
+  extractionProgress = 0,
+  filesExtracted = 0,
+  totalFiles = 0,
 }: DownloadProps) {
   const shouldReduceMotion = useReducedMotion()
   const [isComplete, setIsComplete] = useState(false)
 
-  // Call onAnimationComplete when download reaches 100%
+  // Call onAnimationComplete when process is complete
   useEffect(() => {
-    if (progress >= 100) {
+    if (phase === 'completed') {
       const timer = setTimeout(() => {
         setIsComplete(true)
         if (onAnimationComplete) onAnimationComplete()
       }, 500)
       return () => clearTimeout(timer)
     }
-  }, [progress, onAnimationComplete])
+  }, [phase, onAnimationComplete])
 
   // Container animation
   const containerVariants = {
@@ -102,6 +110,8 @@ export function AnimatedDownload({
           >
             {isComplete ? (
               <Check className="w-12 h-12 text-green-400" strokeWidth={1.5} />
+            ) : phase === 'extracting' ? (
+              <Archive className="w-12 h-12 text-orange-400" strokeWidth={1.5} />
             ) : (
               <Download className="w-12 h-12 text-blue-400" strokeWidth={1.5} />
             )}
@@ -111,12 +121,18 @@ export function AnimatedDownload({
         {/* Status text */}
         <div className="text-center mb-8">
           <h3 className="text-xl font-medium text-white mb-2">
-            {isComplete ? 'Download Complete!' : 'Downloading Model'}
+            {isComplete 
+              ? 'Installation Complete!' 
+              : phase === 'extracting' 
+                ? 'Extracting Model' 
+                : 'Downloading Model'}
           </h3>
           <p className="text-white/60 text-sm">
             {isComplete 
               ? 'Your model is ready to use!'
-              : 'Please wait while we prepare everything for you...'}
+              : phase === 'extracting'
+                ? 'Extracting files from archive...'
+                : 'Please wait while we prepare everything for you...'}
           </p>
         </div>
 
@@ -124,17 +140,29 @@ export function AnimatedDownload({
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-white/80">
-              {isComplete ? 'Completed' : 'In Progress'}
+              {isComplete 
+                ? 'Completed' 
+                : phase === 'extracting' 
+                  ? `Extracting (${filesExtracted}/${totalFiles})` 
+                  : 'Downloading'}
             </span>
             <span className="text-sm font-mono text-blue-300">
-              {Math.round(progress)}%
+              {phase === 'extracting' 
+                ? `${Math.round(extractionProgress)}%`
+                : `${Math.round(progress)}%`}
             </span>
           </div>
 
           <div className="relative h-3 bg-white/5 rounded-full overflow-hidden">
             <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full"
-              style={{ width: `${progress}%` }}
+              className={`absolute inset-0 rounded-full ${
+                phase === 'extracting' 
+                  ? 'bg-gradient-to-r from-orange-500 to-amber-400'
+                  : 'bg-gradient-to-r from-blue-500 to-cyan-400'
+              }`}
+              style={{ 
+                width: `${phase === 'extracting' ? extractionProgress : progress}%` 
+              }}
               transition={{ duration: shouldReduceMotion ? 0.3 : 0.8, ease: 'easeOut' }}
             >
               <motion.div
@@ -150,18 +178,35 @@ export function AnimatedDownload({
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mt-6">
           <div className="bg-white/5 backdrop-blur-sm p-3 rounded-xl border border-white/5">
-            <div className="text-xs text-white/50 mb-1">Downloaded</div>
-            <div className="font-mono text-sm text-white">{downloadedSize}</div>
-          </div>
-          <div className="bg-white/5 backdrop-blur-sm p-3 rounded-xl border border-white/5">
-            <div className="text-xs text-white/50 mb-1">Speed</div>
-            <div className="font-mono text-sm text-white flex items-center">
-              <Zap className="w-3 h-3 text-yellow-400 mr-1" />
-              {downloadSpeed}/s
+            <div className="text-xs text-white/50 mb-1">
+              {phase === 'extracting' ? 'Files' : 'Downloaded'}
+            </div>
+            <div className="font-mono text-sm text-white">
+              {phase === 'extracting' 
+                ? `${filesExtracted}/${totalFiles}`
+                : downloadedSize}
             </div>
           </div>
           <div className="bg-white/5 backdrop-blur-sm p-3 rounded-xl border border-white/5">
-            <div className="text-xs text-white/50 mb-1">Time Left</div>
+            <div className="text-xs text-white/50 mb-1">
+              {phase === 'extracting' ? 'Archive' : 'Speed'}
+            </div>
+            <div className="font-mono text-sm text-white flex items-center">
+              {phase === 'extracting' ? (
+                <>
+                  <Archive className="w-3 h-3 text-orange-400 mr-1" />
+                  ZIP
+                </>
+              ) : (
+                <>
+                  <Zap className="w-3 h-3 text-yellow-400 mr-1" />
+                  {downloadSpeed}/s
+                </>
+              )}
+            </div>
+          </div>
+          <div className="bg-white/5 backdrop-blur-sm p-3 rounded-xl border border-white/5">
+            <div className="text-xs text-white/50 mb-1">Status</div>
             <div className="font-mono text-sm text-white">{timeRemaining}</div>
           </div>
         </div>

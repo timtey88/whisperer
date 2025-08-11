@@ -1,5 +1,5 @@
 import '@fontsource/roboto'
-import { event, path } from '@tauri-apps/api'
+import { path } from '@tauri-apps/api'
 import { convertFileSrc, invoke } from '@tauri-apps/api/core'
 import { emit, listen } from '@tauri-apps/api/event'
 import { basename } from '@tauri-apps/api/path'
@@ -20,6 +20,8 @@ import { NamedPath, ls, openPath, pathToNamedPath, startKeepAwake, stopKeepAwake
 import { getX86Features } from '~/lib/x86Features'
 import { ErrorModalContext } from '~/providers/ErrorModal'
 import { useFilesContext } from '~/providers/FilesProvider'
+import { useTranscription } from '~/providers/TranscriptionProvider'
+import { useHistory } from '~/providers/HistoryProvider'
 import { ModelOptions, usePreferenceProvider } from '~/providers/Preference'
 
 export interface BatchOptions {
@@ -43,25 +45,37 @@ export function viewModel() {
 	const location = useLocation()
 	const [settingsVisible, setSettingsVisible] = useState(location.hash === '#settings')
 	const navigate = useNavigate()
-	const [loading, setLoading] = useState(false)
 	const [isRecording, setIsRecording] = useState(false)
 	const abortRef = useRef<boolean>(false)
-	const [isAborting, setIsAborting] = useState(false)
 	const [segments, setSegments] = useState<transcript.Segment[] | null>(null)
 	const [summarizeSegments, setSummarizeSegments] = useState<transcript.Segment[] | null>(null)
 	const [audio, setAudio] = useState<HTMLAudioElement | null>(null)
-	const [progress, setProgress] = useState<number | null>(0)
-	const [currentPhase, setCurrentPhase] = useState<string>('Loading Model')
 	const [fileSize, setFileSize] = useState<number | null>(null)
 	const [audioDuration] = useState<number | null>(null)
 	const [transcriptionResult, setTranscriptionResult] = useState<TranscriptionResult | null>(null)
 	const [showTranscriptionResult, setShowTranscriptionResult] = useState(false)
 	const [transcriptTab, setTranscriptTab] = useLocalStorage<'transcript' | 'summary'>('prefs_transcript_tab', 'transcript')
-	useConfirmExit((segments?.length ?? 0) > 0 || loading)
 
 	const { files, setFiles } = useFilesContext()
+	const { 
+		transcription, 
+		startTranscription, 
+		abortTranscription,
+		completeTranscription,
+		failTranscription,
+		cancelTranscription
+	} = useTranscription()
+	const { getHistoryEntry, getProcessingEntry } = useHistory()
 	const preference = usePreferenceProvider()
 	const preferenceRef = useRef(preference)
+
+	// Use global transcription state
+	const loading = transcription.isActive
+	const isAborting = transcription.isAborting
+	const progress = transcription.current?.progress ?? null
+	const currentPhase = transcription.current?.phase ?? 'Loading Model'
+
+	useConfirmExit((segments?.length ?? 0) > 0 || loading)
 	const [devices, setDevices] = useState<AudioDevice[]>([])
 	const [inputDevice, setInputDevice] = useState<AudioDevice | null>(null)
 	const [outputDevice, setOutputDevice] = useState<AudioDevice | null>(null)
@@ -87,7 +101,6 @@ export function viewModel() {
 		setAudio(null)
 		setSegments(null)
 		setSummarizeSegments(null)
-		setProgress(0)
 		setFileSize(null)
 		setTranscriptionResult(null)
 		setShowTranscriptionResult(false)
@@ -123,26 +136,74 @@ export function viewModel() {
 		preferenceRef.current = preference
 	}, [preference])
 
-
-
-	async function handleNewSegment() {
-		await listen('transcribe_progress', (event) => {
-			const value = event.payload as number
-			if (value >= 0 && value <= 100) {
-				setProgress(value)
-				// Update phase based on progress
-				if (value >= 10 && value < 95) {
-					setCurrentPhase('Transcribing')
-				} else if (value >= 95) {
-					setCurrentPhase('Post-Processing')
+	// Handle viewing history entries from navigation state
+	useEffect(() => {
+		const loadHistoryEntry = async () => {
+			const navigationState = location.state as any
+			if (navigationState?.viewHistoryEntry) {
+				const historyEntry = getHistoryEntry(navigationState.viewHistoryEntry)
+				if (historyEntry) {
+					// console.log('Loading segments from history entry:', historyEntry.id)
+					
+					// Set the file info for the history entry
+					setFiles([{ name: historyEntry.fileName, path: historyEntry.filePath }])
+					
+					// Load segments from history entry (works for both processing and completed)
+					if (historyEntry.segments && historyEntry.segments.length > 0) {
+						setSegments(historyEntry.segments)
+					} else {
+						setSegments(null)
+					}
 				}
 			}
-		})
-		await listen<transcript.Segment>('new_segment', (event) => {
-			const { payload } = event
-			setSegments((prev) => (prev ? [...prev, payload] : [payload]))
-		})
-	}
+		}
+		
+		loadHistoryEntry()
+	}, [location.state, getHistoryEntry])
+
+	// Sync segments during active transcription
+	useEffect(() => {
+		const syncSegments = async () => {
+			if (transcription.isActive) {
+				const processingEntry = getProcessingEntry()
+				if (processingEntry) {
+					// console.log('Syncing segments from history. Count:', processingEntry.segments?.length || 0)
+					setSegments(processingEntry.segments && processingEntry.segments.length > 0 ? processingEntry.segments : null)
+				}
+			}
+		}
+		
+		syncSegments()
+	}, [transcription.isActive, getProcessingEntry])
+
+	// Real-time updates during transcription - poll for new segments
+	useEffect(() => {
+		if (!transcription.isActive) return
+		
+		const interval = setInterval(() => {
+			const processingEntry = getProcessingEntry()
+			if (processingEntry) {
+				const segments = processingEntry.segments || []
+				setSegments(currentSegments => {
+					// Only update if segment count changed to avoid unnecessary re-renders
+					if (!currentSegments || currentSegments.length !== segments.length) {
+						// console.log('Real-time segment update. Count:', segments.length)
+						return segments.length > 0 ? segments : null
+					}
+					return currentSegments
+				})
+			}
+		}, 500) // Poll every 500ms for real-time updates
+
+		return () => clearInterval(interval)
+	}, [transcription.isActive, getProcessingEntry])
+
+	// Removed direct segment listener to avoid conflicts with TranscriptionProvider
+	// Now relying solely on global state sync for live UI updates
+
+
+
+	// handleNewSegment removed - now handled by TranscriptionProvider
 
 	async function handleRecordFinish() {
 		await listen<{ path: string; name: string }>('record_finish', (event) => {
@@ -168,9 +229,8 @@ export function viewModel() {
 	}
 
 	async function onAbort() {
-		setIsAborting(true)
+		abortTranscription() // This now handles the event emission internally
 		abortRef.current = true
-		event.emit('abort_transcribe')
 	}
 
 	async function selectFiles() {
@@ -204,7 +264,7 @@ export function viewModel() {
 			const filtered = entries.filter((e) => e.name?.endsWith('.bin'))
 			if (filtered.length === 0) {
 				// No models found - user needs to manually download models
-				console.log('No models found. Please download a model manually from settings.')
+				// console.log('No models found. Please download a model manually from settings.')
 				setHasModels(false)
 			} else {
 				// Models found - update state
@@ -302,7 +362,6 @@ export function viewModel() {
 
 		handleDrop()
 		checkModelExists()
-		handleNewSegment()
 		handleRecordFinish()
 		loadAudioDevices()
 	}
@@ -340,16 +399,26 @@ export function viewModel() {
 		setSummarizeSegments(null)
 		setTranscriptTab('transcript')
 		setShowTranscriptionResult(false) // Hide any previous result
-
-		setLoading(true)
-		setCurrentPhase('Loading Model')
-		setProgress(0)
 		abortRef.current = false
 
 		// Get file information and set up result tracking
 		const fileName = await basename(path)
-		const transcriptionStartTime = Date.now()
 		const processStartTime = performance.now()
+
+		// Start global transcription tracking
+		try {
+			await startTranscription(
+				{ fileName, filePath: path },
+				{
+					modelPath: preferenceRef.current.modelPath || undefined,
+					useGpu: preferenceRef.current.useGpu || undefined,
+					settings: { modelOptions: preferenceRef.current.modelOptions }
+				}
+			)
+		} catch (error) {
+			console.error('Failed to start transcription tracking:', error)
+			// Continue with transcription even if history fails
+		}
 		
 		// Basic audio file validation
 		try {
@@ -372,34 +441,85 @@ export function viewModel() {
 		} catch (error) {
 			// If file validation fails, show error immediately
 			const errorString = String(error)
+			const processingDuration = Math.round((performance.now() - processStartTime) / 1000)
+			
 			setTranscriptionResult({
 				fileName,
 				status: 'failed',
-				duration: 0,
-				startTime: transcriptionStartTime,
+				duration: processingDuration,
+				startTime: Date.now(),
 				endTime: Date.now(),
 				error: errorString,
 				modelPath: preferenceRef.current.modelPath || undefined,
 				useGpu: preferenceRef.current.useGpu || undefined
 			})
 			setShowTranscriptionResult(true)
+			
+			// Update global state
+			failTranscription(errorString, processingDuration).catch(error => {
+				console.error('Failed to update failed transcription in history:', error)
+			})
+			
 			stopKeepAwake()
-			setLoading(false)
 			setErrorModal?.({ log: errorString, open: true })
 			return // Exit early if validation fails
 		}
 
 		const modelPath = preferenceRef.current.modelPath
+		
+		// First, try to load the model - handle this error separately
 		try {
-			setCurrentPhase('Loading Model')
 			await invoke('load_model', { modelPath, gpuDevice: preferenceRef.current.gpuDevice, useGpu: preferenceRef.current.useGpu })
+		} catch (modelError) {
+			console.error('Model loading failed:', modelError)
+			const errorString = String(modelError)
+			const transcriptionEndTime = Date.now()
+			const processingDuration = Math.round((transcriptionEndTime - processStartTime) / 1000)
 			
-			setCurrentPhase('Audio Processing')
+			// Immediately fail the transcription with specific model error
+			let userFriendlyError: string
+			if (errorString.includes('not all tensors loaded') || errorString.includes('failed to load model')) {
+				userFriendlyError = `Model is corrupted or incomplete. To fix this:
+• Go to the Models page in the app
+• Re-download the corrupted model
+• Try transcription again
+
+If this persists:
+• Check available disk space
+• Restart the application
+• Contact support if the issue continues`
+			} else {
+				userFriendlyError = `Model loading failed: ${errorString}`
+			}
+			
+			const transcriptionResult = {
+				fileName,
+				status: 'failed' as const,
+				duration: processingDuration,
+				startTime: transcriptionEndTime - (processingDuration * 1000),
+				endTime: transcriptionEndTime,
+				error: userFriendlyError,
+				modelPath: modelPath || undefined,
+				useGpu: preferenceRef.current.useGpu || undefined
+			}
+			setTranscriptionResult(transcriptionResult)
+			setShowTranscriptionResult(true)
+			
+			// Fail global transcription (this will update history and clear abort state)
+			failTranscription(userFriendlyError, processingDuration).catch(error => {
+				console.error('Failed to update failed transcription in history:', error)
+			})
+			
+			stopKeepAwake()
+			return
+		}
+
+		// Model loaded successfully, now proceed with transcription
+		try {
 			const options = {
 				path,
 				...preferenceRef.current.modelOptions,
 			}
-			setCurrentPhase('Transcribing')
 			
 			const diarizeOptions = { threshold: preferenceRef.current.diarizeThreshold, max_speakers: preferenceRef.current.maxSpeakers, enabled: preferenceRef.current.recognizeSpeakers }
 			const res: transcript.Transcript = await invoke('transcribe', {
@@ -409,26 +529,31 @@ export function viewModel() {
 				ffmpegOptions: preferenceRef.current.ffmpegOptions,
 			})
 
-			setCurrentPhase('Post-Processing')
-
 			// Calculate time
 			const processingDuration = Math.round((performance.now() - processStartTime) / 1000)
 			console.info(`Transcribe took ${processingDuration} seconds.`)
 
 			setSegments(res.segments)
+			// Note: segments are now automatically stored in history by TranscriptionProvider
 			
-			// Set successful transcription result
+			// Set successful transcription result for local display
 			const transcriptionEndTime = Date.now()
-			setTranscriptionResult({
+			const transcriptionResult = {
 				fileName,
-				status: 'completed',
+				status: 'completed' as const,
 				duration: processingDuration,
-				startTime: transcriptionStartTime,
+				startTime: transcriptionEndTime - (processingDuration * 1000),
 				endTime: transcriptionEndTime,
 				modelPath: modelPath || undefined,
 				useGpu: preferenceRef.current.useGpu || undefined
-			})
+			}
+			setTranscriptionResult(transcriptionResult)
 			setShowTranscriptionResult(true)
+			
+			// Complete global transcription (this will update history)
+			completeTranscription(res.segments, processingDuration).catch(error => {
+				console.error('Failed to complete transcription in history:', error)
+			})
 			
 			toast.success(`Transcription completed in ${processingDuration} seconds`, { position: 'bottom-center' })
 		} catch (error) {
@@ -437,16 +562,22 @@ export function viewModel() {
 			
 			if (abortRef.current) {
 				// Transcription was canceled
-				setTranscriptionResult({
+				const transcriptionResult = {
 					fileName,
-					status: 'canceled',
+					status: 'canceled' as const,
 					duration: processingDuration,
-					startTime: transcriptionStartTime,
+					startTime: transcriptionEndTime - (processingDuration * 1000),
 					endTime: transcriptionEndTime,
 					modelPath: modelPath || undefined,
 					useGpu: preferenceRef.current.useGpu || undefined
-				})
+				}
+				setTranscriptionResult(transcriptionResult)
 				setShowTranscriptionResult(true)
+				
+				// Cancel global transcription (this will update history)
+				cancelTranscription(processingDuration).catch(error => {
+					console.error('Failed to update canceled transcription in history:', error)
+				})
 			} else {
 				// Transcription failed - provide better error messages
 				const errorString = String(error)
@@ -468,34 +599,42 @@ Original error: ${errorString}`
 • The audio file contains spoken content
 • The audio volume is sufficient
 • The file is not corrupted`
-				} else if (errorString.includes('failed to load model')) {
-					userFriendlyError = `Model loading failed. Please check if:
-• The model file exists and is not corrupted
-• You have sufficient memory available
-• Try restarting the application`
+				} else if (errorString.includes('failed to load model') || errorString.includes('not all tensors loaded')) {
+					userFriendlyError = `Model is corrupted or incomplete. To fix this:
+• Go to the Models page in the app
+• Re-download the corrupted model
+• Try transcription again
+
+If this persists:
+• Check available disk space
+• Restart the application
+• Contact support if the issue continues`
 				}
 				
-				setTranscriptionResult({
+				const transcriptionResult = {
 					fileName,
-					status: 'failed',
+					status: 'failed' as const,
 					duration: processingDuration,
-					startTime: transcriptionStartTime,
+					startTime: transcriptionEndTime - (processingDuration * 1000),
 					endTime: transcriptionEndTime,
 					error: userFriendlyError,
 					modelPath: modelPath || undefined,
 					useGpu: preferenceRef.current.useGpu || undefined
-				})
+				}
+				setTranscriptionResult(transcriptionResult)
 				setShowTranscriptionResult(true)
+				
+				// Fail global transcription (this will update history)
+				failTranscription(userFriendlyError, processingDuration).catch(error => {
+					console.error('Failed to update failed transcription in history:', error)
+				})
+				
 				stopKeepAwake()
 				console.error('Transcription error: ', error)
 				setErrorModal?.({ log: userFriendlyError, open: true })
-				setLoading(false)
 			}
 		} finally {
 			stopKeepAwake()
-			setLoading(false)
-			setIsAborting(false)
-			setProgress(null)
 			if (!abortRef.current) {
 				// Focus back the window and play sound
 				if (preferenceRef.current.soundOnFinish) {

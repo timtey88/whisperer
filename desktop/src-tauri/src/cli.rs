@@ -267,13 +267,13 @@ pub async fn run(app_handle: &AppHandle) -> Result<()> {
     }
 
     app_handle.cleanup_before_exit();
-    
+
     // Run comprehensive cleanup before exit
     tracing::debug!("CLI mode: running comprehensive cleanup before exit");
     if let Err(e) = crate::cleaner::clean_all_on_exit(app_handle, None) {
         eprintln!("Warning: Failed to run cleanup: {}", e);
     }
-    
+
     eprintln!(
         "Transcription completed in {:.1}s ⏱️",
         elapsed.as_secs_f64() + elapsed.subsec_nanos() as f64 * 1e-9

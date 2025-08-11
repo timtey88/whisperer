@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ReactComponent as TranscribeIcon } from '~/icons/microphone.svg'
+import { ReactComponent as HistoryIcon } from '~/icons/clock.svg'
 import { ReactComponent as SettingsIcon } from '~/icons/settings.svg'
 
 export default function NavigationBar() {
@@ -7,6 +8,7 @@ export default function NavigationBar() {
 	const navigate = useNavigate()
 
 	const isTranscribeActive = location.pathname === '/'
+	const isHistoryActive = location.pathname === '/history'
 	const isSettingsActive = location.pathname === '/settings'
 
 	return (
@@ -19,6 +21,13 @@ export default function NavigationBar() {
 					>
 						<TranscribeIcon className="w-5 h-5" />
 						Transcribe
+					</button>
+					<button
+						onClick={() => navigate('/history')}
+						className={`tab tab-lg gap-2 px-6 ${isHistoryActive ? 'tab-active' : ''}`}
+					>
+						<HistoryIcon className="w-5 h-5" />
+						History
 					</button>
 					<button
 						onClick={() => navigate('/settings')}
