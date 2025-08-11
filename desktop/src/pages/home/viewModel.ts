@@ -21,7 +21,6 @@ import { getX86Features } from '~/lib/x86Features'
 import { ErrorModalContext } from '~/providers/ErrorModal'
 import { useFilesContext } from '~/providers/FilesProvider'
 import { ModelOptions, usePreferenceProvider } from '~/providers/Preference'
-import { UpdaterContext } from '~/providers/Updater'
 
 export interface BatchOptions {
 	files: NamedPath[]
@@ -68,7 +67,6 @@ export function viewModel() {
 	const [outputDevice, setOutputDevice] = useState<AudioDevice | null>(null)
 	const [hasModels, setHasModels] = useState<boolean>(false)
 
-	const { updateApp, availableUpdate } = useContext(UpdaterContext)
 	const { setState: setErrorModal } = useContext(ErrorModalContext)
 
 	async function onFilesChanged() {
@@ -543,8 +541,6 @@ Original error: ${errorString}`
 		setAudio,
 		files,
 		setFiles,
-		availableUpdate,
-		updateApp,
 		segments,
 		setSegments,
 		transcribe,
