@@ -113,6 +113,7 @@ fn main() -> Result<()> {
             cmd::rename_crash_file,
             cmd::check_model_exists,
             cmd::delete_model,
+            cmd::reset_app_data,
             cmd::prepare_for_uninstall,
             cmd::get_gpu_info,
             #[cfg(feature = "diarization")]

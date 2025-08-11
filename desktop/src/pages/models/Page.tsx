@@ -155,6 +155,10 @@ export default function ModelsPage() {
 												totalSize={downloadProgress.totalSize}
 												downloadSpeed={downloadProgress.downloadSpeed}
 												timeRemaining={downloadProgress.timeRemaining}
+												phase={downloadProgress.phase}
+												extractionProgress={downloadProgress.extractionProgress}
+												filesExtracted={downloadProgress.filesExtracted}
+												totalFiles={downloadProgress.totalFiles}
 											/>
 										</div>
 									) : (

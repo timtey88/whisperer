@@ -1,4 +1,3 @@
-
 fn commit_hash() -> String {
     let output = std::process::Command::new("git")
         .args(["rev-parse", "--short", "HEAD"])
@@ -6,8 +5,6 @@ fn commit_hash() -> String {
         .unwrap();
     String::from_utf8(output.stdout).unwrap()
 }
-
-
 
 fn extract_whisper_env() {
     println!("cargo:rerun-if-env-changed=WHISPER_NO_AVX");

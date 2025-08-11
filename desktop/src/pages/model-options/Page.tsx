@@ -589,7 +589,7 @@ export default function ModelOptionsPage() {
 									<div className="font-mono text-xs flex items-start gap-2">
 										<span>•</span>
 										<div>
-											<span className="text-primary font-semibold">-af \"volume=2.0\"</span>
+											<span className="text-primary font-semibold">-af &quot;volume=2.0&quot;</span>
 											<div className="text-base-content/60">Increase volume by 2x</div>
 										</div>
 									</div>
