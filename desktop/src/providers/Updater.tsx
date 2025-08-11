@@ -49,9 +49,33 @@ export function UpdaterProvider({ children }: { children: React.ReactNode }) {
 		async function checkForUpdates() {
 			try {
 				console.log('🔄 Checking for updates...')
+				console.log('🌐 Updater endpoint: https://github.com/timtey88/whisperer/releases/latest/download/latest.json')
+				
+				// Log current app version
+				const { getVersion } = await import('@tauri-apps/api/app')
+				const currentVersion = await getVersion()
+				console.log('📱 Current app version:', currentVersion)
 				
 				const newUpdate = await checkUpdate()
 				console.log('📡 Update check result:', newUpdate)
+				
+				if (newUpdate === null) {
+					console.log('🔍 Debugging: Update returned null - this could indicate:')
+					console.log('  - Network connectivity issues')
+					console.log('  - Endpoint accessibility problems') 
+					console.log('  - Signature verification failure')
+					console.log('  - Version comparison issues')
+					console.log('🔧 Trying with additional debug options...')
+					
+					// Try with debug options
+					const debugUpdate = await checkUpdate({
+						timeout: 60000,
+						headers: {
+							'User-Agent': 'Whisperer-Updater/1.0.0'
+						}
+					})
+					console.log('🔬 Debug update result:', debugUpdate)
+				}
 				
 				if (newUpdate) {
 					console.log('✅ Update available:', newUpdate.available, 'Version:', newUpdate.version)
