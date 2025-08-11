@@ -1,7 +1,7 @@
 import '@fontsource/roboto'
 import { event, path } from '@tauri-apps/api'
 import { convertFileSrc, invoke } from '@tauri-apps/api/core'
-import { emit, listen } from '@tauri-apps/api/event'
+import { listen } from '@tauri-apps/api/event'
 import { basename } from '@tauri-apps/api/path'
 import * as webview from '@tauri-apps/api/webviewWindow'
 import * as dialog from '@tauri-apps/plugin-dialog'
@@ -12,7 +12,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useLocalStorage } from 'usehooks-ts'
 import successSound from '~/assets/success.mp3'
 import { TextFormat } from '~/components/FormatSelect'
-import { AudioDevice } from '~/lib/audio'
 import * as config from '~/lib/config'
 import * as transcript from '~/lib/transcript'
 import { useConfirmExit } from '~/lib/useConfirmExit'
@@ -44,7 +43,6 @@ export function viewModel() {
 	const [settingsVisible, setSettingsVisible] = useState(location.hash === '#settings')
 	const navigate = useNavigate()
 	const [loading, setLoading] = useState(false)
-	const [isRecording, setIsRecording] = useState(false)
 	const abortRef = useRef<boolean>(false)
 	const [isAborting, setIsAborting] = useState(false)
 	const [segments, setSegments] = useState<transcript.Segment[] | null>(null)
@@ -62,9 +60,6 @@ export function viewModel() {
 	const { files, setFiles } = useFilesContext()
 	const preference = usePreferenceProvider()
 	const preferenceRef = useRef(preference)
-	const [devices, setDevices] = useState<AudioDevice[]>([])
-	const [inputDevice, setInputDevice] = useState<AudioDevice | null>(null)
-	const [outputDevice, setOutputDevice] = useState<AudioDevice | null>(null)
 	const [hasModels, setHasModels] = useState<boolean>(false)
 
 	const { setState: setErrorModal } = useContext(ErrorModalContext)
@@ -144,28 +139,7 @@ export function viewModel() {
 		})
 	}
 
-	async function handleRecordFinish() {
-		await listen<{ path: string; name: string }>('record_finish', (event) => {
-			const { name, path } = event.payload
-			preference.setHomeTabIndex(1)
-			setFiles([{ name, path }])
-			setIsRecording(false)
-			transcribe(path)
-		})
-	}
 
-	async function loadAudioDevices() {
-		const newDevices = await invoke<AudioDevice[]>('get_audio_devices')
-		const defaultInput = newDevices.find((d) => d.isDefault && d.isInput)
-		const defaultOutput = newDevices.find((d) => d.isDefault && !d.isInput)
-		if (defaultInput) {
-			setInputDevice(defaultInput)
-		}
-		if (defaultOutput) {
-			setOutputDevice(defaultOutput)
-		}
-		setDevices(newDevices)
-	}
 
 	async function onAbort() {
 		setIsAborting(true)
@@ -303,8 +277,6 @@ export function viewModel() {
 		handleDrop()
 		checkModelExists()
 		handleNewSegment()
-		handleRecordFinish()
-		loadAudioDevices()
 	}
 
 	useEffect(() => {
@@ -312,26 +284,7 @@ export function viewModel() {
 		CheckCpuAndInit()
 	}, [])
 
-	async function startRecord() {
-		startKeepAwake()
-		setSegments(null)
-		setSummarizeSegments(null)
-		setTranscriptTab('transcript')
 
-		setIsRecording(true)
-		const devices: AudioDevice[] = []
-		if (inputDevice) {
-			devices.push(inputDevice)
-		}
-		if (outputDevice) {
-			devices.push(outputDevice)
-		}
-		invoke('start_record', { devices, storeInDocuments: preference.storeRecordInDocuments })
-	}
-
-	async function stopRecord() {
-		emit('stop_record')
-	}
 
 	async function transcribe(path: string) {
 		startKeepAwake()
@@ -516,16 +469,6 @@ Original error: ${errorString}`
 		setTranscriptTab,
 		summarizeSegments,
 		setSummarizeSegments,
-		devices,
-		setDevices,
-		inputDevice,
-		setInputDevice,
-		outputDevice,
-		setOutputDevice,
-		isRecording,
-		setIsRecording,
-		startRecord,
-		stopRecord,
 		preference: preference,
 		openPath,
 		selectFiles,
