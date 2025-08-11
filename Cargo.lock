@@ -7966,11 +7966,7 @@ dependencies = [
 
 [[package]]
 name = "whisperer"
-<<<<<<< HEAD
 version = "1.1.0"
-=======
-version = "1.0.9"
->>>>>>> release/v1.0.0
 dependencies = [
  "ash 0.38.0+1.3.281",
  "axum",
