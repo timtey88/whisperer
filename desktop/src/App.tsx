@@ -8,7 +8,6 @@ import ModelOptionsPage from './pages/model-options/Page'
 import { ErrorModalProvider } from './providers/ErrorModal'
 import { PreferenceProvider } from './providers/Preference'
 import { FilesProvider } from './providers/FilesProvider'
-import { UpdaterProvider } from './providers/Updater'
 import { ErrorBoundary } from 'react-error-boundary'
 import { BoundaryFallback } from './components/BoundaryFallback'
 import ErrorModalWithContext from './components/ErrorModalWithContext'
@@ -24,8 +23,7 @@ export default function App() {
 			</div>
 			<ErrorModalProvider>
 				<PreferenceProvider>
-					<UpdaterProvider>
-						<FilesProvider>
+					<FilesProvider>
 							<ToastProvider>
 								<ErrorModalWithContext />
 								<Routes>
@@ -35,8 +33,7 @@ export default function App() {
 									<Route path="/model-options" element={<ModelOptionsPage />} />
 								</Routes>
 							</ToastProvider>
-						</FilesProvider>
-					</UpdaterProvider>
+					</FilesProvider>
 				</PreferenceProvider>
 			</ErrorModalProvider>
 		</ErrorBoundary>

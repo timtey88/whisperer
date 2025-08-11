@@ -53,7 +53,6 @@
     "core:app:default",
     "core:app:allow-version",
     "core:app:allow-name",
-    "updater:default",
     "shell:allow-open",
     "shell:allow-execute",
     "shell:allow-kill",
